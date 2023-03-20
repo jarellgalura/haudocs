@@ -15,6 +15,7 @@ function ReviewerDashboard() {
           justifyContent="center"
           alignItems="stretch"
           sx={{ gap: 2 }}
+          marginTop="1rem"
         >
           <Grid item xs={12} sm={6} md={6} lg={4}>
             <Box

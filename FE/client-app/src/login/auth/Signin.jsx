@@ -50,6 +50,23 @@ function Signin() {
     }
   }, []);
 
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      if (user) {
+        if (!user.emailVerified) {
+          sendEmailVerification(user).then(() => {
+            setTimeActive(true);
+            navigate("/verifyemail");
+          });
+        } else {
+          navigate("/");
+        }
+      }
+    });
+
+    return unsubscribe;
+  }, [navigate, setTimeActive]);
+
   const Login = async (event) => {
     event.preventDefault();
     try {
@@ -61,15 +78,6 @@ function Signin() {
       } else {
         localStorage.removeItem("email");
         localStorage.removeItem("password");
-      }
-
-      if (!auth.currentUser.emailVerified) {
-        sendEmailVerification(auth.currentUser).then(() => {
-          setTimeActive(true);
-          navigate("/verifyemail");
-        });
-      } else {
-        navigate("/");
       }
     } catch (error) {
       switch (error.code) {
@@ -105,6 +113,7 @@ function Signin() {
           role: "applicant",
         });
       }
+      window.location.href = "/";
     } catch (err) {
       console.error(err);
       alert(err.message);
