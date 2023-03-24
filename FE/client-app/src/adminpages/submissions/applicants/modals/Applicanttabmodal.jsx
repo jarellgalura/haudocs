@@ -12,6 +12,7 @@ import Continuingtab from "./applicanttabmodal/Continuingtab";
 import Finaltab from "./applicanttabmodal/Finaltab";
 
 function Applicanttabmodal(props) {
+    console.log("applicant", props.uid);
     const [value, setValue] = React.useState(0);
     const { handleCloseModal } = props;
 

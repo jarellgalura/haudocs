@@ -11,10 +11,19 @@ import { getFirestore, collection, getDocs } from "firebase/firestore/lite";
 
 function Applicantstab(props) {
     const [showModal, setShowModal] = useState(false);
+    const [selectedUid, setSelectedUid] = useState(null);
 
     const [submissions, setSubmissions] = useState([]);
 
-    console.log(submissions);
+    function handleOpenModal(uid) {
+        setSelectedUid(uid);
+        setShowModal(true);
+    }
+
+    function handleCloseModal() {
+        setSelectedUid(null);
+        setShowModal(false);
+    }
 
     useEffect(() => {
         const fetchData = async () => {
@@ -77,14 +86,18 @@ function Applicantstab(props) {
             field: "action",
             headerName: "Action",
             width: "200",
-            renderCell: (params) => <ViewCell uid={"uid"} {...params} />,
+            renderCell: (params) => <ViewCell {...params} />,
         },
     ];
 
     function ViewCell(props) {
+        console.log(props);
         return (
             <div>
-                <Button onClick={() => setShowModal(true)} style={viewStyle}>
+                <Button
+                    onClick={() => handleOpenModal(props.row.uid)}
+                    style={viewStyle}
+                >
                     View
                 </Button>
                 <Modal
@@ -94,10 +107,12 @@ function Applicantstab(props) {
                     aria-describedby="modal-modal-description"
                 >
                     <Box sx={style}>
-                        <Applicanttabmodal
-                            uid={props.row.uid}
-                            handleCloseModal={handleCloseModal}
-                        />
+                        {selectedUid && (
+                            <Applicanttabmodal
+                                uid={selectedUid}
+                                handleCloseModal={handleCloseModal}
+                            />
+                        )}
                     </Box>
                 </Modal>
             </div>
