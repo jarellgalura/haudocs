@@ -29,6 +29,8 @@ import {
     query,
     where,
     getDocs,
+    updateDoc,
+    doc,
 } from "firebase/firestore/lite";
 
 const Initialtab = (props) => {
@@ -175,6 +177,31 @@ const Initialtab = (props) => {
         if (isFormValid && isAnyCheckboxSelected) {
             setShowConfirmation(false);
             setShowSuccess(true);
+
+            const db = getFirestore();
+            const submissionsRef = collection(db, "submissions");
+            const q = query(
+                submissionsRef,
+                where("uid", "==", props.uid),
+                where("status", "==", "initial")
+            );
+
+            getDocs(q).then((querySnapshot) => {
+                const data = querySnapshot.docs.map((doc) => ({
+                    id: doc.id,
+                    ...doc.data(),
+                }));
+
+                // Update the first document in the query snapshot
+                const docRef = doc(db, "submissions", data[0].id);
+                updateDoc(docRef, {
+                    protocol_no: protocolNumber,
+                    review_type: reviewType,
+                    reviewer: assignTo,
+                    school: isCheckedHau ? "HAU" : "Others",
+                });
+            });
+
             console.log({
                 protocolNumber,
                 reviewType,
