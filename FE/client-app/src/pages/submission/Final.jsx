@@ -9,48 +9,106 @@ import {
   DialogContent,
   DialogActions,
   Typography,
+  DialogContentText,
 } from "@mui/material";
+import {
+  collection,
+  addDoc,
+  serverTimestamp,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore/lite";
+import { db, auth } from "../../firebase";
 
 const Final = () => {
   const navigate = useNavigate();
   const { handleStatusChange } = useContext(StatusContext);
   const [firstFile, setFirstFile] = useState(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
+
+  async function handleSubmit() {
+    const submissionsRef = collection(db, "submissions");
+    const q = query(
+      submissionsRef,
+      where("uid", "==", auth.currentUser.uid),
+      where("status", "==", "final")
+    );
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+      // User has already submitted final form
+      setShowAlert(true);
+      return false;
+    }
 
     const form = new FormData();
+
     if (firstFile) {
-      form.append("firstFile", firstFile);
+      form.append("HAU-IRB 3.7(A): Final Report Form", firstFile);
     }
 
     try {
-      const response = await fetch("http://localhost:3000/files", {
-        method: "POST",
-        headers: {
-          filefolder: "folder",
-        },
-        body: form,
-      });
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/files`,
+        {
+          method: "POST",
+          headers: {
+            filefolder: `${auth.currentUser.uid}/final`,
+          },
+          body: form,
+        }
+      );
       const data = await response.json();
       console.log(data);
+
+      try {
+        const docRef = await addDoc(collection(db, "submissions"), {
+          uid: auth.currentUser.uid,
+          status: "final",
+          files: data.files,
+          name: auth.currentUser.displayName,
+          date_sent: serverTimestamp(),
+          due_date: "",
+          protocol_no: "",
+          reviewer: "",
+          review_type: "",
+          decision: "",
+          school: "",
+        });
+        console.log("Document written with ID: ", docRef.id);
+      } catch (e) {
+        console.log("Error adding document: ", e);
+      }
     } catch (error) {
-      console.error(error);
+      console.log(error);
+      return false;
+    }
+    return true;
+  }
+
+  const handleConfirmSubmit = async () => {
+    const success = await handleSubmit();
+    if (success) {
+      setShowConfirmation(false);
+      setShowSuccess(true);
     }
   };
 
-  const handleConfirmSubmit = () => {
+  const handleOpenConfirmation = () => {
+    setShowConfirmation(true);
+  };
+
+  const handleCloseConfirmation = () => {
     setShowConfirmation(false);
-    navigate("/application");
-    handleStatusChange("Your application is in process for Final review");
-    handleSubmit();
   };
 
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        setShowConfirmation(true);
+        handleOpenConfirmation();
       }}
     >
       <div className="sub-containerr">
@@ -59,7 +117,7 @@ const Final = () => {
           <hr />
           <br />
           <div className="files">
-            <div className="form">
+            <div className="form shadow-2xl">
               <article className="upload">
                 <label
                   class="block mb-5 text-lg font-medium text-gray-900 dark:text-white"
@@ -72,7 +130,6 @@ const Final = () => {
                   id="multiple_files"
                   accept=".pdf,.doc,.docx"
                   type="file"
-                  multiple
                   onChange={(event) => {
                     setFirstFile(event.target.files[0]);
                   }}
@@ -101,29 +158,56 @@ const Final = () => {
                   </button>
                 </div>
               </div>
-              <Dialog
-                open={showConfirmation}
-                onClose={() => setShowConfirmation(false)}
-              >
-                <DialogTitle>Confirm Submit</DialogTitle>
+              <Dialog open={showConfirmation} onClose={handleCloseConfirmation}>
+                <DialogTitle>Confirm Submission</DialogTitle>
                 <DialogContent>
-                  <Typography variant="body1">
-                    Are you sure you want to submit the form?
-                  </Typography>
+                  <DialogContentText>
+                    Are you sure you want to submit all the files?
+                  </DialogContentText>
                 </DialogContent>
                 <DialogActions>
                   <Button
+                    onClick={handleCloseConfirmation}
                     sx={{ color: "maroon" }}
-                    onClick={() => setShowConfirmation(false)}
                   >
                     Cancel
                   </Button>
                   <Button
-                    sx={{ color: "maroon" }}
                     onClick={handleConfirmSubmit}
-                    autoFocus
+                    sx={{ color: "maroon" }}
                   >
-                    Submit
+                    Yes
+                  </Button>
+                </DialogActions>
+              </Dialog>
+              <Dialog open={showSuccess}>
+                <DialogTitle>Success</DialogTitle>
+                <DialogContent>
+                  <DialogContentText>
+                    Documents successfully submitted.
+                  </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                  <Button
+                    sx={{ color: "maroon" }}
+                    onClick={() => setShowSuccess(false)}
+                  >
+                    OK
+                  </Button>
+                </DialogActions>
+              </Dialog>
+
+              <Dialog open={showAlert} onClose={() => setShowAlert(false)}>
+                <DialogTitle>{"Sorry"}</DialogTitle>
+                <DialogContent>
+                  <div>You have already submitted the initial form.</div>
+                </DialogContent>
+                <DialogActions>
+                  <Button
+                    sx={{ color: "maroon" }}
+                    onClick={() => setShowAlert(false)}
+                  >
+                    OK
                   </Button>
                 </DialogActions>
               </Dialog>

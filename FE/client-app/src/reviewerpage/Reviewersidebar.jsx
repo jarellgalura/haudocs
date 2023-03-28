@@ -462,7 +462,7 @@ const Reviewersidebar = ({ children }) => {
             height={30}
           />
         </div>
-        <div>{userName}</div>
+        <div className="text-sm ml-3">{userName}</div>
         <div>
           <Badge
             badgeContent={notifications.filter((n) => !n.read).length}
@@ -553,7 +553,7 @@ const Reviewersidebar = ({ children }) => {
             width={30}
             height={30}
           />
-          <Typography>{userName}</Typography>
+          <Typography className="text-sm ml-3">{userName}</Typography>
         </div>
       </DrawerHeader>
       <List>

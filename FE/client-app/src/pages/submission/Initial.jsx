@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useContext, useEffect } from "react";
 import {
   Button,
   Dialog,
@@ -10,7 +10,14 @@ import {
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { StatusContext } from "../application/StatusContext";
-import { collection, addDoc, serverTimestamp } from "firebase/firestore/lite";
+import {
+  collection,
+  addDoc,
+  serverTimestamp,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore/lite";
 import { db, auth } from "../../firebase";
 
 function Initial() {
@@ -27,8 +34,22 @@ function Initial() {
   const [ninthFile, setNinthFile] = useState(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
 
   async function handleSubmit() {
+    const submissionsRef = collection(db, "submissions");
+    const q = query(
+      submissionsRef,
+      where("uid", "==", auth.currentUser.uid),
+      where("status", "==", "initial")
+    );
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+      // User has already submitted initial form
+      setShowAlert(true);
+      return false;
+    }
+
     const form = new FormData();
 
     if (firstFile) {
@@ -119,11 +140,19 @@ function Initial() {
     }
   };
 
+  const handleOpenConfirmation = () => {
+    setShowConfirmation(true);
+  };
+
+  const handleCloseConfirmation = () => {
+    setShowConfirmation(false);
+  };
+
   return (
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        handleConfirmSubmit();
+        handleOpenConfirmation();
       }}
     >
       <div className="sub-containerr">
@@ -132,7 +161,7 @@ function Initial() {
           <hr />
           <br />
           <div className="files">
-            <div className="form">
+            <div className="form shadow-2xl">
               <article className="upload">
                 <label
                   class="block mb-5 text-lg font-medium text-gray-900 dark:text-white"
@@ -145,7 +174,6 @@ function Initial() {
                   id="multiple_files"
                   accept=".pdf,.doc,.docx"
                   type="file"
-                  multiple
                   onChange={(event) => {
                     setFirstFile(event.target.files[0]);
                   }}
@@ -162,7 +190,6 @@ function Initial() {
                   class="block w-full mb-5 text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
                   type="file"
                   accept=".pdf,.doc,.docx"
-                  multiple
                   onChange={(event) => {
                     setSecondFile(event.target.files[0]);
                   }}
@@ -180,7 +207,6 @@ function Initial() {
                   class="block w-full mb-5 text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
                   type="file"
                   accept=".pdf,.doc,.docx"
-                  multiple
                   onChange={(event) => {
                     setThirdFile(event.target.files[0]);
                   }}
@@ -198,7 +224,6 @@ function Initial() {
                   class="block w-full mb-5 text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
                   type="file"
                   accept=".pdf,.doc,.docx"
-                  multiple
                   onChange={(event) => {
                     setFourthFile(event.target.files[0]);
                   }}
@@ -218,7 +243,6 @@ function Initial() {
                   class="block w-full mb-5 text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
                   type="file"
                   accept=".pdf,.doc,.docx"
-                  multiple
                   onChange={(event) => {
                     setFifthFile(event.target.files[0]);
                   }}
@@ -230,7 +254,6 @@ function Initial() {
                   class="block w-full mb-5 text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
                   type="file"
                   accept=".pdf,.doc,.docx"
-                  multiple
                   onChange={(event) => {
                     setSixthFile(event.target.files[0]);
                   }}
@@ -242,7 +265,6 @@ function Initial() {
                   class="block w-full mb-5 text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
                   type="file"
                   accept=".pdf,.doc,.docx"
-                  multiple
                   onChange={(event) => {
                     setSeventhFile(event.target.files[0]);
                   }}
@@ -259,7 +281,6 @@ function Initial() {
                   class="block w-full mb-5 text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
                   type="file"
                   accept=".pdf,.doc,.docx"
-                  multiple
                   onChange={(event) => {
                     setEightFile(event.target.files[0]);
                   }}
@@ -276,7 +297,6 @@ function Initial() {
                   class="block w-full mb-5 text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
                   type="file"
                   accept=".pdf,.doc,.docx"
-                  multiple
                   onChange={(event) => {
                     setNinthFile(event.target.files[0]);
                   }}
@@ -297,66 +317,77 @@ function Initial() {
                 <div class="flex space-x-4 items-center justify-end px-3 py-2 border-t dark:border-gray-600">
                   <button
                     id="sub"
-                    onClick={() => setShowConfirmation(true)}
                     disabled={
-                      false
-                      // !firstFile ||
-                      // !secondFile ||
-                      // !thirdFile ||
-                      // !fifthFile ||
-                      // !sixthFile ||
-                      // !seventhFile ||
-                      // !eightFile
+                      !firstFile ||
+                      !secondFile ||
+                      !thirdFile ||
+                      !fifthFile ||
+                      !sixthFile ||
+                      !seventhFile ||
+                      !eightFile
                     }
                     class="inline-flex items-center py-2.5 px-[3rem] text-xs font-medium text-center text-white bg-maroon rounded-lg focus:ring-4 focus:ring-blue-200 dark:focus:ring-blue-900"
                   >
                     Submit
                   </button>
+                  <Dialog
+                    open={showConfirmation}
+                    onClose={handleCloseConfirmation}
+                  >
+                    <DialogTitle>Confirm Submission</DialogTitle>
+                    <DialogContent>
+                      <DialogContentText>
+                        Are you sure you want to submit all the files?
+                      </DialogContentText>
+                    </DialogContent>
+                    <DialogActions>
+                      <Button
+                        onClick={handleCloseConfirmation}
+                        sx={{ color: "maroon" }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleConfirmSubmit}
+                        sx={{ color: "maroon" }}
+                      >
+                        Yes
+                      </Button>
+                    </DialogActions>
+                  </Dialog>
+                  <Dialog open={showSuccess}>
+                    <DialogTitle>Success</DialogTitle>
+                    <DialogContent>
+                      <DialogContentText>
+                        Documents successfully submitted.
+                      </DialogContentText>
+                    </DialogContent>
+                    <DialogActions>
+                      <Button
+                        sx={{ color: "maroon" }}
+                        onClick={() => setShowSuccess(false)}
+                      >
+                        OK
+                      </Button>
+                    </DialogActions>
+                  </Dialog>
+
+                  <Dialog open={showAlert} onClose={() => setShowAlert(false)}>
+                    <DialogTitle>{"Sorry"}</DialogTitle>
+                    <DialogContent>
+                      <div>You have already submitted the initial form.</div>
+                    </DialogContent>
+                    <DialogActions>
+                      <Button
+                        sx={{ color: "maroon" }}
+                        onClick={() => setShowAlert(false)}
+                      >
+                        OK
+                      </Button>
+                    </DialogActions>
+                  </Dialog>
                 </div>
               </div>
-              <Dialog
-                open={showConfirmation}
-                onClose={() => setShowConfirmation(false)}
-              >
-                <DialogTitle>Are you sure you want to submit?</DialogTitle>
-                <DialogContent>
-                  <DialogContentText>
-                    By clicking "Agree," you will submit your files for initial
-                    review.
-                  </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                  <Button
-                    sx={{ color: "maroon" }}
-                    onClick={() => setShowConfirmation(false)}
-                  >
-                    Disagree
-                  </Button>
-                  <Button
-                    sx={{ color: "maroon" }}
-                    onClick={handleConfirmSubmit}
-                    autoFocus
-                  >
-                    Agree
-                  </Button>
-                </DialogActions>
-              </Dialog>
-              <Dialog open={showSuccess} onClose={() => setShowSuccess(false)}>
-                <DialogTitle>Success!</DialogTitle>
-                <DialogContent>
-                  <DialogContentText>
-                    Your files have been submitted for initial review.
-                  </DialogContentText>
-                </DialogContent>
-                <DialogActions>
-                  <Button
-                    sx={{ color: "maroon" }}
-                    onClick={() => setShowSuccess(false)}
-                  >
-                    OK
-                  </Button>
-                </DialogActions>
-              </Dialog>
             </div>
           </div>
         </div>

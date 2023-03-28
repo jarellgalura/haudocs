@@ -10,15 +10,22 @@ import {
   Typography,
   Box,
   Alert,
+  Grid,
+  TextField,
+  InputAdornment,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { ref, getDownloadURL } from "firebase/storage";
 import { storage } from "../../../../firebase";
+import IconButton from "@mui/material/IconButton";
+import RemoveIcon from "@mui/icons-material/Remove";
+import AddIcon from "@mui/icons-material/Add";
+import "../../assignedprotocol.css";
 
 const Assignedmodalinitial = (props) => {
   const navigate = useNavigate();
   const [value, setValue] = React.useState(0);
-  const [fileUploads, setfileUpload] = useState(null);
+  const [files, setFiles] = useState([{ id: 1, file: null }]);
   const [open, setOpen] = useState(false);
   const { handleCloseModal } = props;
   const [selectedFiles, setSelectedFiles] = useState([]);
@@ -31,20 +38,23 @@ const Assignedmodalinitial = (props) => {
   const [showAlert, setShowAlert] = useState(false);
   const [isDownloadSuccessful, setIsDownloadSuccessful] = useState(false);
 
-  const handleFileUpload = (event) => {
-    const files = Array.from(event.target.files);
-    setIsSubmitEnabled(true);
-    setSelectedFiles(files);
-    const newFileUploads = [...fileUploads];
+  const handleFileUpload = (event, id) => {
+    const file = event.target.files[0];
+    const newFiles = [...files];
+    const index = newFiles.findIndex((file) => file.id === id);
+    newFiles[index].file = file;
+    setFiles(newFiles);
+  };
 
-    for (let i = 0; i < files.length; i++) {
-      newFileUploads.push(files[i]);
-    }
+  const handleAddFile = () => {
+    const newFiles = [...files];
+    newFiles.push({ id: newFiles.length + 1, file: null });
+    setFiles(newFiles);
+  };
 
-    setfileUpload(newFileUploads);
-
-    const fileNames = files.map((file) => file.name).join(", ");
-    document.getElementById("multiple_files").value = fileNames;
+  const handleRemoveFile = (id) => {
+    const newFiles = files.filter((file) => file.id !== id);
+    setFiles(newFiles);
   };
 
   const columns = [
@@ -215,16 +225,50 @@ const Assignedmodalinitial = (props) => {
           setShowConfirmation(true);
         }}
       >
-        <input
-          class="mt-[1rem] block w-full mb-5 text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
-          id="multiple_files"
-          type="file"
-          required
-          accept=".pdf,.doc,.docx"
-          multiple
-          onChange={handleFileUpload}
-        />
-        <div className="flex items-end justify-end space-x-2">
+        <DialogContent>
+          <form>
+            <Grid container spacing={2}>
+              {files.map((file) => (
+                <Grid item xs={12} key={file.id}>
+                  <input
+                    type="file"
+                    variant="outlined"
+                    onChange={(event) => handleFileUpload(event, file.id)}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton onClick={() => handleRemoveFile(file.id)}>
+                            <RemoveIcon />
+                          </IconButton>
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+                </Grid>
+              ))}
+              <Grid item xs={12}>
+                <Button
+                  variant="outlined"
+                  sx={{
+                    color: "maroon",
+                    borderColor: "maroon",
+                    "&:hover": {
+                      backgroundColor: "maroon",
+                      color: "white",
+                      borderColor: "maroon",
+                    },
+                  }}
+                  startIcon={<AddIcon />}
+                  onClick={handleAddFile}
+                >
+                  Add More
+                </Button>
+              </Grid>
+            </Grid>
+          </form>
+        </DialogContent>
+
+        <div className="flex items-end justify-end space-x-2 pb-[2rem]">
           <Button
             onClick={handleCloseModal}
             style={closeStyle}

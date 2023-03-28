@@ -7,15 +7,15 @@ const AdminApplication = () => {
   // Sample data
   const columns = [
     { field: "protocolnumber", headerName: "Protocol Number", width: 300 },
-    { field: "classification", headerName: "Classification", width: 300 },
+    { field: "reviewetype", headerName: "Review Type", width: 300 },
     {
       field: "datesent",
       headerName: "Date Sent",
       width: 200,
     },
     {
-      field: "sentto",
-      headerName: "Sent To",
+      field: "reviewer",
+      headerName: "Reviewer",
       width: 200,
     },
     {
@@ -28,10 +28,10 @@ const AdminApplication = () => {
     {
       id: "",
       protocolnumber: "2023-001-NAME-TITLE",
-      classification: "",
+      reviewtype: "",
       datesent: "February 14, 2023",
-      sentto: "Person A",
-      status: "In Progress",
+      reviewer: "Person A",
+      status: "Initial",
     },
   ];
   return (
