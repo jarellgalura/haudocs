@@ -169,71 +169,67 @@ function Signup() {
           {renderErrorMsg("username")}
           {renderErrorMsg("noUsername")}
 
-          <div style={{ display: "flex", flexDirection: "row", gap: "10px" }}>
-            <TextField
-              className="textfield"
-              margin="normal"
-              label="Password"
-              fullWidth
-              required
-              name="password"
-              id="password"
-              autoComplete="current-password"
-              type={showPassword ? "text" : "password"}
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={() => setShowPassword(!showPassword)}
-                      onMouseDown={(e) => e.preventDefault()}
-                      edge="end"
-                    >
-                      {showPassword ? <MdVisibilityOff /> : <MdVisibility />}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
-            {renderErrorMsg("password")}
-            {renderErrorMsg("noPassword")}
+          <TextField
+            className="textfield"
+            margin="normal"
+            label="Password"
+            fullWidth
+            required
+            name="password"
+            id="password"
+            autoComplete="current-password"
+            type={showPassword ? "text" : "password"}
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowPassword(!showPassword)}
+                    onMouseDown={(e) => e.preventDefault()}
+                    edge="end"
+                  >
+                    {showPassword ? <MdVisibilityOff /> : <MdVisibility />}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+          {renderErrorMsg("password")}
+          {renderErrorMsg("noPassword")}
 
-            <TextField
-              className="textfield"
-              margin="normal"
-              label="Confirm Password"
-              fullWidth
-              required
-              name="password"
-              id="confirmpassword"
-              autoComplete="current-password"
-              type={showConfirmPassword ? "text" : "password"}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              InputProps={{
-                endAdornment: (
-                  <InputAdornment position="end">
-                    <IconButton
-                      onClick={() =>
-                        setShowConfirmPassword(!showConfirmPassword)
-                      }
-                      onMouseDown={(e) => e.preventDefault()}
-                      edge="end"
-                    >
-                      {showConfirmPassword ? (
-                        <MdVisibilityOff />
-                      ) : (
-                        <MdVisibility />
-                      )}
-                    </IconButton>
-                  </InputAdornment>
-                ),
-              }}
-            />
-            {renderErrorMsg("password")}
-            {renderErrorMsg("noPassword")}
-          </div>
+          <TextField
+            className="textfield"
+            margin="normal"
+            label="Confirm Password"
+            fullWidth
+            required
+            name="password"
+            id="confirmpassword"
+            autoComplete="current-password"
+            type={showConfirmPassword ? "text" : "password"}
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            InputProps={{
+              endAdornment: (
+                <InputAdornment position="end">
+                  <IconButton
+                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                    onMouseDown={(e) => e.preventDefault()}
+                    edge="end"
+                  >
+                    {showConfirmPassword ? (
+                      <MdVisibilityOff />
+                    ) : (
+                      <MdVisibility />
+                    )}
+                  </IconButton>
+                </InputAdornment>
+              ),
+            }}
+          />
+          {renderErrorMsg("password")}
+          {renderErrorMsg("noPassword")}
         </div>
         <input
           onClick={register}

@@ -69,8 +69,16 @@ function Assignedmodal(props) {
 
   return (
     <div className="flex">
-      <Box sx={{ width: "100%" }}>
-        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+      <Box sx={{ width: "100%", height: "70vh" }}>
+        <Box
+          sx={{
+            borderBottom: 1,
+            borderColor: "divider",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
           <ThemeProvider theme={theme}>
             <CustomTabs
               value={value}

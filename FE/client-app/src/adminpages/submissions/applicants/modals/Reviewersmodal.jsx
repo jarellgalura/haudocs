@@ -70,7 +70,15 @@ function Reviewersmodal(props) {
   return (
     <div className="flex">
       <Box sx={{ width: "100%" }}>
-        <Box sx={{ borderBottom: 1, borderColor: "divider" }}>
+        <Box
+          sx={{
+            borderBottom: 1,
+            borderColor: "divider",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
           <ThemeProvider theme={theme}>
             <CustomTabs
               value={value}

@@ -61,7 +61,7 @@ const AdminTransfer = () => {
   return (
     <Adminsidebar>
       <div className="transfer">
-        <Box sx={{ py: 10 }}>
+        <Box sx={{ py: 2 }}>
           <Box sx={{ maxWidth: "600px", margin: "0 auto", px: 2 }}>
             <Box
               ref={formRef}

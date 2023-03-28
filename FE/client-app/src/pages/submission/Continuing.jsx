@@ -9,7 +9,17 @@ import {
   DialogContent,
   DialogActions,
   Typography,
+  DialogContentText,
 } from "@mui/material";
+import {
+  collection,
+  addDoc,
+  serverTimestamp,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore/lite";
+import { db, auth } from "../../firebase";
 
 const Continuing = () => {
   const navigate = useNavigate();
@@ -23,53 +33,112 @@ const Continuing = () => {
   const [seventhFile, setSeventhFile] = useState(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
+  const [showSuccess, setShowSuccess] = useState(false);
+  const [showAlert, setShowAlert] = useState(false);
 
-  const handleSubmit = async (event) => {
-    event.preventDefault();
+  async function handleSubmit() {
+    const submissionsRef = collection(db, "submissions");
+    const q = query(
+      submissionsRef,
+      where("uid", "==", auth.currentUser.uid),
+      where("status", "==", "continuing")
+    );
+    const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+      // User has already submitted continuing form
+      setShowAlert(true);
+      return false;
+    }
 
     const form = new FormData();
+
     if (firstFile) {
-      form.append("firstFile", firstFile);
+      form.append("HAU-IRB 3.1(A): Progress Report Form", firstFile);
     }
     if (secondFile) {
-      form.append("secondFile", secondFile);
+      form.append(
+        "HAU-IRB FORM 3.2(A): Early Termination Report Form",
+        secondFile
+      );
     }
     if (thirdFile) {
-      form.append("thirdFile", thirdFile);
+      form.append("HAU-IRB FORM 3.3(A): Amendment Review Form", thirdFile);
     }
     if (fourthFile) {
-      form.append("fourthFile", fourthFile);
+      form.append(
+        "HAU-IRB FORM 3.4(A): Protocol Deviation/Violation Report Form",
+        fourthFile
+      );
     }
     if (fifthFile) {
-      form.append("fifthFile", fifthFile);
+      form.append("HAU-IRB FORM 3.5(A): Serious Adverse Event Form", fifthFile);
     }
     if (sixthFile) {
-      form.append("sixthFile", sixthFile);
+      form.append(
+        "HAU-IRB FORM 3.5(B): Reportable Negative Events Form",
+        sixthFile
+      );
     }
     if (seventhFile) {
-      form.append("seventhFile", seventhFile);
+      form.append(
+        "HAU-IRB FORM 3.6(A): Application for Continuing Review",
+        seventhFile
+      );
     }
 
     try {
-      const response = await fetch("http://localhost:3000/files", {
-        method: "POST",
-        headers: {
-          filefolder: "folder",
-        },
-        body: form,
-      });
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/files`,
+        {
+          method: "POST",
+          headers: {
+            filefolder: `${auth.currentUser.uid}/continuing`,
+          },
+          body: form,
+        }
+      );
       const data = await response.json();
       console.log(data);
+
+      try {
+        const docRef = await addDoc(collection(db, "submissions"), {
+          uid: auth.currentUser.uid,
+          status: "continuing",
+          files: data.files,
+          name: auth.currentUser.displayName,
+          date_sent: serverTimestamp(),
+          due_date: "",
+          protocol_no: "",
+          reviewer: "",
+          review_type: "",
+          decision: "",
+          school: "",
+        });
+        console.log("Document written with ID: ", docRef.id);
+      } catch (e) {
+        console.log("Error adding document: ", e);
+      }
     } catch (error) {
-      console.error(error);
+      console.log(error);
+      return false;
+    }
+    return true;
+  }
+
+  const handleConfirmSubmit = async () => {
+    const success = await handleSubmit();
+    if (success) {
+      setShowConfirmation(false);
+      setShowSuccess(true);
     }
   };
 
-  const handleConfirmSubmit = () => {
+  const handleOpenConfirmation = () => {
+    setShowConfirmation(true);
+  };
+
+  const handleCloseConfirmation = () => {
     setShowConfirmation(false);
-    navigate("/application");
-    handleStatusChange("Your application is in process for Continuing review");
-    handleSubmit();
   };
 
   useEffect(() => {
@@ -98,7 +167,7 @@ const Continuing = () => {
     <form
       onSubmit={(e) => {
         e.preventDefault();
-        setShowConfirmation(true);
+        handleOpenConfirmation();
       }}
     >
       <div className="sub-containerr">
@@ -107,7 +176,7 @@ const Continuing = () => {
           <hr />
           <br />
           <div className="files">
-            <div className="form">
+            <div className="form shadow-2xl">
               <article className="upload">
                 <label
                   class="block mb-5 text-lg font-medium text-gray-900 dark:text-white"
@@ -120,7 +189,6 @@ const Continuing = () => {
                   id="multiple_files"
                   type="file"
                   accept=".pdf,.doc,.docx"
-                  multiple
                   onChange={(event) => {
                     setFirstFile(event.target.files[0]);
                   }}
@@ -137,7 +205,6 @@ const Continuing = () => {
                   class="block w-full mb-5 text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
                   type="file"
                   accept=".pdf,.doc,.docx"
-                  multiple
                   onChange={(event) => {
                     setSecondFile(event.target.files[0]);
                   }}
@@ -154,7 +221,6 @@ const Continuing = () => {
                   class="block w-full mb-5 text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
                   type="file"
                   accept=".pdf,.doc,.docx"
-                  multiple
                   onChange={(event) => {
                     setThirdFile(event.target.files[0]);
                   }}
@@ -172,7 +238,6 @@ const Continuing = () => {
                   class="block w-full mb-5 text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
                   type="file"
                   accept=".pdf,.doc,.docx"
-                  multiple
                   onChange={(event) => {
                     setFourthFile(event.target.files[0]);
                   }}
@@ -189,7 +254,6 @@ const Continuing = () => {
                   class="block w-full mb-5 text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
                   type="file"
                   accept=".pdf,.doc,.docx"
-                  multiple
                   onChange={(event) => {
                     setFifthFile(event.target.files[0]);
                   }}
@@ -206,7 +270,6 @@ const Continuing = () => {
                   class="block w-full mb-5 text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
                   type="file"
                   accept=".pdf,.doc,.docx"
-                  multiple
                   onChange={(event) => {
                     setSixthFile(event.target.files[0]);
                   }}
@@ -223,7 +286,6 @@ const Continuing = () => {
                   class="block w-full mb-5 text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
                   type="file"
                   accept=".pdf,.doc,.docx"
-                  multiple
                   onChange={(event) => {
                     setSeventhFile(event.target.files[0]);
                   }}
@@ -254,29 +316,56 @@ const Continuing = () => {
                   </button>
                 </div>
               </div>
-              <Dialog
-                open={showConfirmation}
-                onClose={() => setShowConfirmation(false)}
-              >
-                <DialogTitle>Confirm Submit</DialogTitle>
+              <Dialog open={showConfirmation} onClose={handleCloseConfirmation}>
+                <DialogTitle>Confirm Submission</DialogTitle>
                 <DialogContent>
-                  <Typography variant="body1">
-                    Are you sure you want to submit the form?
-                  </Typography>
+                  <DialogContentText>
+                    Are you sure you want to submit all the files?
+                  </DialogContentText>
                 </DialogContent>
                 <DialogActions>
                   <Button
+                    onClick={handleCloseConfirmation}
                     sx={{ color: "maroon" }}
-                    onClick={() => setShowConfirmation(false)}
                   >
                     Cancel
                   </Button>
                   <Button
-                    sx={{ color: "maroon" }}
                     onClick={handleConfirmSubmit}
-                    autoFocus
+                    sx={{ color: "maroon" }}
                   >
-                    Submit
+                    Yes
+                  </Button>
+                </DialogActions>
+              </Dialog>
+              <Dialog open={showSuccess}>
+                <DialogTitle>Success</DialogTitle>
+                <DialogContent>
+                  <DialogContentText>
+                    Documents successfully submitted.
+                  </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                  <Button
+                    sx={{ color: "maroon" }}
+                    onClick={() => setShowSuccess(false)}
+                  >
+                    OK
+                  </Button>
+                </DialogActions>
+              </Dialog>
+
+              <Dialog open={showAlert} onClose={() => setShowAlert(false)}>
+                <DialogTitle>{"Sorry"}</DialogTitle>
+                <DialogContent>
+                  <div>You have already submitted the initial form.</div>
+                </DialogContent>
+                <DialogActions>
+                  <Button
+                    sx={{ color: "maroon" }}
+                    onClick={() => setShowAlert(false)}
+                  >
+                    OK
                   </Button>
                 </DialogActions>
               </Dialog>

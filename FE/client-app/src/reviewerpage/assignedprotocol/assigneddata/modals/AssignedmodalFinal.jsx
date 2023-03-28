@@ -130,7 +130,6 @@ const AssignedmodalFinal = (props) => {
           id="multiple_files"
           type="file"
           accept=".pdf,.doc,.docx"
-          multiple
           onChange={handleFileUpload}
         />
         <div className="flex items-end justify-end space-x-2">
