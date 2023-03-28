@@ -42,6 +42,7 @@ import { db } from "./firebase";
 import { doc, getDoc } from "firebase/firestore/lite";
 import LandingPage from "./components/Landingpage";
 import LoadingPage from "./components/Loadingpage";
+import "./index.css";
 
 function App() {
   const [currentUser, setCurrentUser] = useState(null);

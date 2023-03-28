@@ -486,7 +486,7 @@ const Sidebar = ({ children }) => {
             height={30}
           />
         </div>
-        <div>{userName}</div>
+        <div className="text-sm ml-3">{userName}</div>
         <div>
           <Badge
             badgeContent={notifications.filter((n) => !n.read).length}
@@ -515,7 +515,7 @@ const Sidebar = ({ children }) => {
                   display: "block",
                   position: "absolute",
                   top: 0,
-                  right: 15,
+                  left: 4,
                   width: 10,
                   height: 10,
                   bgcolor: "background.paper",
