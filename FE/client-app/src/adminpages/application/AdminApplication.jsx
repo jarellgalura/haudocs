@@ -38,7 +38,10 @@ const AdminApplication = () => {
     <Adminsidebar>
       <div className="adminreviewdatatable">
         <h1 className="text-center text-2xl font-bold">Review Status</h1>
-        <div className="review mt-4" style={{ height: 500, width: "100%" }}>
+        <div
+          className="review mt-4 shadow-md"
+          style={{ height: 500, width: "100%" }}
+        >
           <DataGrid
             rows={rows}
             columns={columns}
