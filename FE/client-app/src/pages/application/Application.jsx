@@ -41,7 +41,7 @@ function Application() {
             display="flex"
             alignItems="center"
             justifyContent="center"
-            mb={10}
+            mb={5}
           >
             <AiOutlineFile size={70} color="gray" />
           </Box>
@@ -61,7 +61,7 @@ function Application() {
           alignItems="center"
           justifyContent="center"
           flexDirection="column"
-          minHeight="calc(100vh - 64px)"
+          minHeight="calc(70vh - 64px)"
         >
           {getStatusIcon()}
           <Typography
