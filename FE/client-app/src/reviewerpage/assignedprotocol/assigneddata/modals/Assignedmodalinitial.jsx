@@ -201,23 +201,6 @@ const Assignedmodalinitial = (props) => {
         )}
       </div>
 
-      <div className="flex justify-between mt-[1rem]">
-        <Button
-          variant="contained"
-          size="medium"
-          sx={{
-            color: "white",
-            backgroundColor: "maroon",
-            "&:hover": {
-              backgroundColor: "maroon",
-            },
-          }}
-          onClick={handleOpenDownloadDialog}
-        >
-          Download
-        </Button>
-      </div>
-
       <Box
         component="form"
         onSubmit={(e) => {
@@ -226,8 +209,22 @@ const Assignedmodalinitial = (props) => {
         }}
       >
         <DialogContent>
-          <form>
-            <Grid container spacing={2}>
+          <div className="flex flex-col">
+            <Button
+              variant="contained"
+              size="medium"
+              sx={{
+                color: "white",
+                backgroundColor: "maroon",
+                "&:hover": {
+                  backgroundColor: "maroon",
+                },
+              }}
+              onClick={handleOpenDownloadDialog}
+            >
+              Download
+            </Button>
+            <Grid sx={{ marginTop: "1rem" }} container spacing={2}>
               {files.map((file) => (
                 <Grid item xs={12} key={file.id}>
                   <input
@@ -265,7 +262,7 @@ const Assignedmodalinitial = (props) => {
                 </Button>
               </Grid>
             </Grid>
-          </form>
+          </div>
         </DialogContent>
 
         <div className="flex items-end justify-end space-x-2 pb-[2rem]">

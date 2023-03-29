@@ -104,7 +104,7 @@ function Reviewersstab(props) {
   };
 
   return (
-    <div style={{ height: 400, width: "100%" }}>
+    <div className="shadow-md" style={{ height: 400, width: "100%" }}>
       <DataGrid
         classes={{ header: "custom-header" }}
         rows={rows}

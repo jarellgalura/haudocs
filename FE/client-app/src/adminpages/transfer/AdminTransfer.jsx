@@ -79,6 +79,7 @@ const AdminTransfer = () => {
                 borderColor: "black",
                 borderRadius: 2,
                 p: 4,
+                boxShadow: 4,
               }}
             >
               <InputLabel htmlFor="file-upload">Transfer Files</InputLabel>
