@@ -118,6 +118,7 @@ function Initial() {
           protocol_no: "",
           reviewer: "",
           review_type: "",
+          research_type: "",
           decision: "",
           school: "",
         });
