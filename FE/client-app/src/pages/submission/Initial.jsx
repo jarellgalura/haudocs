@@ -111,7 +111,12 @@ function Initial() {
         const docRef = await addDoc(collection(db, "submissions"), {
           uid: auth.currentUser.uid,
           status: "initial",
-          files: data.files,
+          initial_files: data.files,
+          continuing_files: [],
+          final_files: [],
+          rev_initial_files: [],
+          rev_continuing_files: [],
+          rev_final_files: [],
           name: auth.currentUser.displayName,
           date_sent: serverTimestamp(),
           due_date: "",

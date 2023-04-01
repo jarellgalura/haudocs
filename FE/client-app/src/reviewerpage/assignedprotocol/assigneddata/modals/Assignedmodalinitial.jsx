@@ -22,6 +22,16 @@ import RemoveIcon from "@mui/icons-material/Remove";
 import AddIcon from "@mui/icons-material/Add";
 import "../../assignedprotocol.css";
 
+import {
+  collection,
+  doc,
+  updateDoc,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore/lite";
+import { db, auth } from "../../../../firebase";
+
 const Assignedmodalinitial = (props) => {
   const navigate = useNavigate();
   const [value, setValue] = React.useState(0);
@@ -37,6 +47,81 @@ const Assignedmodalinitial = (props) => {
   const [isAnyCheckboxSelected, setIsAnyCheckboxSelected] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const [isDownloadSuccessful, setIsDownloadSuccessful] = useState(false);
+  
+  async function handleSubmit() {
+    // Create a new FormData instance
+    const form = new FormData();
+  
+    // Append the files to the FormData instance
+    files.forEach((fileObj, index) => {
+      if (fileObj.file) {
+        form.append(`file_${index}`, fileObj.file);
+      }
+    });
+  
+    // Perform the fetch request
+    try {
+      const response = await fetch(`${process.env.REACT_APP_BACKEND_URL}/files`, {
+        method: "POST",
+        headers: {
+          filefolder: `${"reviewer_uid_here"}/initial`,
+        },
+        body: form,
+      });
+  
+      const data = await response.json();
+      console.log(data);
+  
+      const submissionsRef = collection(db, "submissions");
+      const q = query(submissionsRef, where("protocol_no", "==", "12312321"));
+      const querySnapshot = await getDocs(q);
+  
+      // Check if the submission exists
+      if (!querySnapshot.empty) {
+        // Get the first matching document (there should be only one)
+        const docSnapshot = querySnapshot.docs[0];
+  
+        // Get the current date as a UNIX timestamp
+        const currentDate = Date.now();
+  
+        // Offset the current date to GMT+8
+        const offsetHours = 8;
+        const offsetMilliseconds = offsetHours * 60 * 60 * 1000;
+        const currentDateGMT8 = currentDate + offsetMilliseconds;
+  
+        // Add the offset current date to each file in the data.files array
+        const filesWithDate = data.files.map(file => ({
+          ...file,
+          upload_date: currentDateGMT8, // Add the offset current date as a UNIX timestamp
+        }));
+  
+        // Get the existing rev_initial_files array or an empty array if it doesn't exist
+        const existingReviewerFiles = docSnapshot.data().rev_initial_files || [];
+  
+        // Concatenate the existing and new files arrays
+        const updatedReviewerFiles = existingReviewerFiles.concat(filesWithDate);
+  
+        // Update the document with the updated rev_initial_files
+        const submissionRef = doc(db, "submissions", docSnapshot.id);
+        await updateDoc(submissionRef, {
+          rev_initial_files: updatedReviewerFiles,
+        });
+  
+        console.log("Document updated with ID: ", docSnapshot.id);
+      } else {
+        console.log("No submission found with the given protocol_no");
+      }
+  
+    } catch (error) {
+      console.log(error);
+      return false;
+    }
+  
+    navigate("/reviewerstatus");
+    setOpen(false);
+  }
+  
+  
 
   const handleFileUpload = (event, id) => {
     const file = event.target.files[0];
@@ -159,11 +244,6 @@ const Assignedmodalinitial = (props) => {
     setShowConfirmation(false);
   }
 
-  function handleSubmit() {
-    navigate("/reviewerstatus");
-    setOpen(false);
-  }
-
   const downloadStyle = {
     color: "maroon",
   };
@@ -274,13 +354,13 @@ const Assignedmodalinitial = (props) => {
             Close
           </Button>
           <Button
-            id="sub"
-            type="submit"
-            disabled={!isSubmitEnabled}
-            variant="contained"
-          >
-            Forward
-          </Button>
+          id="sub"
+          onClick={handleSubmit}
+          disabled={isSubmitEnabled}
+          variant="contained"
+        >
+          Forward
+        </Button>
         </div>
         <Dialog
           open={showConfirmation}
@@ -312,7 +392,11 @@ const Assignedmodalinitial = (props) => {
             </Typography>
           </DialogContent>
           <DialogActions>
-            <Button sx={{ color: "maroon" }} onClick={handleSubmit}>
+            <Button sx={{ color: "maroon" }} 
+            onClick={() => {
+              navigate("/reviewerstatus");
+              setOpen(false)}}
+              >
               Close
             </Button>
           </DialogActions>
