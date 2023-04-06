@@ -29,6 +29,8 @@ import IconButton from "@mui/material/IconButton";
 import { MdVisibility, MdVisibilityOff } from "react-icons/md";
 import Checkbox from "@mui/material/Checkbox";
 import LoadingPage from "../../components/Loadingpage";
+import { onAuthStateChanged } from "firebase/auth";
+import { signOut } from "firebase/auth";
 
 function Signin() {
   const [email, setEmail] = useState("");
@@ -56,21 +58,22 @@ function Signin() {
     event.preventDefault();
     setIsLoading(true);
     try {
-      await signInWithEmailAndPassword(auth, email, password);
-
-      if (rememberMe) {
-        localStorage.setItem("email", email);
-        localStorage.setItem("password", password);
-      } else {
-        localStorage.removeItem("email");
-        localStorage.removeItem("password");
-      }
-
-      if (!auth.currentUser.emailVerified) {
-        sendEmailVerification(auth.currentUser).then(() => {
-          setTimeActive(true);
-          navigate("/verifyemail");
-        });
+      const userCredential = await signInWithEmailAndPassword(
+        auth,
+        email,
+        password
+      );
+      const user = userCredential.user;
+      const idToken = await user.getIdToken();
+      const tokenData = {
+        idToken,
+        expiresIn: 60 * 60 * 24 * 5, // Token expires in 5 days
+      };
+      localStorage.setItem("tokenData", JSON.stringify(tokenData)); // Store token data in local storage
+      if (!user.emailVerified) {
+        await sendEmailVerification(user);
+        setTimeActive(true);
+        navigate("/verifyemail");
       } else {
         setTimeout(() => {
           setIsLoading(false);
@@ -93,6 +96,29 @@ function Signin() {
       }
     }
   };
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const tokenData = JSON.parse(localStorage.getItem("tokenData"));
+        if (!tokenData) {
+          return; // No token data found
+        }
+        const idToken = tokenData.idToken;
+        user.getIdToken().then((currentIdToken) => {
+          if (idToken !== currentIdToken) {
+            signOut(auth).then(() => {
+              localStorage.removeItem("tokenData");
+              setErrorMessages(
+                "Your account has been signed out because you signed in on another device."
+              );
+            });
+          }
+        });
+      }
+    });
+    return unsubscribe;
+  }, []);
 
   const googleProvider = new GoogleAuthProvider();
   const signInWithGoogle = async () => {

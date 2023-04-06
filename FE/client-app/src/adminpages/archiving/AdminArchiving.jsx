@@ -36,9 +36,7 @@ const Archiving = () => {
     borderColor: "maroon",
   };
 
-  const rows = [
-    { id: "", applicantname: "", documentname: "", reviewer: "", date: "" },
-  ];
+  const rows = [];
 
   return (
     <Adminsidebar>
@@ -50,7 +48,6 @@ const Archiving = () => {
             columns={columns}
             pageSize={5}
             rowsPerPageOptions={[5]}
-            checkboxSelection
           />
         </Box>
       </div>
