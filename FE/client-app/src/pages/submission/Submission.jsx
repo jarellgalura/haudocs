@@ -7,7 +7,9 @@ import Final from "./Final";
 
 function Submission() {
   const [activeTab, setActiveTab] = useState(0);
-  const [initialSubmitted, setInitialSubmitted] = useState(false); // add state variable to track if initial form is submitted
+  const [initialSubmitted, setInitialSubmitted] = useState(
+    localStorage.getItem("initialSubmitted") === "true"
+  );
   const tabs = [
     {
       label: "Initial Process",
@@ -16,14 +18,18 @@ function Submission() {
     {
       label: "Continuing Review",
       content: <Continuing />,
-      disabled: !initialSubmitted, // disable the "Continuing" tab button if initial form is not submitted
+      disabled: !initialSubmitted,
     },
     {
       label: "Final Review",
       content: <Final />,
-      disabled: !initialSubmitted, // disable the "Final" tab button if initial form is not submitted
+      disabled: !initialSubmitted,
     },
   ];
+
+  useEffect(() => {
+    localStorage.setItem("initialSubmitted", initialSubmitted);
+  }, [initialSubmitted]);
 
   return (
     <Sidebar>
