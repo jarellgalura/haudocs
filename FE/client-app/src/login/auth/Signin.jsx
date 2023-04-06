@@ -127,9 +127,9 @@ function Signin() {
     try {
       const res = await signInWithPopup(auth, googleProvider);
       const user = res.user;
-      const token = await user.getIdToken(); // get the Firebase Authentication ID token
+      const token = await user.getIdToken();
       const userRef = ref(getDatabase(), `users/${user.uid}`);
-      await set(userRef, { token: token }); // save the ID token in the Realtime Database
+      await set(userRef, { token: token });
 
       const q = query(collection(db, "users"), where("uid", "==", user.uid));
       const docs = await getDocs(q);
@@ -143,7 +143,7 @@ function Signin() {
           role: "applicant",
         });
       }
-      navigate("/"); // redirect the user to the home page
+      navigate("/");
     } catch (err) {
       console.error(err);
       alert(err.message);
