@@ -13,13 +13,15 @@ import { doc, setDoc } from "firebase/firestore/lite";
 // Your web app's Firebase configuration
 // For Firebase JS SDK v7.20.0 and later, measurementId is optional
 const firebaseConfig = {
-    apiKey: "AIzaSyABjwoMfARnkRQfNlKzTajbYzrtAA31nFI",
-    authDomain: "hau-docs-auth.firebaseapp.com",
-    projectId: "hau-docs-auth",
-    storageBucket: "hau-docs-auth.appspot.com",
-    messagingSenderId: "637327069553",
-    appId: "1:637327069553:web:a8fdc9cfe5826b3885a6d0",
-    measurementId: "G-VTTRY7Z5DE",
+  apiKey: "AIzaSyABjwoMfARnkRQfNlKzTajbYzrtAA31nFI",
+  authDomain: "hau-docs-auth.firebaseapp.com",
+  projectId: "hau-docs-auth",
+  storageBucket: "hau-docs-auth.appspot.com",
+  messagingSenderId: "637327069553",
+  appId: "1:637327069553:web:a8fdc9cfe5826b3885a6d0",
+  measurementId: "G-VTTRY7Z5DE",
+  databaseURL:
+    "https://hau-docs-auth-default-rtdb.asia-southeast1.firebasedatabase.app",
 };
 
 // Initialize Firebase
@@ -33,32 +35,32 @@ export const db = getFirestore(app);
 export const storage = getStorage(app);
 
 export const registerWithEmailAndPassword = async (
-    name,
-    lastname,
-    email,
-    password,
-    role
+  name,
+  lastname,
+  email,
+  password,
+  role
 ) => {
-    try {
-        const res = await createUserWithEmailAndPassword(
-            auth,
-            email,
-            password,
-            name,
-            lastname
-        );
-        const user = res.user;
-        await setDoc(doc(db, "users", user.uid), {
-            createdAt: serverTimestamp(),
-            name,
-            lastname,
-            authProvider: "local",
-            email,
-            role: role || "applicant",
-            uid: user.uid,
-        });
-    } catch (err) {
-        console.error(err);
-        alert(err.message);
-    }
+  try {
+    const res = await createUserWithEmailAndPassword(
+      auth,
+      email,
+      password,
+      name,
+      lastname
+    );
+    const user = res.user;
+    await setDoc(doc(db, "users", user.uid), {
+      createdAt: serverTimestamp(),
+      name,
+      lastname,
+      authProvider: "local",
+      email,
+      role: role || "applicant",
+      uid: user.uid,
+    });
+  } catch (err) {
+    console.error(err);
+    alert(err.message);
+  }
 };

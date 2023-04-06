@@ -29,8 +29,8 @@ import IconButton from "@mui/material/IconButton";
 import { MdVisibility, MdVisibilityOff } from "react-icons/md";
 import Checkbox from "@mui/material/Checkbox";
 import LoadingPage from "../../components/Loadingpage";
+import { getDatabase, ref, onValue, set } from "firebase/database";
 import { onAuthStateChanged } from "firebase/auth";
-import { signOut } from "firebase/auth";
 
 function Signin() {
   const [email, setEmail] = useState("");
@@ -54,26 +54,51 @@ function Signin() {
     }
   }, []);
 
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const userId = user.uid;
+        const userRef = ref(getDatabase(), `users/${userId}`);
+        onValue(userRef, (snapshot) => {
+          const token = snapshot.val()?.token;
+          if (token) {
+            user.getIdToken().then((idToken) => {
+              if (idToken !== token) {
+                auth.signOut();
+                alert(
+                  "You have been logged out because you logged in from another device."
+                );
+              }
+            });
+          }
+        });
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
   const Login = async (event) => {
     event.preventDefault();
     setIsLoading(true);
     try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        email,
-        password
-      );
-      const user = userCredential.user;
-      const idToken = await user.getIdToken();
-      const tokenData = {
-        idToken,
-        expiresIn: 60 * 60 * 24 * 5, // Token expires in 5 days
-      };
-      localStorage.setItem("tokenData", JSON.stringify(tokenData)); // Store token data in local storage
-      if (!user.emailVerified) {
-        await sendEmailVerification(user);
-        setTimeActive(true);
-        navigate("/verifyemail");
+      const user = await signInWithEmailAndPassword(auth, email, password);
+      const token = await user.user.getIdToken();
+      const userRef = ref(getDatabase(), `users/${user.user.uid}`);
+      await set(userRef, { token: token });
+
+      if (rememberMe) {
+        localStorage.setItem("email", email);
+        localStorage.setItem("password", password);
+      } else {
+        localStorage.removeItem("email");
+        localStorage.removeItem("password");
+      }
+
+      if (!auth.currentUser.emailVerified) {
+        sendEmailVerification(auth.currentUser).then(() => {
+          setTimeActive(true);
+          navigate("/verifyemail");
+        });
       } else {
         setTimeout(() => {
           setIsLoading(false);
@@ -97,34 +122,15 @@ function Signin() {
     }
   };
 
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        const tokenData = JSON.parse(localStorage.getItem("tokenData"));
-        if (!tokenData) {
-          return; // No token data found
-        }
-        const idToken = tokenData.idToken;
-        user.getIdToken().then((currentIdToken) => {
-          if (idToken !== currentIdToken) {
-            signOut(auth).then(() => {
-              localStorage.removeItem("tokenData");
-              setErrorMessages(
-                "Your account has been signed out because you signed in on another device."
-              );
-            });
-          }
-        });
-      }
-    });
-    return unsubscribe;
-  }, []);
-
   const googleProvider = new GoogleAuthProvider();
   const signInWithGoogle = async () => {
     try {
       const res = await signInWithPopup(auth, googleProvider);
       const user = res.user;
+      const token = await user.getIdToken(); // get the Firebase Authentication ID token
+      const userRef = ref(getDatabase(), `users/${user.uid}`);
+      await set(userRef, { token: token }); // save the ID token in the Realtime Database
+
       const q = query(collection(db, "users"), where("uid", "==", user.uid));
       const docs = await getDocs(q);
       if (docs.docs.length === 0) {
@@ -137,7 +143,7 @@ function Signin() {
           role: "applicant",
         });
       }
-      window.location.href = "/";
+      navigate("/"); // redirect the user to the home page
     } catch (err) {
       console.error(err);
       alert(err.message);
