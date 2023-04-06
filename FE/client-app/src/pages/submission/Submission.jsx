@@ -7,15 +7,21 @@ import Final from "./Final";
 
 function Submission() {
   const [activeTab, setActiveTab] = useState(0);
+  const [initialSubmitted, setInitialSubmitted] = useState(false); // add state variable to track if initial form is submitted
   const tabs = [
-    { label: "Initial Process", content: <Initial /> },
+    {
+      label: "Initial Process",
+      content: <Initial onSubmitted={() => setInitialSubmitted(true)} />,
+    },
     {
       label: "Continuing Review",
       content: <Continuing />,
+      disabled: !initialSubmitted, // disable the "Continuing" tab button if initial form is not submitted
     },
     {
       label: "Final Review",
       content: <Final />,
+      disabled: !initialSubmitted, // disable the "Final" tab button if initial form is not submitted
     },
   ];
 
@@ -28,6 +34,7 @@ function Submission() {
               key={index}
               onClick={() => setActiveTab(index)}
               className={activeTab === index ? "active" : ""}
+              disabled={tab.disabled}
             >
               {tab.label}
             </button>

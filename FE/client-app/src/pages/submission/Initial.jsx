@@ -20,7 +20,7 @@ import {
 } from "firebase/firestore/lite";
 import { db, auth } from "../../firebase";
 
-function Initial() {
+function Initial({ onSubmitted }) {
   const navigate = useNavigate();
   const { handleStatusChange } = useContext(StatusContext);
   const [firstFile, setFirstFile] = useState(null);
@@ -128,6 +128,7 @@ function Initial() {
           school: "",
         });
         console.log("Document written with ID: ", docRef.id);
+        onSubmitted();
       } catch (e) {
         console.log("Error adding document: ", e);
       }
