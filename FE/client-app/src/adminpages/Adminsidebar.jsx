@@ -332,7 +332,7 @@ const Adminsidebar = ({ children }) => {
                 {n.message}
               </MenuItem>
             ))}
-            <MenuItem onClick={handleMarkAllRead}>Mark all as read</MenuItem>
+            <MenuItem onClick={handleMarkRead}>Mark all as read</MenuItem>
           </Menu>
           <div className="menu-trigger">
             <Tooltip title="Account settings">
