@@ -1,11 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { ref, getDownloadURL } from "firebase/storage";
-import { db } from "../firebase";
-import { doc, getDoc } from "firebase/firestore/lite";
 import userIcon from "../assets/usericon.png";
-import { storage } from "../firebase";
 import {
   Dashboard,
   AssignmentTurnedIn,
@@ -34,16 +30,17 @@ import {
   BottomNavigation,
   BottomNavigationAction,
   ClickAwayListener,
+  Dialog,
+  DialogContent,
 } from "@mui/material";
-import { Inbox, Notifications, ExitToApp } from "@mui/icons-material";
+import { Notifications, ExitToApp } from "@mui/icons-material";
 import Settings from "@mui/icons-material/Settings";
 import { useNavigate } from "react-router-dom";
-import { signOut } from "firebase/auth";
 import AppBar from "@mui/material/AppBar";
 import MenuIcon from "@mui/icons-material/Menu";
 import Logout from "@mui/icons-material/Logout";
-import { collection, getDocs } from "firebase/firestore/lite";
-import { deleteDoc } from "firebase/firestore/lite";
+import { onSnapshot, collection, doc, getDoc } from "firebase/firestore";
+import { getFirestore } from "firebase/firestore";
 
 const drawerWidth = 220;
 
@@ -87,6 +84,7 @@ const DrawerHeader = styled(Toolbar)(({ theme }) => ({
 }));
 
 const Adminsidebar = ({ children }) => {
+  const db = getFirestore();
   const [anchorEl, setAnchorEl] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [value, setValue] = useState(0);
@@ -104,8 +102,8 @@ const Adminsidebar = ({ children }) => {
   const [imageUrl, setImageUrl] = useState(
     localStorage.getItem("profileImageUrl") || null
   );
-  const MAX_NOTIFICATIONS = 4;
   const [notifications, setNotifications] = useState([]);
+  const [showAll, setShowAll] = useState(false);
 
   const handleMenuClick = (event) => {
     setAnchorEl2(event.currentTarget);
@@ -130,8 +128,21 @@ const Adminsidebar = ({ children }) => {
     setAnchorEl2(null);
   };
 
+  const handleNotificationClick = () => {
+    const newNotifications = notifications.map((n) => ({ ...n, read: true }));
+    setNotifications(newNotifications);
+    const readNotifications = newNotifications
+      .filter((n) => n.read)
+      .map((n) => n.id);
+    localStorage.setItem(
+      "readNotifications",
+      JSON.stringify(readNotifications)
+    );
+  };
+
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
+    handleNotificationClick();
   };
 
   const handleClose = () => {
@@ -155,47 +166,6 @@ const Adminsidebar = ({ children }) => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const handleMarkRead = async () => {
-    const notificationsToMarkRead = notifications.filter((n) => !n.read);
-    const deletePromises = notificationsToMarkRead.map((n) =>
-      deleteDoc(doc(db, "notifications", n.id))
-    );
-    await Promise.all(deletePromises);
-    const updatedNotifications = notifications.map((n) =>
-      notificationsToMarkRead.some((d) => d.id === n.id)
-        ? { ...n, read: true }
-        : n
-    );
-    setNotifications(updatedNotifications);
-    handleClose();
-  };
-
-  useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        if (user.photoURL) {
-          setImageUrl(user.photoURL);
-          localStorage.setItem("profileImageUrl", user.photoURL);
-        } else {
-          const storageRef = ref(storage, `users/${user.uid}/profile_picture`);
-          getDownloadURL(storageRef)
-            .then((url) => {
-              setImageUrl(url);
-              localStorage.setItem("profileImageUrl", url);
-            })
-            .catch((error) => {
-              console.log(error);
-            });
-        }
-      } else {
-        setImageUrl(null);
-        localStorage.removeItem("profileImageUrl");
-      }
-      setCurrentUser(user);
-    });
-    return unsubscribeAuth;
-  }, []);
-
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
       setCurrentUser(currentUser);
@@ -216,18 +186,27 @@ const Adminsidebar = ({ children }) => {
     return unsubscribe;
   }, []);
 
-  const unreadNotifications = notifications.filter((n) => !n.read);
-
   useEffect(() => {
-    const fetchNotifications = async () => {
-      const notificationsRef = collection(db, "notifications");
-      const querySnapshot = await getDocs(notificationsRef);
+    const notificationsRef = collection(db, "notifications");
+    const unsubscribe = onSnapshot(notificationsRef, (querySnapshot) => {
       const notifications = querySnapshot.docs.map((doc) => {
         return { ...doc.data(), id: doc.id };
       });
-      setNotifications(notifications);
+      const readNotifications = JSON.parse(
+        localStorage.getItem("readNotifications") || "[]"
+      );
+      const updatedNotifications = notifications.map((n) => {
+        if (readNotifications.includes(n.id)) {
+          return { ...n, read: true };
+        }
+        return n;
+      });
+      setNotifications(updatedNotifications);
+    });
+
+    return () => {
+      unsubscribe();
     };
-    fetchNotifications();
   }, [db]);
 
   const hasPhotoURL = currentUser && currentUser.photoURL;
@@ -332,7 +311,7 @@ const Adminsidebar = ({ children }) => {
                 {n.message}
               </MenuItem>
             ))}
-            <MenuItem onClick={handleMarkRead}>Mark all as read</MenuItem>
+            <MenuItem>Mark all as read</MenuItem>
           </Menu>
           <div className="menu-trigger">
             <Tooltip title="Account settings">
@@ -532,10 +511,39 @@ const Adminsidebar = ({ children }) => {
               </MenuItem>
             )}
             <Divider />
-            <MenuItem sx={{ fontWeight: "bold" }} onClick={handleMarkRead}>
-              Mark Read
+            <MenuItem
+              sx={{ fontWeight: "bold" }}
+              onClick={() => setShowAll(true)}
+            >
+              See All
             </MenuItem>
           </Menu>
+          <Dialog open={showAll} onClose={() => setShowAll(false)}>
+            <DialogContent>
+              <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
+                All Notifications
+              </Typography>
+              {notifications.length > 0 ? (
+                notifications.map((n) => (
+                  <MenuItem key={n.id} onClick={handleClose}>
+                    <Typography
+                      noWrap={false}
+                      sx={{ overflowWrap: "break-word" }}
+                    >
+                      {n.message} <br />
+                      <small>
+                        {new Date(n.timestamp?.toDate()).toLocaleString()}
+                      </small>
+                    </Typography>
+                  </MenuItem>
+                ))
+              ) : (
+                <Typography sx={{ fontStyle: "italic" }}>
+                  No notifications
+                </Typography>
+              )}
+            </DialogContent>
+          </Dialog>
         </div>
       </DrawerHeader>
       <List>
