@@ -30,7 +30,6 @@ import {
   updateDoc,
   doc,
 } from "firebase/firestore/lite";
-import { db } from "../../../../../firebase";
 
 const Initialtab = (props) => {
   const navigate = useNavigate();

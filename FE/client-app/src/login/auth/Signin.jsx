@@ -31,6 +31,7 @@ import Checkbox from "@mui/material/Checkbox";
 import LoadingPage from "../../components/Loadingpage";
 import { getDatabase, ref, onValue, set } from "firebase/database";
 import { onAuthStateChanged } from "firebase/auth";
+import Cookies from "js-cookie";
 
 function Signin() {
   const [email, setEmail] = useState("");
@@ -44,8 +45,8 @@ function Signin() {
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    const storedEmail = localStorage.getItem("email");
-    const storedPassword = localStorage.getItem("password");
+    const storedEmail = Cookies.get("email");
+    const storedPassword = Cookies.get("password");
 
     if (storedEmail && storedPassword) {
       setEmail(storedEmail);
@@ -85,13 +86,12 @@ function Signin() {
       const token = await user.user.getIdToken();
       const userRef = ref(getDatabase(), `users/${user.user.uid}`);
       await set(userRef, { token: token });
-
       if (rememberMe) {
-        localStorage.setItem("email", email);
-        localStorage.setItem("password", password);
+        Cookies.set("email", email, { expires: 7 });
+        Cookies.set("password", password, { expires: 7 });
       } else {
-        localStorage.removeItem("email");
-        localStorage.removeItem("password");
+        Cookies.remove("email");
+        Cookies.remove("password");
       }
 
       if (!auth.currentUser.emailVerified) {

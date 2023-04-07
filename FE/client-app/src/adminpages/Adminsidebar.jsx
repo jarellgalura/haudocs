@@ -32,6 +32,8 @@ import {
   ClickAwayListener,
   Dialog,
   DialogContent,
+  Checkbox,
+  Button,
 } from "@mui/material";
 import { Notifications, ExitToApp } from "@mui/icons-material";
 import Settings from "@mui/icons-material/Settings";
@@ -39,7 +41,14 @@ import { useNavigate } from "react-router-dom";
 import AppBar from "@mui/material/AppBar";
 import MenuIcon from "@mui/icons-material/Menu";
 import Logout from "@mui/icons-material/Logout";
-import { onSnapshot, collection, doc, getDoc } from "firebase/firestore";
+import {
+  onSnapshot,
+  collection,
+  doc,
+  getDoc,
+  deleteDoc,
+  getDocs,
+} from "firebase/firestore";
 import { getFirestore } from "firebase/firestore";
 
 const drawerWidth = 220;
@@ -104,7 +113,56 @@ const Adminsidebar = ({ children }) => {
   );
   const [notifications, setNotifications] = useState([]);
   const [showAll, setShowAll] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [selectedNotifications, setSelectedNotifications] = useState([]);
+  const [selectAllChecked, setSelectAllChecked] = useState(false);
 
+  const handleCheckboxChange = (event, notificationId) => {
+    if (event.target.checked) {
+      setSelectedNotifications((prevSelected) => [
+        ...prevSelected,
+        notificationId,
+      ]);
+    } else {
+      setSelectedNotifications((prevSelected) =>
+        prevSelected.filter((id) => id !== notificationId)
+      );
+    }
+    const allSelected = selectedNotifications.length === notifications.length;
+    const currentSelected = selectedNotifications.includes(notificationId);
+
+    if (allSelected && !currentSelected) {
+      setSelectAllChecked(false);
+    } else if (!allSelected && currentSelected) {
+      setSelectAllChecked(true);
+    }
+
+    event.stopPropagation();
+  };
+
+  const handleSelectAll = () => {
+    if (selectAllChecked) {
+      setSelectedNotifications([]);
+      setSelectAllChecked(false);
+    } else {
+      setSelectedNotifications(notifications.map((n) => n.id));
+      setSelectAllChecked(true);
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    const deletePromises = selectedNotifications.map((id) =>
+      deleteDoc(doc(db, "notifications", id))
+    );
+    await Promise.all(deletePromises);
+    setSelectedNotifications([]);
+    const notificationsRef = collection(db, "notifications");
+    const querySnapshot = await getDocs(notificationsRef);
+    const notifications = querySnapshot.docs.map((doc) => {
+      return { ...doc.data(), id: doc.id };
+    });
+    setNotifications(notifications.sort((a, b) => b.timestamp - a.timestamp));
+  };
   const handleMenuClick = (event) => {
     setAnchorEl2(event.currentTarget);
   };
@@ -138,6 +196,7 @@ const Adminsidebar = ({ children }) => {
       "readNotifications",
       JSON.stringify(readNotifications)
     );
+    setUnreadCount(0);
   };
 
   const handleClick = (event) => {
@@ -147,6 +206,11 @@ const Adminsidebar = ({ children }) => {
 
   const handleClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleClose3 = () => {
+    setSelectedNotifications([]);
+    setShowAll(false);
   };
 
   const handleClose2 = () => {
@@ -201,13 +265,16 @@ const Adminsidebar = ({ children }) => {
         }
         return n;
       });
-      setNotifications(updatedNotifications);
+      setNotifications(
+        updatedNotifications.sort((a, b) => b.timestamp - a.timestamp)
+      );
+      setUnreadCount(updatedNotifications.filter((n) => !n.read).length);
     });
 
     return () => {
       unsubscribe();
     };
-  }, [db]);
+  }, []);
 
   const hasPhotoURL = currentUser && currentUser.photoURL;
 
@@ -489,40 +556,7 @@ const Adminsidebar = ({ children }) => {
             <MenuItem sx={{ fontWeight: "bold" }} onClick={handleClose}>
               Notifications
             </MenuItem>
-            {notifications.length > 0 ? (
-              notifications.map((n) => (
-                <MenuItem key={n.id} onClick={handleClose}>
-                  <Typography
-                    noWrap={false}
-                    sx={{ overflowWrap: "break-word" }}
-                  >
-                    {n.message} <br />
-                    <small>
-                      {new Date(n.timestamp?.toDate()).toLocaleString()}
-                    </small>
-                  </Typography>
-                </MenuItem>
-              ))
-            ) : (
-              <MenuItem onClick={handleClose}>
-                <Typography sx={{ fontStyle: "italic" }}>
-                  No new notifications
-                </Typography>
-              </MenuItem>
-            )}
-            <Divider />
-            <MenuItem
-              sx={{ fontWeight: "bold" }}
-              onClick={() => setShowAll(true)}
-            >
-              See All
-            </MenuItem>
-          </Menu>
-          <Dialog open={showAll} onClose={() => setShowAll(false)}>
-            <DialogContent>
-              <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
-                All Notifications
-              </Typography>
+            <div style={{ maxHeight: "300px", overflowY: "scroll" }}>
               {notifications.length > 0 ? (
                 notifications.map((n) => (
                   <MenuItem key={n.id} onClick={handleClose}>
@@ -530,6 +564,10 @@ const Adminsidebar = ({ children }) => {
                       noWrap={false}
                       sx={{ overflowWrap: "break-word" }}
                     >
+                      <small>
+                        <strong>{n.senderEmail}</strong>
+                      </small>
+                      <br />
                       {n.message} <br />
                       <small>
                         {new Date(n.timestamp?.toDate()).toLocaleString()}
@@ -538,9 +576,80 @@ const Adminsidebar = ({ children }) => {
                   </MenuItem>
                 ))
               ) : (
-                <Typography sx={{ fontStyle: "italic" }}>
-                  No notifications
-                </Typography>
+                <MenuItem onClick={handleClose}>
+                  <Typography sx={{ fontStyle: "italic" }}>
+                    No new notifications
+                  </Typography>
+                </MenuItem>
+              )}
+            </div>
+            <Divider />
+            <MenuItem
+              sx={{ fontWeight: "bold" }}
+              onClick={() => setShowAll(true)}
+            >
+              See All
+            </MenuItem>
+          </Menu>
+          <Dialog open={showAll} onClose={handleClose3}>
+            <DialogContent>
+              <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
+                All Notifications
+              </Typography>
+              {notifications.length > 0 ? (
+                <>
+                  <MenuItem sx={{ display: "flex", alignItems: "center" }}>
+                    <Checkbox
+                      checked={selectAllChecked}
+                      indeterminate={
+                        selectedNotifications.length > 0 &&
+                        selectedNotifications.length < notifications.length
+                      }
+                      onChange={handleSelectAll}
+                    />
+                    <Typography sx={{ fontWeight: "bold" }}>
+                      Select All Notifications
+                    </Typography>
+                  </MenuItem>
+                  {notifications.map((n) => (
+                    <MenuItem
+                      key={n.id}
+                      sx={{ display: "flex", alignItems: "center" }}
+                    >
+                      <Checkbox
+                        checked={selectedNotifications.includes(n.id)}
+                        onChange={(event) => handleCheckboxChange(event, n.id)}
+                      />
+                      <Typography
+                        noWrap={false}
+                        sx={{ overflowWrap: "break-word", ml: 1 }}
+                      >
+                        <small>
+                          <strong>{n.senderEmail}</strong>
+                        </small>
+                        <br />
+                        {n.message} <br />
+                        <small>
+                          {new Date(n.timestamp?.toDate()).toLocaleString()}
+                        </small>
+                      </Typography>
+                    </MenuItem>
+                  ))}
+                  <div className="flex items-end justify-end">
+                    <Button
+                      sx={{
+                        mt: 2,
+                        color: "maroon",
+                      }}
+                      onClick={handleDeleteSelected}
+                      disabled={selectedNotifications.length === 0}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <Typography>No notifications to display.</Typography>
               )}
             </DialogContent>
           </Dialog>
