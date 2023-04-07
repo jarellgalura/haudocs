@@ -21,6 +21,8 @@ import {
   doc,
 } from "firebase/firestore/lite";
 import { db, auth } from "../../firebase";
+import { onAuthStateChanged } from "firebase/auth";
+import { getDoc } from "firebase/firestore/lite";
 
 function Initial({ onSubmitted }) {
   const navigate = useNavigate();
@@ -37,6 +39,28 @@ function Initial({ onSubmitted }) {
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
+  const [userName, setUserName] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setCurrentUser(currentUser);
+
+      if (currentUser) {
+        const userRef = doc(db, "users", currentUser.uid);
+
+        getDoc(userRef).then((doc) => {
+          if (doc.exists()) {
+            const name = doc.data().name;
+            setUserName(name);
+            localStorage.setItem("userName", name);
+          }
+        });
+      }
+    });
+
+    return unsubscribe;
+  }, []);
 
   async function handleSubmit() {
     const submissionsRef = collection(db, "submissions");
@@ -119,7 +143,7 @@ function Initial({ onSubmitted }) {
           rev_initial_files: [],
           rev_continuing_files: [],
           rev_final_files: [],
-          name: auth.currentUser.displayName,
+          name: userName,
           date_sent: serverTimestamp(),
           due_date: "",
           protocol_no: "",
@@ -133,7 +157,8 @@ function Initial({ onSubmitted }) {
         const notificationsRef = collection(db, "notifications");
         const newNotification = {
           id: doc(notificationsRef).id,
-          message: `Initial form submitted by ${auth.currentUser.displayName}`,
+          message: `Theres a new Initial form submitted`,
+          role: "applicant",
           read: false,
           recipientEmail: "haudocsirb@gmail.com",
           senderEmail: auth.currentUser.email,
