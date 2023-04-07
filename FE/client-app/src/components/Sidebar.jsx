@@ -102,18 +102,7 @@ const Sidebar = ({ children }) => {
   const [imageUrl, setImageUrl] = useState(
     localStorage.getItem("profileImageUrl") || null
   );
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      message: "New notification 1",
-      read: false,
-    },
-    {
-      id: 2,
-      message: "New notification 2",
-      read: false,
-    },
-  ]);
+  const [notifications, setNotifications] = useState([]);
 
   const handleMenuClick = (event) => {
     setAnchorEl2(event.currentTarget);
@@ -163,15 +152,19 @@ const Sidebar = ({ children }) => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const handleMarkAllRead = () => {
-    const updatedNotifications = notifications.map((n) => {
-      return {
-        ...n,
-        read: true,
-      };
-    });
+  const handleMarkRead = async () => {
+    const notificationsToMarkRead = notifications.filter((n) => !n.read);
+    const deletePromises = notificationsToMarkRead.map((n) =>
+      deleteDoc(doc(db, "notifications", n.id))
+    );
+    await Promise.all(deletePromises);
+    const updatedNotifications = notifications.map((n) =>
+      notificationsToMarkRead.some((d) => d.id === n.id)
+        ? { ...n, read: true }
+        : n
+    );
     setNotifications(updatedNotifications);
-    setAnchorEl(null);
+    handleClose();
   };
 
   useEffect(() => {
@@ -490,7 +483,7 @@ const Sidebar = ({ children }) => {
         <div>
           <Badge
             badgeContent={notifications.filter((n) => !n.read).length}
-            color="error"
+            color="primary"
           >
             <Notifications sx={{ cursor: "pointer" }} onClick={handleClick} />
           </Badge>
@@ -498,39 +491,35 @@ const Sidebar = ({ children }) => {
             anchorEl={anchorEl}
             open={Boolean(anchorEl)}
             onClose={handleClose}
-            PaperProps={{
-              elevation: 0,
-              sx: {
-                overflow: "visible",
-                filter: "drop-shadow(0px 2px 8px rgba(0,0,0,0.32))",
-                mt: 1.5,
-                "& .MuiAvatar-root": {
-                  width: 32,
-                  height: 32,
-                  ml: -0.51,
-                  mr: 1,
-                },
-                "&:before": {
-                  content: '""',
-                  display: "block",
-                  position: "absolute",
-                  top: 0,
-                  left: 4,
-                  width: 10,
-                  height: 10,
-                  bgcolor: "background.paper",
-                  transform: "translateY(-50%) rotate(45deg)",
-                  zIndex: 0,
-                },
-              },
-            }}
           >
-            {notifications.map((n) => (
-              <MenuItem key={n.id} onClick={handleClose}>
-                {n.message}
+            <MenuItem sx={{ fontWeight: "bold" }} onClick={handleClose}>
+              Notifications
+            </MenuItem>
+            {notifications.length > 0 ? (
+              notifications.map((n) => (
+                <MenuItem key={n.id} onClick={handleClose}>
+                  <Typography
+                    noWrap={false}
+                    sx={{ overflowWrap: "break-word" }}
+                  >
+                    {n.message} <br />
+                    <small>
+                      {new Date(n.timestamp?.toDate()).toLocaleString()}
+                    </small>
+                  </Typography>
+                </MenuItem>
+              ))
+            ) : (
+              <MenuItem onClick={handleClose}>
+                <Typography sx={{ fontStyle: "italic" }}>
+                  No new notifications
+                </Typography>
               </MenuItem>
-            ))}
-            <MenuItem onClick={handleMarkAllRead}>Mark all as read</MenuItem>
+            )}
+            <Divider />
+            <MenuItem sx={{ fontWeight: "bold" }} onClick={handleMarkRead}>
+              Mark Read
+            </MenuItem>
           </Menu>
         </div>
       </DrawerHeader>
