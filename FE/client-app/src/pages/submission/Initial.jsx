@@ -17,6 +17,8 @@ import {
   getDocs,
   query,
   where,
+  setDoc,
+  doc,
 } from "firebase/firestore/lite";
 import { db, auth } from "../../firebase";
 
@@ -128,6 +130,15 @@ function Initial({ onSubmitted }) {
           school: "",
         });
         console.log("Document written with ID: ", docRef.id);
+        const notificationsRef = collection(db, "notifications");
+        const newNotification = {
+          message: `New form submitted by ${auth.currentUser.displayName}`,
+          read: false,
+          recipientEmail: "haudocsirb@gmail.com",
+          senderEmail: auth.currentUser.email,
+          timestamp: serverTimestamp(),
+        };
+        await setDoc(doc(notificationsRef), newNotification);
         onSubmitted();
       } catch (e) {
         console.log("Error adding document: ", e);
