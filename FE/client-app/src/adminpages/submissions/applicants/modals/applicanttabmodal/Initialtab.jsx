@@ -30,6 +30,7 @@ import {
   updateDoc,
   doc,
 } from "firebase/firestore/lite";
+import { db } from "../../../../../firebase";
 
 const Initialtab = (props) => {
   const navigate = useNavigate();
@@ -49,6 +50,7 @@ const Initialtab = (props) => {
   const [showDownloadDialog, setShowDownloadDialog] = React.useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const formRef = useRef(null);
+  const [users, setUsers] = useState([]);
 
   const [submissions, setSubmissions] = useState([]);
 
@@ -76,6 +78,18 @@ const Initialtab = (props) => {
       setSubmissions(files);
     });
   }, [props.uid]);
+
+  useEffect(() => {
+    const db = getFirestore();
+    const usersRef = collection(db, "users");
+    getDocs(usersRef).then((querySnapshot) => {
+      const data = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setUsers(data);
+    });
+  }, []);
 
   const columns = [
     { field: "fieldname", headerName: "DocumentName", width: "180" },
@@ -366,13 +380,20 @@ const Initialtab = (props) => {
               </Select>
             </FormControl>
           </Box>
-
           <FormControl required sx={{ minWidth: 120, marginBottom: "2rem" }}>
             <InputLabel>Assign To</InputLabel>
             <Select value={assignTo} onChange={handleAssignToChange}>
-              <MenuItem value="Person A">Person A</MenuItem>
-              <MenuItem value="Person B">Person B</MenuItem>
-              <MenuItem value="Person C">Person C</MenuItem>
+              {users &&
+                users
+                  .filter(
+                    (user) =>
+                      user.role === "scientist" || user.role === "non-scientist"
+                  )
+                  .map((user, index) => (
+                    <MenuItem key={user.id} value={user.id}>
+                      Reviewer {index + 1}
+                    </MenuItem>
+                  ))}
             </Select>
           </FormControl>
         </Box>

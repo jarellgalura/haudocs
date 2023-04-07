@@ -132,7 +132,8 @@ function Initial({ onSubmitted }) {
         console.log("Document written with ID: ", docRef.id);
         const notificationsRef = collection(db, "notifications");
         const newNotification = {
-          message: `New form submitted by ${auth.currentUser.displayName}`,
+          id: doc(notificationsRef).id,
+          message: `Initial form submitted by ${auth.currentUser.displayName}`,
           read: false,
           recipientEmail: "haudocsirb@gmail.com",
           senderEmail: auth.currentUser.email,

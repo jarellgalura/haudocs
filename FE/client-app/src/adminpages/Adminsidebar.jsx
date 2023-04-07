@@ -43,6 +43,7 @@ import AppBar from "@mui/material/AppBar";
 import MenuIcon from "@mui/icons-material/Menu";
 import Logout from "@mui/icons-material/Logout";
 import { collection, getDocs } from "firebase/firestore/lite";
+import { deleteDoc } from "firebase/firestore/lite";
 
 const drawerWidth = 220;
 
@@ -103,6 +104,7 @@ const Adminsidebar = ({ children }) => {
   const [imageUrl, setImageUrl] = useState(
     localStorage.getItem("profileImageUrl") || null
   );
+  const MAX_NOTIFICATIONS = 4;
   const [notifications, setNotifications] = useState([]);
 
   const handleMenuClick = (event) => {
@@ -153,15 +155,19 @@ const Adminsidebar = ({ children }) => {
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  const handleMarkAllRead = () => {
-    const updatedNotifications = notifications.map((n) => {
-      return {
-        ...n,
-        read: true,
-      };
-    });
+  const handleMarkRead = async () => {
+    const notificationsToMarkRead = notifications.filter((n) => !n.read);
+    const deletePromises = notificationsToMarkRead.map((n) =>
+      deleteDoc(doc(db, "notifications", n.id))
+    );
+    await Promise.all(deletePromises);
+    const updatedNotifications = notifications.map((n) =>
+      notificationsToMarkRead.some((d) => d.id === n.id)
+        ? { ...n, read: true }
+        : n
+    );
     setNotifications(updatedNotifications);
-    setAnchorEl(null);
+    handleClose();
   };
 
   useEffect(() => {
@@ -210,15 +216,19 @@ const Adminsidebar = ({ children }) => {
     return unsubscribe;
   }, []);
 
+  const unreadNotifications = notifications.filter((n) => !n.read);
+
   useEffect(() => {
     const fetchNotifications = async () => {
       const notificationsRef = collection(db, "notifications");
       const querySnapshot = await getDocs(notificationsRef);
-      const notifications = querySnapshot.docs.map((doc) => doc.data());
+      const notifications = querySnapshot.docs.map((doc) => {
+        return { ...doc.data(), id: doc.id };
+      });
       setNotifications(notifications);
     };
     fetchNotifications();
-  }, []);
+  }, [db]);
 
   const hasPhotoURL = currentUser && currentUser.photoURL;
 
@@ -488,7 +498,7 @@ const Adminsidebar = ({ children }) => {
         <div>
           <Badge
             badgeContent={notifications.filter((n) => !n.read).length}
-            color="error"
+            color="primary"
           >
             <Notifications sx={{ cursor: "pointer" }} onClick={handleClick} />
           </Badge>
@@ -497,12 +507,34 @@ const Adminsidebar = ({ children }) => {
             open={Boolean(anchorEl)}
             onClose={handleClose}
           >
-            {notifications.map((n) => (
-              <MenuItem key={n.timestamp} onClick={handleClose}>
-                {n.message}
+            <MenuItem sx={{ fontWeight: "bold" }} onClick={handleClose}>
+              Notifications
+            </MenuItem>
+            {notifications.length > 0 ? (
+              notifications.map((n) => (
+                <MenuItem key={n.id} onClick={handleClose}>
+                  <Typography
+                    noWrap={false}
+                    sx={{ overflowWrap: "break-word" }}
+                  >
+                    {n.message} <br />
+                    <small>
+                      {new Date(n.timestamp?.toDate()).toLocaleString()}
+                    </small>
+                  </Typography>
+                </MenuItem>
+              ))
+            ) : (
+              <MenuItem onClick={handleClose}>
+                <Typography sx={{ fontStyle: "italic" }}>
+                  No new notifications
+                </Typography>
               </MenuItem>
-            ))}
-            <MenuItem onClick={handleMarkAllRead}>Mark all as read</MenuItem>
+            )}
+            <Divider />
+            <MenuItem sx={{ fontWeight: "bold" }} onClick={handleMarkRead}>
+              Mark Read
+            </MenuItem>
           </Menu>
         </div>
       </DrawerHeader>
