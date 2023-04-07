@@ -42,6 +42,7 @@ import { signOut } from "firebase/auth";
 import AppBar from "@mui/material/AppBar";
 import MenuIcon from "@mui/icons-material/Menu";
 import Logout from "@mui/icons-material/Logout";
+import { collection, getDocs } from "firebase/firestore/lite";
 
 const drawerWidth = 220;
 
@@ -102,18 +103,7 @@ const Adminsidebar = ({ children }) => {
   const [imageUrl, setImageUrl] = useState(
     localStorage.getItem("profileImageUrl") || null
   );
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      message: "New notification 1",
-      read: false,
-    },
-    {
-      id: 2,
-      message: "New notification 2",
-      read: false,
-    },
-  ]);
+  const [notifications, setNotifications] = useState([]);
 
   const handleMenuClick = (event) => {
     setAnchorEl2(event.currentTarget);
@@ -218,6 +208,16 @@ const Adminsidebar = ({ children }) => {
     });
 
     return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    const fetchNotifications = async () => {
+      const notificationsRef = collection(db, "notifications");
+      const querySnapshot = await getDocs(notificationsRef);
+      const notifications = querySnapshot.docs.map((doc) => doc.data());
+      setNotifications(notifications);
+    };
+    fetchNotifications();
   }, []);
 
   const hasPhotoURL = currentUser && currentUser.photoURL;
@@ -498,7 +498,7 @@ const Adminsidebar = ({ children }) => {
             onClose={handleClose}
           >
             {notifications.map((n) => (
-              <MenuItem key={n.id} onClick={handleClose}>
+              <MenuItem key={n.timestamp} onClick={handleClose}>
                 {n.message}
               </MenuItem>
             ))}
