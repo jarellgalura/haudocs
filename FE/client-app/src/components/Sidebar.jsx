@@ -43,6 +43,7 @@ import MenuIcon from "@mui/icons-material/Menu";
 import { useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import Logout from "@mui/icons-material/Logout";
+import { deleteDoc } from "firebase/firestore/lite";
 
 const drawerWidth = 220;
 
@@ -316,7 +317,7 @@ const Sidebar = ({ children }) => {
                 {n.message}
               </MenuItem>
             ))}
-            <MenuItem onClick={handleMarkAllRead}>Mark all as read</MenuItem>
+            <MenuItem onClick={handleMarkRead}>Mark all as read</MenuItem>
           </Menu>
           <div className="menu-trigger">
             <Tooltip title="Account settings">
