@@ -1,7 +1,6 @@
 import React, { useState, useContext } from "react";
 import FormData from "form-data";
 import { useNavigate } from "react-router-dom";
-import { StatusContext } from "../application/StatusContext";
 import {
   Button,
   Dialog,
@@ -23,7 +22,6 @@ import { db, auth } from "../../firebase";
 
 const Final = () => {
   const navigate = useNavigate();
-  const { handleStatusChange } = useContext(StatusContext);
   const [firstFile, setFirstFile] = useState(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);

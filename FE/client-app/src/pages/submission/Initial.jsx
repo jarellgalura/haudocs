@@ -9,7 +9,6 @@ import {
   DialogContentText,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { StatusContext } from "../application/StatusContext";
 import {
   collection,
   addDoc,
@@ -26,7 +25,6 @@ import { getDoc } from "firebase/firestore/lite";
 
 function Initial({ onSubmitted }) {
   const navigate = useNavigate();
-  const { handleStatusChange } = useContext(StatusContext);
   const [firstFile, setFirstFile] = useState(null);
   const [secondFile, setSecondFile] = useState(null);
   const [thirdFile, setThirdFile] = useState(null);

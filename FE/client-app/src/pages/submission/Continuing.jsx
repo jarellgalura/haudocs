@@ -1,7 +1,6 @@
 import React, { useState, useContext, useEffect } from "react";
 import FormData from "form-data";
 import { useNavigate } from "react-router-dom";
-import { StatusContext } from "../application/StatusContext";
 import {
   Button,
   Dialog,
@@ -21,9 +20,8 @@ import {
 } from "firebase/firestore/lite";
 import { db, auth } from "../../firebase";
 
-const Continuing = () => {
+const Continuing = ({ onSubmitted }) => {
   const navigate = useNavigate();
-  const { handleStatusChange } = useContext(StatusContext);
   const [firstFile, setFirstFile] = useState(null);
   const [secondFile, setSecondFile] = useState(null);
   const [thirdFile, setThirdFile] = useState(null);
@@ -115,6 +113,7 @@ const Continuing = () => {
           school: "",
         });
         console.log("Document written with ID: ", docRef.id);
+        onSubmitted();
       } catch (e) {
         console.log("Error adding document: ", e);
       }
