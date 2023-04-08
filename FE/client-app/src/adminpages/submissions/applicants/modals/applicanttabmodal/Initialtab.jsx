@@ -345,7 +345,7 @@ const Initialtab = (props) => {
                 name="Hau"
               />
             }
-            label="Hau"
+            label="HAU"
           />
           <FormControlLabel
             control={
