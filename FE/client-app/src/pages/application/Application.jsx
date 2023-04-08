@@ -1,57 +1,98 @@
-import React, { useState, useEffect, useContext } from "react";
+import React, { useState, useEffect } from "react";
 import Sidebar from "../../components/Sidebar";
 import "./application.css";
 import { FaSpinner, FaTimes } from "react-icons/fa";
 import { AiFillCheckCircle, AiOutlineFile } from "react-icons/ai";
-import { StatusContext } from "./StatusContext";
-import PendingIcon from "@mui/icons-material/Pending";
 import { Box, CircularProgress, Container, Typography } from "@mui/material";
+import {
+  collection,
+  onSnapshot,
+  getFirestore,
+  query,
+  where,
+} from "firebase/firestore";
+import { auth } from "../../firebase";
 
 function Application() {
-  const { status } = useContext(StatusContext);
+  const [status, setStatus] = useState("Please wait...");
+
+  useEffect(() => {
+    const db = getFirestore();
+    const unsub = onSnapshot(
+      query(
+        collection(db, "submissions"),
+        where("uid", "==", auth.currentUser.uid)
+      ),
+      (querySnapshot) => {
+        if (!querySnapshot.empty) {
+          const submission = querySnapshot.docs[0].data();
+          if (submission.status === "initial") {
+            setStatus("Your application is in process for initial review");
+          } else if (submission.status === "continuing") {
+            setStatus("Your application is in process for Continuing review");
+          } else if (submission.status === "final") {
+            setStatus("Your application is in process for Final review");
+          } else if (submission.status === "approved_initial") {
+            setStatus("Your application for initial review has been completed");
+          } else if (submission.status === "approved_continuing") {
+            setStatus(
+              "Your application for Continuing review has been completed"
+            );
+          } else if (submission.status === "approved_final") {
+            setStatus("Your application for Final review has been completed");
+          } else if (submission.status === "declined_initial") {
+            setStatus("Your application for initial review has been declined");
+          } else if (submission.status === "declined_continuing") {
+            setStatus(
+              "Your application for Continuing review has been declined"
+            );
+          }
+        }
+      }
+    );
+    return unsub;
+  }, [auth.currentUser.uid]);
 
   const getStatusIcon = () => {
-    switch (status) {
-      case "Your application for initial review has been completed":
-        return (
-          <Box display="flex" alignItems="center" justifyContent="center">
-            <AiFillCheckCircle size={70} color="green" />
-          </Box>
-        );
-      case "Your application is in process for initial review":
-      case "Your application is in process for Continuing review":
-      case "Your application is in process for Final review":
-        return (
-          <Box display="flex" alignItems="center" justifyContent="center">
-            <CircularProgress sx={{ color: "maroon" }} size={70} />
-          </Box>
-        );
-      case "Your application for initial review has been declined":
-      case "Your application for Continuing review has been declined":
-      case "Your application for Continuing review has been completed":
-      case "Your application for Final review has been completed":
-        return (
-          <Box display="flex" alignItems="center" justifyContent="center">
-            <FaTimes size={70} color="red" />
-          </Box>
-        );
-      default:
-        return (
-          <Box
-            display="flex"
-            alignItems="center"
-            justifyContent="center"
-            mb={5}
-          >
-            <AiOutlineFile size={70} color="gray" />
-          </Box>
-        );
+    if (status === null) {
+      return null;
+    } else if (status === "You have no pending submissions for review") {
+      return (
+        <Box display="flex" alignItems="center" justifyContent="center" mb={5}>
+          <AiOutlineFile size={70} color="gray" />
+        </Box>
+      );
+    } else if (
+      status === "Your application for initial review has been completed"
+    ) {
+      return (
+        <Box display="flex" alignItems="center" justifyContent="center">
+          <AiFillCheckCircle size={70} color="green" />
+        </Box>
+      );
+    } else {
+      return (
+        <Box display="flex" alignItems="center" justifyContent="center">
+          <CircularProgress sx={{ color: "maroon" }} size={70} />
+        </Box>
+      );
     }
   };
 
-  useEffect(() => {
-    console.log("Status updated:", status);
-  }, [status]);
+  const getStatusText = () => {
+    if (status === null) {
+      return null;
+    } else {
+      return (
+        <Typography
+          variant="h5"
+          sx={{ fontWeight: "bold", textAlign: "center", marginTop: "2rem" }}
+        >
+          {status}
+        </Typography>
+      );
+    }
+  };
 
   return (
     <Sidebar>
@@ -64,12 +105,7 @@ function Application() {
           minHeight="calc(70vh - 64px)"
         >
           {getStatusIcon()}
-          <Typography
-            variant="h5"
-            sx={{ fontWeight: "bold", textAlign: "center" }}
-          >
-            {status}
-          </Typography>
+          {getStatusText()}
         </Box>
       </Container>
     </Sidebar>

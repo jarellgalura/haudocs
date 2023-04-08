@@ -10,6 +10,9 @@ function Submission() {
   const [initialSubmitted, setInitialSubmitted] = useState(
     localStorage.getItem("initialSubmitted") === "true"
   );
+  const [continuingSubmitted, setContinuingSubmitted] = useState(
+    localStorage.getItem("continuingSubmitted") === "true"
+  );
   const tabs = [
     {
       label: "Initial Process",
@@ -17,13 +20,13 @@ function Submission() {
     },
     {
       label: "Continuing Review",
-      content: <Continuing />,
+      content: <Continuing onSubmitted={() => setContinuingSubmitted(true)} />,
       disabled: !initialSubmitted,
     },
     {
       label: "Final Review",
       content: <Final />,
-      disabled: !initialSubmitted,
+      disabled: !continuingSubmitted,
     },
   ];
 
