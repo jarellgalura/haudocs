@@ -24,7 +24,9 @@ function Application() {
         where("uid", "==", auth.currentUser.uid)
       ),
       (querySnapshot) => {
-        if (!querySnapshot.empty) {
+        if (querySnapshot.docs.length === 0) {
+          setStatus("You have no pending submissions for review");
+        } else {
           const submission = querySnapshot.docs[0].data();
           if (submission.status === "initial") {
             setStatus("Your application is in process for initial review");

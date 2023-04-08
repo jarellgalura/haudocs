@@ -50,7 +50,6 @@ const Initialtab = (props) => {
   const [showAlert, setShowAlert] = useState(false);
   const formRef = useRef(null);
   const [users, setUsers] = useState([]);
-
   const [submissions, setSubmissions] = useState([]);
 
   useEffect(() => {
@@ -71,6 +70,7 @@ const Initialtab = (props) => {
           data[0].date_sent.seconds * 1000 +
             data[0].date_sent.nanoseconds / 1000000
         ).toLocaleString(),
+        status_indicator: data[0].status_indicator,
         ...file,
       }));
       setSubmissions(files);
@@ -153,16 +153,6 @@ const Initialtab = (props) => {
       `${process.env.REACT_APP_BACKEND_URL}${params.row.downloadLink}`,
       "_blank"
     );
-
-    // const fileRef = ref(storage, `Submissions/${id}.docx`);
-    // try {
-    //     // Get the download URL for the file
-    //     const downloadURL = await getDownloadURL(fileRef);
-    //     window.open(downloadURL, "_blank");
-    //     setIsDownloadSuccessful(true);
-    // } catch (error) {
-    //     console.error(error);
-    // }
   };
 
   const handleSubmit = (event) => {
@@ -201,6 +191,7 @@ const Initialtab = (props) => {
           if (selectedId.includes(file.id)) {
             return {
               ...file,
+              status_indicator: "Forwarded",
               forReview: true,
             };
           }
@@ -267,6 +258,7 @@ const Initialtab = (props) => {
   const columns = [
     { field: "fieldname", headerName: "DocumentName", width: "180" },
     { field: "name", headerName: "Sent By", width: "175" },
+    { field: "status_indicator", headerName: "Status", width: "200" },
     { field: "date_sent", headerName: "Date Sent", width: "200" },
     {
       field: "action",
