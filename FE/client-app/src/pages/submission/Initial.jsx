@@ -62,6 +62,17 @@ function Initial({ onSubmitted }) {
     return unsubscribe;
   }, []);
 
+  function generateId(length) {
+    let result = "";
+    const characters =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    const charactersLength = characters.length;
+    for (let i = 0; i < length; i++) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
+  }
+
   async function handleSubmit() {
     const submissionsRef = collection(db, "submissions");
     const q = query(
@@ -134,10 +145,16 @@ function Initial({ onSubmitted }) {
       console.log(data);
 
       try {
+        const initialFiles = data.files.map((file) => ({
+          id: generateId(16),
+          forReview: false,
+          ...file,
+        }));
+
         const docRef = await addDoc(collection(db, "submissions"), {
           uid: auth.currentUser.uid,
           status: "initial",
-          initial_files: data.files,
+          initial_files: initialFiles,
           continuing_files: [],
           final_files: [],
           rev_initial_files: [],
