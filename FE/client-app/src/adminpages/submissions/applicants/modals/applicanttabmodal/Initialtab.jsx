@@ -89,22 +89,6 @@ const Initialtab = (props) => {
     });
   }, []);
 
-  const columns = [
-    { field: "fieldname", headerName: "DocumentName", width: "180" },
-    { field: "name", headerName: "Sent By", width: "175" },
-    { field: "date_sent", headerName: "Date Sent", width: "200" },
-    {
-      field: "action",
-      headerName: "Action",
-      width: "100",
-      renderCell: (params) => (
-        <Button style={downloadStyle} onClick={() => handleDownload(params)}>
-          Download
-        </Button>
-      ),
-    },
-  ];
-
   const checkFormValidity = () => {
     const requiredFields = [protocolNumber, reviewType, assignTo, researchType];
     const isAllFieldsFilledOut = requiredFields.every((field) => !!field);
@@ -212,6 +196,20 @@ const Initialtab = (props) => {
           reviewer: assignTo,
           school: isCheckedHau ? "HAU" : "Others",
         });
+
+        const updatedInitialFiles = data[0].initial_files.map((file) => {
+          if (selectedId.includes(file.id)) {
+            return {
+              ...file,
+              forReview: true,
+            };
+          }
+          return file;
+        });
+
+        updateDoc(docRef, {
+          initial_files: updatedInitialFiles,
+        });
       });
 
       console.log({
@@ -266,6 +264,24 @@ const Initialtab = (props) => {
     backgroundColor: "maroon",
   };
 
+  const columns = [
+    { field: "fieldname", headerName: "DocumentName", width: "180" },
+    { field: "name", headerName: "Sent By", width: "175" },
+    { field: "date_sent", headerName: "Date Sent", width: "200" },
+    {
+      field: "action",
+      headerName: "Action",
+      width: "100",
+      renderCell: (params) => (
+        <Button style={downloadStyle} onClick={() => handleDownload(params)}>
+          Download
+        </Button>
+      ),
+    },
+  ];
+
+  const [selectedId, setSelectedId] = useState([]);
+
   return (
     <div style={{ height: 400, width: "100%" }}>
       <DataGrid
@@ -276,7 +292,14 @@ const Initialtab = (props) => {
         rowsPerPageOptions={[5]}
         checkboxSelection
         onSelectionModelChange={(newSelection) => {
-          setSelectedRows(newSelection);
+          const selectedRowData = newSelection.map((id) =>
+            submissions.find((row) => row.id === id)
+          );
+          setSelectedRows(selectedRowData);
+
+          const id = selectedRowData.map((row) => row.id);
+          setSelectedId(id);
+
           setIsAnyCheckboxSelected(newSelection.length > 0);
           checkFormValidity();
         }}
