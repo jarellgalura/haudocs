@@ -1,4 +1,11 @@
-import React, { useState } from "react";
+import { useState, useEffect } from "react";
+import {
+  collection,
+  getDocs,
+  query,
+  where,
+  getFirestore,
+} from "firebase/firestore";
 import PropTypes from "prop-types";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
@@ -8,9 +15,42 @@ import Modal from "@mui/material/Modal";
 import Assignedmodal from "./modals/Assignedmodal";
 import "../assignedprotocol.css";
 import Reviewersidebar from "../../Reviewersidebar";
+import { auth } from "../../../firebase";
 
 function AssignedProtocol() {
   const [showModal, setShowModal] = useState(false);
+  const [submissions, setSubmissions] = useState([]);
+
+  useEffect(() => {
+    const db = getFirestore();
+    const submissionsCollection = collection(db, "submissions");
+    const currentUser = auth.currentUser;
+
+    if (currentUser) {
+      const q = query(
+        submissionsCollection,
+        where("reviewer", "==", currentUser.uid),
+        where("reviewer", "!=", "")
+      );
+
+      getDocs(q).then((querySnapshot) => {
+        const data = querySnapshot.docs.map((doc) => {
+          const docData = doc.data();
+          return {
+            id: doc.id,
+            ...docData,
+            date_sent: docData.date_sent
+              ? new Date(docData.date_sent.seconds * 1000).toLocaleString()
+              : null,
+            due_date: docData.due_date
+              ? new Date(docData.due_date.seconds * 1000).toLocaleString()
+              : null,
+          };
+        });
+        setSubmissions(data);
+      });
+    }
+  }, []);
 
   function handleCloseModal() {
     setShowModal(false);
@@ -35,23 +75,14 @@ function AssignedProtocol() {
   };
 
   const columns = [
-    { field: "protocolnumber", headerName: "Protocol Number", width: "350" },
-    { field: "datesent", headerName: "Date Sent", width: "350" },
+    { field: "protocol_no", headerName: "Protocol Number", width: "350" },
+    { field: "date_sent", headerName: "Date Sent", width: "350" },
     { field: "duedate", headerName: "Due Date", width: "350" },
     {
       field: "action",
       headerName: "Action",
       width: "200",
       renderCell: (params) => <ViewCell {...params} />,
-    },
-  ];
-
-  const rows = [
-    {
-      id: "",
-      protocolnumber: "2023-001-NAME-TITLE",
-      datesent: "January 28, 2023",
-      duedate: "March 26, 2023",
     },
   ];
 
@@ -112,7 +143,7 @@ function AssignedProtocol() {
         <div className="mt-[2rem]" style={{ height: 400 }}>
           <DataGrid
             classes={{ header: "custom-header" }}
-            rows={rows}
+            rows={submissions}
             columns={columns}
             pageSize={5}
             rowsPerPageOptions={[5]}

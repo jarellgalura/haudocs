@@ -144,6 +144,7 @@ function Initial({ onSubmitted }) {
           rev_continuing_files: [],
           rev_final_files: [],
           name: userName,
+          email: currentUser.email,
           date_sent: serverTimestamp(),
           due_date: "",
           protocol_no: "",

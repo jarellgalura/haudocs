@@ -6,24 +6,12 @@ import { DataGrid } from "@mui/x-data-grid";
 import { Button } from "@mui/material";
 import Modal from "@mui/material/Modal";
 import Applicanttabmodal from "./modals/Applicanttabmodal";
-
 import { getFirestore, collection, getDocs } from "firebase/firestore/lite";
 
 function Applicantstab(props) {
   const [showModal, setShowModal] = useState(false);
   const [selectedUid, setSelectedUid] = useState(null);
-
   const [submissions, setSubmissions] = useState([]);
-
-  function handleOpenModal(uid) {
-    setSelectedUid(uid);
-    setShowModal(true);
-  }
-
-  function handleCloseModal() {
-    setSelectedUid(null);
-    setShowModal(false);
-  }
 
   useEffect(() => {
     const fetchData = async () => {
@@ -47,6 +35,16 @@ function Applicantstab(props) {
     };
     fetchData();
   }, []);
+
+  function handleOpenModal(uid) {
+    setSelectedUid(uid);
+    setShowModal(true);
+  }
+
+  function handleCloseModal() {
+    setSelectedUid(null);
+    setShowModal(false);
+  }
 
   function handleCloseModal() {
     setShowModal(false);
@@ -77,7 +75,7 @@ function Applicantstab(props) {
       width: "350",
     },
     { field: "date_sent", headerName: "Date Sent", width: "350" },
-    { field: "due_date", headerName: "Due Date", width: "350" },
+    { field: "email", headerName: "Email", width: "350" },
     {
       field: "action",
       headerName: "Action",
