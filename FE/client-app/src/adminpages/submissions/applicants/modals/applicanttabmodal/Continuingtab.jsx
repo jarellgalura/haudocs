@@ -48,6 +48,7 @@ const Continuingtab = (props) => {
   const [showAlert, setShowAlert] = useState(false);
   const formRef = useRef(null);
   const [submissions, setSubmissions] = useState([]);
+  const [users, setUsers] = useState(null);
 
   console.log(submissions);
 
@@ -73,6 +74,18 @@ const Continuingtab = (props) => {
       setSubmissions(files);
     });
   }, [props.uid]);
+
+  useEffect(() => {
+    const db = getFirestore();
+    const usersRef = collection(db, "users");
+    getDocs(usersRef).then((querySnapshot) => {
+      const data = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+      setUsers(data);
+    });
+  }, []);
 
   const columns = [
     { field: "documentname", headerName: "DocumentName", width: "180" },
@@ -277,58 +290,28 @@ const Continuingtab = (props) => {
           setShowConfirmation(true);
         }}
       >
-        <Box sx={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={isCheckedHau}
-                onChange={handleCheckboxChange}
-                name="Hau"
-              />
-            }
-            label="Hau"
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={isCheckedOthers}
-                onChange={handleCheckboxChange}
-                name="Others"
-              />
-            }
-            label="Others"
-          />
-        </Box>
         <Box
           sx={{
             display: "flex",
             flexDirection: "column",
             gap: "1rem",
+            marginTop: "1rem",
           }}
         >
-          <TextField
-            required
-            label="Protocol Number"
-            value={protocolNumber}
-            onChange={handleProtocolNumberChange}
-          />
-
-          <Box required sx={{ display: "flex", gap: "1rem" }}>
-            <FormControl sx={{ width: "100%" }}>
-              <InputLabel>Review Type</InputLabel>
-              <Select value={reviewType} onChange={handleReviewTypeChange}>
-                <MenuItem value="Full Board Review">Full Board Review</MenuItem>
-                <MenuItem value="Expedited Review">Expedited Review</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-
-          <FormControl sx={{ minWidth: 120, marginBottom: "2rem" }}>
+          <FormControl required sx={{ minWidth: 120, marginBottom: "2rem" }}>
             <InputLabel>Assign To</InputLabel>
             <Select value={assignTo} onChange={handleAssignToChange}>
-              <MenuItem value="Person A">Person A</MenuItem>
-              <MenuItem value="Person B">Person B</MenuItem>
-              <MenuItem value="Person C">Person C</MenuItem>
+              {users &&
+                users
+                  .filter(
+                    (user) =>
+                      user.role === "scientist" || user.role === "non-scientist"
+                  )
+                  .map((user, index) => (
+                    <MenuItem key={user.id} value={user.id}>
+                      Reviewer {index + 1}
+                    </MenuItem>
+                  ))}
             </Select>
           </FormControl>
         </Box>
