@@ -29,12 +29,18 @@ import {
   getDocs,
   updateDoc,
   doc,
+  Timestamp,
+  serverTimestamp,
 } from "firebase/firestore/lite";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
 const Initialtab = (props) => {
   const navigate = useNavigate();
   const { handleCloseModal } = props;
   const [protocolNumber, setProtocolNumber] = React.useState("");
+  const [submissionDate, setSubmissionDate] = useState(Timestamp.now());
   const [reviewType, setReviewType] = React.useState("");
   const [researchType, setResearchType] = React.useState("");
   const [isCheckedHau, setIsCheckedHau] = useState(false);
@@ -129,6 +135,11 @@ const Initialtab = (props) => {
     checkFormValidity();
   };
 
+  const handleDateChange = (date) => {
+    setSubmissionDate(date);
+    checkFormValidity();
+  };
+
   const handleCheckboxChange = (event) => {
     const { name, checked } = event.target;
 
@@ -180,9 +191,11 @@ const Initialtab = (props) => {
         // Update the first document in the query snapshot
         const docRef = doc(db, "submissions", data[0].id);
         updateDoc(docRef, {
+          rev_date_sent: serverTimestamp(),
           protocol_no: protocolNumber,
           review_type: reviewType,
           research_type: researchType,
+          due_date: Timestamp.fromDate(submissionDate.toDate()),
           reviewer: assignTo,
           school: isCheckedHau ? "HAU" : "Others",
         });
@@ -365,6 +378,10 @@ const Initialtab = (props) => {
             onChange={handleProtocolNumberChange}
           />
 
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <DatePicker value={submissionDate} onChange={handleDateChange} />
+          </LocalizationProvider>
+
           <Box required sx={{ display: "flex", gap: "1rem" }}>
             <FormControl sx={{ width: "100%" }}>
               <InputLabel>Review Type</InputLabel>
@@ -402,9 +419,9 @@ const Initialtab = (props) => {
                     (user) =>
                       user.role === "scientist" || user.role === "non-scientist"
                   )
-                  .map((user, index) => (
-                    <MenuItem key={user.id} value={user.id}>
-                      Reviewer {index + 1}
+                  .map((user) => (
+                    <MenuItem key={user.email} value={user.email}>
+                      {user.email}
                     </MenuItem>
                   ))}
             </Select>

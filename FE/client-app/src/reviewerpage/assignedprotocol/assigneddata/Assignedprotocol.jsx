@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import {
   collection,
-  getDocs,
+  onSnapshot,
   query,
   where,
   getFirestore,
@@ -27,28 +27,31 @@ function AssignedProtocol() {
     const currentUser = auth.currentUser;
 
     if (currentUser) {
-      const q = query(
+      const submissionsQuery = query(
         submissionsCollection,
-        where("reviewer", "==", currentUser.uid),
+        where("reviewer", "==", currentUser.email),
         where("reviewer", "!=", "")
       );
 
-      getDocs(q).then((querySnapshot) => {
-        const data = querySnapshot.docs.map((doc) => {
-          const docData = doc.data();
+      const unsubscribe = onSnapshot(submissionsQuery, (snapshot) => {
+        const submissionsData = snapshot.docs.map((doc) => {
+          const data = doc.data();
           return {
             id: doc.id,
-            ...docData,
-            date_sent: docData.date_sent
-              ? new Date(docData.date_sent.seconds * 1000).toLocaleString()
+            ...data,
+            rev_date_sent: data.rev_date_sent
+              ? new Date(data.rev_date_sent.seconds * 1000).toLocaleString()
               : null,
-            due_date: docData.due_date
-              ? new Date(docData.due_date.seconds * 1000).toLocaleString()
+            due_date: data.due_date
+              ? new Date(data.due_date.seconds * 1000).toLocaleString()
               : null,
           };
         });
-        setSubmissions(data);
+        setSubmissions(submissionsData);
       });
+      return () => {
+        unsubscribe();
+      };
     }
   }, []);
 
@@ -76,8 +79,8 @@ function AssignedProtocol() {
 
   const columns = [
     { field: "protocol_no", headerName: "Protocol Number", width: "350" },
-    { field: "date_sent", headerName: "Date Sent", width: "350" },
-    { field: "duedate", headerName: "Due Date", width: "350" },
+    { field: "rev_date_sent", headerName: "Date Sent", width: "350" },
+    { field: "due_date", headerName: "Due Date", width: "350" },
     {
       field: "action",
       headerName: "Action",

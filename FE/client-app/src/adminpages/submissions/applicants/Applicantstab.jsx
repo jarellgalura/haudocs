@@ -6,7 +6,7 @@ import { DataGrid } from "@mui/x-data-grid";
 import { Button } from "@mui/material";
 import Modal from "@mui/material/Modal";
 import Applicanttabmodal from "./modals/Applicanttabmodal";
-import { getFirestore, collection, getDocs } from "firebase/firestore/lite";
+import { getFirestore, collection, onSnapshot } from "firebase/firestore";
 
 function Applicantstab(props) {
   const [showModal, setShowModal] = useState(false);
@@ -14,11 +14,10 @@ function Applicantstab(props) {
   const [submissions, setSubmissions] = useState([]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      const db = getFirestore();
-      const submissionsCollection = collection(db, "submissions");
-      const submissionsSnapshot = await getDocs(submissionsCollection);
-      const submissionsData = submissionsSnapshot.docs.map((doc) => {
+    const db = getFirestore();
+    const submissionsCollection = collection(db, "submissions");
+    const unsubscribe = onSnapshot(submissionsCollection, (snapshot) => {
+      const submissionsData = snapshot.docs.map((doc) => {
         const data = doc.data();
         return {
           id: doc.id,
@@ -32,8 +31,10 @@ function Applicantstab(props) {
         };
       });
       setSubmissions(submissionsData);
+    });
+    return () => {
+      unsubscribe();
     };
-    fetchData();
   }, []);
 
   function handleOpenModal(uid) {
