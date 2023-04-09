@@ -161,6 +161,7 @@ function Initial({ onSubmitted }) {
           name: userName,
           email: currentUser.email,
           date_sent: serverTimestamp(),
+          rev_date_sent: serverTimestamp(),
           due_date: "",
           protocol_no: "",
           reviewer: "",

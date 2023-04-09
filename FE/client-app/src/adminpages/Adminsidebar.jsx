@@ -186,19 +186,6 @@ const Adminsidebar = ({ children }) => {
     setAnchorEl2(null);
   };
 
-  const handleNotificationClick = () => {
-    const newNotifications = notifications.map((n) => ({ ...n, read: true }));
-    setNotifications(newNotifications);
-    const readNotifications = newNotifications
-      .filter((n) => n.read)
-      .map((n) => n.id);
-    localStorage.setItem(
-      "readNotifications",
-      JSON.stringify(readNotifications)
-    );
-    setUnreadCount(0);
-  };
-
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
     handleNotificationClick();
@@ -268,12 +255,40 @@ const Adminsidebar = ({ children }) => {
       setNotifications(
         updatedNotifications.sort((a, b) => b.timestamp - a.timestamp)
       );
-      setUnreadCount(updatedNotifications.filter((n) => !n.read).length);
+      const unreadNotifications = updatedNotifications.filter((n) => !n.read);
+      setUnreadCount(unreadNotifications.length);
+      localStorage.setItem(
+        "hasUnreadNotifications",
+        JSON.stringify(unreadNotifications.length > 0)
+      );
     });
 
     return () => {
       unsubscribe();
     };
+  }, []);
+
+  const handleNotificationClick = () => {
+    const newNotifications = notifications.map((n) => ({ ...n, read: true }));
+    setNotifications(newNotifications);
+    const readNotifications = newNotifications
+      .filter((n) => n.read)
+      .map((n) => n.id);
+    localStorage.setItem(
+      "readNotifications",
+      JSON.stringify(readNotifications)
+    );
+    setUnreadCount(0);
+    localStorage.setItem("hasUnreadNotifications", JSON.stringify(false));
+  };
+
+  useEffect(() => {
+    const hasUnreadNotifications = JSON.parse(
+      localStorage.getItem("hasUnreadNotifications") || "false"
+    );
+    if (!hasUnreadNotifications) {
+      setUnreadCount(0);
+    }
   }, []);
 
   const hasPhotoURL = currentUser && currentUser.photoURL;
