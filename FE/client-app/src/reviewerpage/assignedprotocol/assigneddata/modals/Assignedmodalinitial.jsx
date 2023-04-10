@@ -97,7 +97,7 @@ const Assignedmodalinitial = (props) => {
                 {
                     method: "POST",
                     headers: {
-                        filefolder: `${"reviewer_uid_here"}/initial`,
+                        filefolder: `${auth.currentUser.uid}/initial`,
                     },
                     body: form,
                 }
@@ -109,7 +109,7 @@ const Assignedmodalinitial = (props) => {
             const submissionsRef = collection(db, "submissions");
             const q = query(
                 submissionsRef,
-                where("protocol_no", "==", "12312321")
+                where("protocol_no", "==", props.protocol_no)
             );
             const querySnapshot = await getDocs(q);
 
