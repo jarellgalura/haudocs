@@ -49,12 +49,13 @@ const Assignedmodalinitial = (props) => {
   const [isDownloadSuccessful, setIsDownloadSuccessful] = useState(false);
   const [submissions, setSubmissions] = useState([]);
 
+  console.log("modal initial", props.protocol_no);
   useEffect(() => {
     const db = getFirestore();
     const submissionsRef = collection(db, "submissions");
     const q = query(
       submissionsRef,
-      where("reviewer", "array-contains", auth.currentUser.email)
+      where("protocol_no", "==", props.protocol_no)
     );
 
     getDocs(q).then((querySnapshot) => {
