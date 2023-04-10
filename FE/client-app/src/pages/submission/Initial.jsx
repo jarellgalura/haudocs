@@ -181,7 +181,6 @@ function Initial({ onSubmitted }) {
           (doc) => doc.data().email
         );
 
-        // Create and send notification to each admin user
         adminEmails.forEach(async (email) => {
           const newNotification = {
             id: doc(notificationsRef).id,

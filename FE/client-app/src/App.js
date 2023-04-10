@@ -33,7 +33,6 @@ import {
   AdminApplication,
   AdminArchiving,
   Adminsubmissions,
-  AdminTransfer,
   AdminUsers,
   AdminLogout,
   AdminSettings,
@@ -283,18 +282,6 @@ function App() {
                 role === "admin" ? (
                   <ProtectedRoute>
                     <Adminsubmissions />
-                  </ProtectedRoute>
-                ) : (
-                  <Navigate to="/" replace />
-                )
-              }
-            />
-            <Route
-              path="/admintransfer"
-              element={
-                role === "admin" ? (
-                  <ProtectedRoute>
-                    <AdminTransfer />
                   </ProtectedRoute>
                 ) : (
                   <Navigate to="/" replace />

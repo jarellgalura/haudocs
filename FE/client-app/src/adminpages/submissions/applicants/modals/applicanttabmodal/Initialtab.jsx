@@ -37,6 +37,20 @@ import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { auth } from "../../../../../firebase";
+import Modal from "@mui/material/Modal";
+import AdminTransfer from "./AdminTransfer";
+
+const style = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: "50%",
+  bgcolor: "background.paper",
+  border: "2px solid #000",
+  boxShadow: 24,
+  p: 4,
+};
 
 const Initialtab = (props) => {
   const navigate = useNavigate();
@@ -60,6 +74,8 @@ const Initialtab = (props) => {
   const [users, setUsers] = useState([]);
   const [submissions, setSubmissions] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
+  const [open, setOpen] = React.useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     const db = getFirestore();
@@ -288,6 +304,14 @@ const Initialtab = (props) => {
     setShowAlert(false);
   };
 
+  function modalhandleOpen() {
+    setShowModal(true);
+  }
+
+  function modalhandleClose() {
+    setShowModal(false);
+  }
+
   const handleDownloadAll = async () => {
     for (const row of submissions) {
       if (selectedRows.includes(row.id)) {
@@ -384,6 +408,32 @@ const Initialtab = (props) => {
         >
           Download
         </Button>
+        <div>
+          <Button
+            size="medium"
+            sx={{
+              color: "white",
+              backgroundColor: "maroon",
+              "&:hover": {
+                backgroundColor: "maroon",
+              },
+            }}
+            variant="contained"
+            onClick={modalhandleOpen}
+          >
+            Message Applicant
+          </Button>
+          <Modal
+            open={showModal}
+            onClose={modalhandleClose}
+            aria-labelledby="modal-modal-title"
+            aria-describedby="modal-modal-description"
+          >
+            <Box sx={style}>
+              <AdminTransfer uid={props.uid} />
+            </Box>
+          </Modal>
+        </div>
       </div>
       <Box
         ref={formRef}

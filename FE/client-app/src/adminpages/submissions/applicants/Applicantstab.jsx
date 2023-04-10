@@ -47,10 +47,6 @@ function Applicantstab(props) {
     setShowModal(false);
   }
 
-  function handleCloseModal() {
-    setShowModal(false);
-  }
-
   const style = {
     position: "absolute",
     top: "50%",

@@ -317,11 +317,6 @@ const Adminsidebar = ({ children }) => {
       icon: <CloudDownload />,
     },
     {
-      path: "/admintransfer",
-      name: "Transfer",
-      icon: <SwapHoriz />,
-    },
-    {
       path: "/adminarchiving",
       name: "Archiving",
       icon: <Archive />,
