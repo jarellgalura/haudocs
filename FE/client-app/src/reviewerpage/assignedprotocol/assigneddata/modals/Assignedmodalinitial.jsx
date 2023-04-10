@@ -2,17 +2,17 @@ import React, { useState, useEffect } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { Button } from "@mui/material";
 import {
-  Dialog,
-  DialogTitle,
-  DialogContent,
-  DialogContentText,
-  DialogActions,
-  Typography,
-  Box,
-  Alert,
-  Grid,
-  TextField,
-  InputAdornment,
+    Dialog,
+    DialogTitle,
+    DialogContent,
+    DialogContentText,
+    DialogActions,
+    Typography,
+    Box,
+    Alert,
+    Grid,
+    TextField,
+    InputAdornment,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import { ref, getDownloadURL } from "firebase/storage";
@@ -22,395 +22,453 @@ import RemoveIcon from "@mui/icons-material/Remove";
 import AddIcon from "@mui/icons-material/Add";
 import "../../assignedprotocol.css";
 import {
-  collection,
-  doc,
-  updateDoc,
-  getDocs,
-  query,
-  where,
+    collection,
+    doc,
+    updateDoc,
+    getDocs,
+    query,
+    where,
 } from "firebase/firestore/lite";
 import { db, auth } from "../../../../firebase";
 import { getFirestore } from "firebase/firestore/lite";
 
 const Assignedmodalinitial = (props) => {
-  const navigate = useNavigate();
-  const [value, setValue] = React.useState(0);
-  const [files, setFiles] = useState([{ id: 1, file: null }]);
-  const [open, setOpen] = useState(false);
-  const { handleCloseModal } = props;
-  const [selectedFiles, setSelectedFiles] = useState([]);
-  const [showConfirmation, setShowConfirmation] = useState(false);
-  const [showSuccess, setShowSuccess] = useState(false);
-  const [isSubmitEnabled, setIsSubmitEnabled] = useState(false);
-  const [selectedRows, setSelectedRows] = React.useState([]);
-  const [showDownloadDialog, setShowDownloadDialog] = React.useState(false);
-  const [isAnyCheckboxSelected, setIsAnyCheckboxSelected] = useState(false);
-  const [showAlert, setShowAlert] = useState(false);
-  const [isDownloadSuccessful, setIsDownloadSuccessful] = useState(false);
-  const [submissions, setSubmissions] = useState([]);
+    const navigate = useNavigate();
+    const [value, setValue] = React.useState(0);
+    const [files, setFiles] = useState([{ id: 1, file: null }]);
+    const [open, setOpen] = useState(false);
+    const { handleCloseModal } = props;
+    const [selectedFiles, setSelectedFiles] = useState([]);
+    const [showConfirmation, setShowConfirmation] = useState(false);
+    const [showSuccess, setShowSuccess] = useState(false);
+    const [isSubmitEnabled, setIsSubmitEnabled] = useState(false);
+    const [selectedRows, setSelectedRows] = React.useState([]);
+    const [showDownloadDialog, setShowDownloadDialog] = React.useState(false);
+    const [isAnyCheckboxSelected, setIsAnyCheckboxSelected] = useState(false);
+    const [showAlert, setShowAlert] = useState(false);
+    const [isDownloadSuccessful, setIsDownloadSuccessful] = useState(false);
+    const [submissions, setSubmissions] = useState([]);
 
-  console.log("modal initial", props.protocol_no);
-  useEffect(() => {
-    const db = getFirestore();
-    const submissionsRef = collection(db, "submissions");
-    const q = query(
-      submissionsRef,
-      where("protocol_no", "==", props.protocol_no)
-    );
+    useEffect(() => {
+        const db = getFirestore();
+        const submissionsRef = collection(db, "submissions");
+        const q = query(
+            submissionsRef,
+            where("protocol_no", "==", props.protocol_no)
+        );
 
-    getDocs(q).then((querySnapshot) => {
-      const data = querySnapshot.docs.map((doc) => ({
-        id: doc.id,
-        ...doc.data(),
-      }));
+        getDocs(q).then((querySnapshot) => {
+            const data = querySnapshot.docs.map((doc) => ({
+                id: doc.id,
+                ...doc.data(),
+            }));
 
-      const files = data[0].initial_files
-        .filter((file) => file.forReview)
-        .map((file, index) => ({
-          id: index + 1,
-          name: data[0].name,
-          date_sent: new Date(
-            data[0].date_sent.seconds * 1000 +
-              data[0].date_sent.nanoseconds / 1000000
-          ).toLocaleString(),
-          ...file,
-        }));
-      setSubmissions(files);
-      console.log(files);
-    });
-  }, [auth.currentUser.uid]);
+            const files = data[0].initial_files
+                .filter((file) => file.forReview)
+                .map((file, index) => ({
+                    id: index + 1,
+                    name: data[0].name,
+                    date_sent: new Date(
+                        data[0].date_sent.seconds * 1000 +
+                            data[0].date_sent.nanoseconds / 1000000
+                    ).toLocaleString(),
+                    ...file,
+                }));
+            setSubmissions(files);
+            console.log(files);
+        });
+    }, [auth.currentUser.uid]);
 
-  async function handleSubmit() {
-    // Create a new FormData instance
-    const form = new FormData();
+    async function handleSubmit() {
+        // Create a new FormData instance
+        const form = new FormData();
 
-    // Append the files to the FormData instance
-    files.forEach((fileObj, index) => {
-      if (fileObj.file) {
-        form.append(`file_${index}`, fileObj.file);
-      }
-    });
-
-    // Perform the fetch request
-    try {
-      const response = await fetch(
-        `${process.env.REACT_APP_BACKEND_URL}/files`,
-        {
-          method: "POST",
-          headers: {
-            filefolder: `${"reviewer_uid_here"}/initial`,
-          },
-          body: form,
-        }
-      );
-
-      const data = await response.json();
-      console.log(data);
-
-      const submissionsRef = collection(db, "submissions");
-      const q = query(submissionsRef, where("protocol_no", "==", "12312321"));
-      const querySnapshot = await getDocs(q);
-
-      // Check if the submission exists
-      if (!querySnapshot.empty) {
-        // Get the first matching document (there should be only one)
-        const docSnapshot = querySnapshot.docs[0];
-
-        // Get the current date as a UNIX timestamp
-        const currentDate = Date.now();
-
-        // Offset the current date to GMT+8
-        const offsetHours = 8;
-        const offsetMilliseconds = offsetHours * 60 * 60 * 1000;
-        const currentDateGMT8 = currentDate + offsetMilliseconds;
-
-        // Add the offset current date to each file in the data.files array
-        const filesWithDate = data.files.map((file) => ({
-          ...file,
-          upload_date: currentDateGMT8, // Add the offset current date as a UNIX timestamp
-        }));
-
-        // Get the existing rev_initial_files array or an empty array if it doesn't exist
-        const existingReviewerFiles =
-          docSnapshot.data().rev_initial_files || [];
-
-        // Concatenate the existing and new files arrays
-        const updatedReviewerFiles =
-          existingReviewerFiles.concat(filesWithDate);
-
-        // Update the document with the updated rev_initial_files
-        const submissionRef = doc(db, "submissions", docSnapshot.id);
-        await updateDoc(submissionRef, {
-          rev_initial_files: updatedReviewerFiles,
+        // Append the files to the FormData instance
+        files.forEach((fileObj, index) => {
+            if (fileObj.file) {
+                form.append(`file_${index}`, fileObj.file);
+            }
         });
 
-        console.log("Document updated with ID: ", docSnapshot.id);
-      } else {
-        console.log("No submission found with the given protocol_no");
-      }
-    } catch (error) {
-      console.log(error);
-      return false;
-    }
-
-    navigate("/reviewerstatus");
-    setOpen(false);
-  }
-
-  const handleFileUpload = (event, id) => {
-    const file = event.target.files[0];
-    const newFiles = [...files];
-    const index = newFiles.findIndex((file) => file.id === id);
-    newFiles[index].file = file;
-    setFiles(newFiles);
-  };
-
-  const handleAddFile = () => {
-    const newFiles = [...files];
-    newFiles.push({ id: newFiles.length + 1, file: null });
-    setFiles(newFiles);
-  };
-
-  const handleRemoveFile = (id) => {
-    const newFiles = files.filter((file) => file.id !== id);
-    setFiles(newFiles);
-  };
-
-  const columns = [
-    { field: "fieldname", headerName: "DocumentName", width: "550" },
-
-    {
-      field: "action",
-      headerName: "Action",
-      width: "100",
-      renderCell: (params) => (
-        <Button style={downloadStyle} onClick={() => handleDownload(params)}>
-          Download
-        </Button>
-      ),
-    },
-  ];
-
-  const handleDownload = async (params) => {
-    console.log(params.row.downloadLink);
-    window.open(
-      `${process.env.REACT_APP_BACKEND_URL}${params.row.downloadLink}`,
-      "_blank"
-    );
-  };
-
-  const handleOpenDownloadDialog = () => {
-    if (isAnyCheckboxSelected) {
-      setShowDownloadDialog(true);
-    } else {
-      setShowAlert(true);
-    }
-  };
-
-  const handleCloseDownloadDialog = () => {
-    setShowDownloadDialog(false);
-  };
-
-  const handleDownloadAll = async () => {
-    for (const submissions of submissions) {
-      if (selectedRows.includes(submissions.id)) {
-        await handleDownload(submissions.id);
-      }
-    }
-    setShowDownloadDialog(false);
-  };
-
-  const handleOpen = () => {
-    setOpen(true);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-  };
-
-  function handlesSuccess() {
-    setShowSuccess(true);
-    setShowConfirmation(false);
-  }
-
-  const downloadStyle = {
-    color: "maroon",
-  };
-
-  const closeStyle = {
-    color: "maroon",
-    borderColor: "maroon",
-  };
-
-  const submitStyle = {
-    color: "white",
-    backgroundColor: "maroon",
-  };
-  return (
-    <div style={{ height: 400, width: "100%" }}>
-      <DataGrid
-        classes={{ header: "custom-header" }}
-        rows={submissions}
-        columns={columns}
-        pageSize={5}
-        rowsPerPageOptions={[5]}
-        checkboxSelection
-        selectionModel={selectedRows}
-        onSelectionModelChange={(newSelection) => {
-          setSelectedRows(newSelection);
-          setIsAnyCheckboxSelected(newSelection.length > 0);
-        }}
-      />
-
-      <div className="mt-[1rem]">
-        {showAlert && !isDownloadSuccessful && (
-          <Alert severity="warning" onClose={() => setShowAlert(false)}>
-            Please select at least one document to download.
-          </Alert>
-        )}
-      </div>
-
-      <Box
-        component="form"
-        onSubmit={(e) => {
-          e.preventDefault();
-          setShowConfirmation(true);
-        }}
-      >
-        <DialogContent>
-          <div className="flex flex-col">
-            <Button
-              variant="contained"
-              size="medium"
-              sx={{
-                color: "white",
-                backgroundColor: "maroon",
-                "&:hover": {
-                  backgroundColor: "maroon",
-                },
-              }}
-              onClick={handleOpenDownloadDialog}
-            >
-              Download
-            </Button>
-            <Grid sx={{ marginTop: "1rem" }} container spacing={2}>
-              {files.map((file) => (
-                <Grid item xs={12} key={file.id}>
-                  <input
-                    type="file"
-                    variant="outlined"
-                    onChange={(event) => handleFileUpload(event, file.id)}
-                    InputProps={{
-                      endAdornment: (
-                        <InputAdornment position="end">
-                          <IconButton onClick={() => handleRemoveFile(file.id)}>
-                            <RemoveIcon />
-                          </IconButton>
-                        </InputAdornment>
-                      ),
-                    }}
-                  />
-                </Grid>
-              ))}
-              <Grid item xs={12}>
-                <Button
-                  variant="outlined"
-                  sx={{
-                    color: "maroon",
-                    borderColor: "maroon",
-                    "&:hover": {
-                      backgroundColor: "maroon",
-                      color: "white",
-                      borderColor: "maroon",
+        // Perform the fetch request
+        try {
+            const response = await fetch(
+                `${process.env.REACT_APP_BACKEND_URL}/files`,
+                {
+                    method: "POST",
+                    headers: {
+                        filefolder: `${"reviewer_uid_here"}/initial`,
                     },
-                  }}
-                  startIcon={<AddIcon />}
-                  onClick={handleAddFile}
-                >
-                  Add More
-                </Button>
-              </Grid>
-            </Grid>
-          </div>
-        </DialogContent>
+                    body: form,
+                }
+            );
 
-        <div className="flex items-end justify-end space-x-2 pb-[2rem]">
-          <Button
-            onClick={handleCloseModal}
-            style={closeStyle}
-            variant="outlined"
-          >
-            Close
-          </Button>
-          <Button
-            id="sub"
-            onClick={handleSubmit}
-            disabled={isSubmitEnabled}
-            variant="contained"
-          >
-            Forward
-          </Button>
+            const data = await response.json();
+            console.log(data);
+
+            const submissionsRef = collection(db, "submissions");
+            const q = query(
+                submissionsRef,
+                where("protocol_no", "==", "12312321")
+            );
+            const querySnapshot = await getDocs(q);
+
+            // Check if the submission exists
+            if (!querySnapshot.empty) {
+                // Get the first matching document (there should be only one)
+                const docSnapshot = querySnapshot.docs[0];
+
+                // Get the current date as a UNIX timestamp
+                const currentDate = Date.now();
+
+                // Offset the current date to GMT+8
+                const offsetHours = 8;
+                const offsetMilliseconds = offsetHours * 60 * 60 * 1000;
+                const currentDateGMT8 = currentDate + offsetMilliseconds;
+
+                // Add the offset current date to each file in the data.files array
+                const filesWithDate = data.files.map((file) => ({
+                    ...file,
+                    upload_date: currentDateGMT8, // Add the offset current date as a UNIX timestamp
+                }));
+
+                // Get the existing rev_initial_files array or an empty array if it doesn't exist
+                const existingReviewerFiles =
+                    docSnapshot.data().rev_initial_files || [];
+
+                // Concatenate the existing and new files arrays
+                const updatedReviewerFiles =
+                    existingReviewerFiles.concat(filesWithDate);
+
+                // Update the document with the updated rev_initial_files
+                const submissionRef = doc(db, "submissions", docSnapshot.id);
+                await updateDoc(submissionRef, {
+                    rev_initial_files: updatedReviewerFiles,
+                });
+
+                console.log("Document updated with ID: ", docSnapshot.id);
+            } else {
+                console.log("No submission found with the given protocol_no");
+            }
+        } catch (error) {
+            console.log(error);
+            return false;
+        }
+
+        navigate("/reviewerstatus");
+        setOpen(false);
+    }
+
+    const handleFileUpload = (event, id) => {
+        const file = event.target.files[0];
+        const newFiles = [...files];
+        const index = newFiles.findIndex((file) => file.id === id);
+        newFiles[index].file = file;
+        setFiles(newFiles);
+    };
+
+    const handleAddFile = () => {
+        const newFiles = [...files];
+        newFiles.push({ id: newFiles.length + 1, file: null });
+        setFiles(newFiles);
+    };
+
+    const handleRemoveFile = (id) => {
+        const newFiles = files.filter((file) => file.id !== id);
+        setFiles(newFiles);
+    };
+
+    const columns = [
+        { field: "fieldname", headerName: "DocumentName", width: "550" },
+
+        {
+            field: "action",
+            headerName: "Action",
+            width: "100",
+            renderCell: (params) => (
+                <Button
+                    style={downloadStyle}
+                    onClick={() => handleDownload(params)}
+                >
+                    Download
+                </Button>
+            ),
+        },
+    ];
+
+    const handleDownload = async (params) => {
+        console.log(params.row.downloadLink);
+        window.open(
+            `${process.env.REACT_APP_BACKEND_URL}${params.row.downloadLink}`,
+            "_blank"
+        );
+    };
+
+    const handleOpenDownloadDialog = () => {
+        if (isAnyCheckboxSelected) {
+            setShowDownloadDialog(true);
+        } else {
+            setShowAlert(true);
+        }
+    };
+
+    const handleCloseDownloadDialog = () => {
+        setShowDownloadDialog(false);
+    };
+
+    const handleDownloadAll = async () => {
+        const keys = [];
+        for (const row of submissions) {
+            keys.push(row.downloadLink.replace("/files/", ""));
+        }
+
+        fetch(`${process.env.REACT_APP_BACKEND_URL}/files/zip`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ keys: keys }),
+        })
+            .then((response) => {
+                if (response.ok) {
+                    return response.blob();
+                } else {
+                    throw new Error("Request failed");
+                }
+            })
+            .then((blob) => {
+                // Download the zip file
+                const url = URL.createObjectURL(blob);
+                const link = document.createElement("a");
+                link.href = url;
+                link.download = "files.zip";
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            })
+            .catch((error) => {
+                console.error("Error:", error);
+            });
+    };
+
+    const handleOpen = () => {
+        setOpen(true);
+    };
+
+    const handleClose = () => {
+        setOpen(false);
+    };
+
+    function handlesSuccess() {
+        setShowSuccess(true);
+        setShowConfirmation(false);
+    }
+
+    const downloadStyle = {
+        color: "maroon",
+    };
+
+    const closeStyle = {
+        color: "maroon",
+        borderColor: "maroon",
+    };
+
+    const submitStyle = {
+        color: "white",
+        backgroundColor: "maroon",
+    };
+    return (
+        <div style={{ height: 400, width: "100%" }}>
+            <DataGrid
+                classes={{ header: "custom-header" }}
+                rows={submissions}
+                columns={columns}
+                pageSize={5}
+                rowsPerPageOptions={[5]}
+                checkboxSelection
+                selectionModel={selectedRows}
+                onSelectionModelChange={(newSelection) => {
+                    setSelectedRows(newSelection);
+                    setIsAnyCheckboxSelected(newSelection.length > 0);
+                }}
+            />
+
+            <div className="mt-[1rem]">
+                {showAlert && !isDownloadSuccessful && (
+                    <Alert
+                        severity="warning"
+                        onClose={() => setShowAlert(false)}
+                    >
+                        Please select at least one document to download.
+                    </Alert>
+                )}
+            </div>
+
+            <Box
+                component="form"
+                onSubmit={(e) => {
+                    e.preventDefault();
+                    setShowConfirmation(true);
+                }}
+            >
+                <DialogContent>
+                    <div className="flex flex-col">
+                        <Button
+                            variant="contained"
+                            size="medium"
+                            sx={{
+                                color: "white",
+                                backgroundColor: "maroon",
+                                "&:hover": {
+                                    backgroundColor: "maroon",
+                                },
+                            }}
+                            onClick={handleDownloadAll}
+                        >
+                            Download All Files
+                        </Button>
+                        <Grid sx={{ marginTop: "1rem" }} container spacing={2}>
+                            {files.map((file) => (
+                                <Grid item xs={12} key={file.id}>
+                                    <input
+                                        type="file"
+                                        variant="outlined"
+                                        onChange={(event) =>
+                                            handleFileUpload(event, file.id)
+                                        }
+                                        InputProps={{
+                                            endAdornment: (
+                                                <InputAdornment position="end">
+                                                    <IconButton
+                                                        onClick={() =>
+                                                            handleRemoveFile(
+                                                                file.id
+                                                            )
+                                                        }
+                                                    >
+                                                        <RemoveIcon />
+                                                    </IconButton>
+                                                </InputAdornment>
+                                            ),
+                                        }}
+                                    />
+                                </Grid>
+                            ))}
+                            <Grid item xs={12}>
+                                <Button
+                                    variant="outlined"
+                                    sx={{
+                                        color: "maroon",
+                                        borderColor: "maroon",
+                                        "&:hover": {
+                                            backgroundColor: "maroon",
+                                            color: "white",
+                                            borderColor: "maroon",
+                                        },
+                                    }}
+                                    startIcon={<AddIcon />}
+                                    onClick={handleAddFile}
+                                >
+                                    Add More
+                                </Button>
+                            </Grid>
+                        </Grid>
+                    </div>
+                </DialogContent>
+
+                <div className="flex items-end justify-end space-x-2 pb-[2rem]">
+                    <Button
+                        onClick={handleCloseModal}
+                        style={closeStyle}
+                        variant="outlined"
+                    >
+                        Close
+                    </Button>
+                    <Button
+                        id="sub"
+                        onClick={handleSubmit}
+                        disabled={isSubmitEnabled}
+                        variant="contained"
+                    >
+                        Forward
+                    </Button>
+                </div>
+                <Dialog
+                    open={showConfirmation}
+                    onClose={() => setShowConfirmation(false)}
+                >
+                    <DialogTitle>Confirm Forward</DialogTitle>
+                    <DialogContent>
+                        <Typography variant="body1">
+                            Are you sure you want to forward the reviewed forms?
+                        </Typography>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button
+                            sx={{ color: "maroon" }}
+                            onClick={() => setShowConfirmation(false)}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            sx={{ color: "maroon" }}
+                            onClick={handlesSuccess}
+                            autoFocus
+                        >
+                            Forward
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+                <Dialog
+                    open={showSuccess}
+                    onClose={() => setShowSuccess(false)}
+                >
+                    <DialogTitle>Success!</DialogTitle>
+                    <DialogContent>
+                        <Typography variant="body1">
+                            You have successfully transferred the files.
+                        </Typography>
+                    </DialogContent>
+                    <DialogActions>
+                        <Button
+                            sx={{ color: "maroon" }}
+                            onClick={() => {
+                                navigate("/reviewerstatus");
+                                setOpen(false);
+                            }}
+                        >
+                            Close
+                        </Button>
+                    </DialogActions>
+                </Dialog>
+            </Box>
+            <Dialog
+                open={showDownloadDialog}
+                onClose={handleCloseDownloadDialog}
+            >
+                <DialogTitle>Download Selected Files</DialogTitle>
+                <DialogContent>
+                    <DialogContentText>
+                        Do you want to download all the selected files?
+                    </DialogContentText>
+                </DialogContent>
+                <DialogActions>
+                    <Button
+                        sx={{ color: "maroon" }}
+                        onClick={handleCloseDownloadDialog}
+                    >
+                        Cancel
+                    </Button>
+                    <Button
+                        sx={{ color: "maroon" }}
+                        onClick={handleDownloadAll}
+                    >
+                        Download
+                    </Button>
+                </DialogActions>
+            </Dialog>
         </div>
-        <Dialog
-          open={showConfirmation}
-          onClose={() => setShowConfirmation(false)}
-        >
-          <DialogTitle>Confirm Forward</DialogTitle>
-          <DialogContent>
-            <Typography variant="body1">
-              Are you sure you want to forward the reviewed forms?
-            </Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button
-              sx={{ color: "maroon" }}
-              onClick={() => setShowConfirmation(false)}
-            >
-              Cancel
-            </Button>
-            <Button sx={{ color: "maroon" }} onClick={handlesSuccess} autoFocus>
-              Forward
-            </Button>
-          </DialogActions>
-        </Dialog>
-        <Dialog open={showSuccess} onClose={() => setShowSuccess(false)}>
-          <DialogTitle>Success!</DialogTitle>
-          <DialogContent>
-            <Typography variant="body1">
-              You have successfully transferred the files.
-            </Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button
-              sx={{ color: "maroon" }}
-              onClick={() => {
-                navigate("/reviewerstatus");
-                setOpen(false);
-              }}
-            >
-              Close
-            </Button>
-          </DialogActions>
-        </Dialog>
-      </Box>
-      <Dialog open={showDownloadDialog} onClose={handleCloseDownloadDialog}>
-        <DialogTitle>Download Selected Files</DialogTitle>
-        <DialogContent>
-          <DialogContentText>
-            Do you want to download all the selected files?
-          </DialogContentText>
-        </DialogContent>
-        <DialogActions>
-          <Button sx={{ color: "maroon" }} onClick={handleCloseDownloadDialog}>
-            Cancel
-          </Button>
-          <Button sx={{ color: "maroon" }} onClick={handleDownloadAll}>
-            Download
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </div>
-  );
+    );
 };
 
 export default Assignedmodalinitial;

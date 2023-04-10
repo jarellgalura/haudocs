@@ -6,6 +6,7 @@ const cors = require("cors");
 const bodyParser = require("body-parser");
 const multer = require("multer");
 require("dotenv").config();
+const archiver = require("archiver");
 
 app.use(
     cors({
@@ -130,6 +131,57 @@ app.get("/files/*", (req, res) => {
             return res.status(500).send(err);
         })
         .pipe(res);
+});
+
+// Download files from S3 bucket and zip them
+app.post("/files/zip", async (req, res) => {
+    // Get the file keys from the request body
+    const fileKeys = req.body.keys;
+    // console.log(fileKeys);
+
+    if (!fileKeys || !Array.isArray(fileKeys) || fileKeys.length === 0) {
+        return res.status(400).send("Missing or invalid 'keys' parameter.");
+    }
+
+    // Set up the zip archive
+    const archive = archiver("zip", {
+        zlib: { level: 9 }, // Compression level
+    });
+
+    // Set up the response headers
+    res.setHeader("Content-Type", "application/zip");
+    res.setHeader("Content-Disposition", `attachment; filename="files.zip"`);
+
+    // Pipe the archive to the response
+    archive.pipe(res);
+
+    // Iterate through the file keys and add them to the archive
+    for (const key of fileKeys) {
+        // Define the file parameters
+        const params = {
+            Bucket: BUCKET_NAME,
+            Key: key,
+        };
+
+        // Retrieve the file name
+        const fileName = key.split("/").pop();
+
+        // Add the file to the archive
+        archive.append(s3.getObject(params).createReadStream(), {
+            name: fileName,
+        });
+    }
+
+    // Finalize the archive
+    archive.finalize();
+
+    // Handle archive errors
+    archive.on("error", (err) => {
+        console.error(err);
+        res.status(500).send(
+            "An error occurred while creating the zip archive."
+        );
+    });
 });
 
 // Delete file from the S3 bucket
