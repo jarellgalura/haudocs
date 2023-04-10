@@ -11,15 +11,14 @@ import {
   DialogContentText,
 } from "@mui/material";
 import Box from "@mui/material/Box";
-import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
 import FormControl from "@mui/material/FormControl";
 import InputLabel from "@mui/material/InputLabel";
 import Select from "@mui/material/Select";
 import Checkbox from "@mui/material/Checkbox";
-import FormControlLabel from "@mui/material/FormControlLabel";
 import "../tabmodal.css";
 import { useNavigate } from "react-router-dom";
+import "./applicantmodal.css";
 import {
   getFirestore,
   collection,
@@ -28,16 +27,36 @@ import {
   getDocs,
   updateDoc,
   doc,
-} from "firebase/firestore/lite";
+  Timestamp,
+  serverTimestamp,
+  setDoc,
+} from "firebase/firestore";
+import { auth } from "../../../../../firebase";
+import Modal from "@mui/material/Modal";
+import AdminTransfer from "./AdminTransfer";
+
+const style = {
+  position: "absolute",
+  top: "50%",
+  left: "50%",
+  transform: "translate(-50%, -50%)",
+  width: "50%",
+  bgcolor: "background.paper",
+  border: "2px solid #000",
+  boxShadow: 24,
+  p: 4,
+};
 
 const Continuingtab = (props) => {
   const navigate = useNavigate();
   const { handleCloseModal } = props;
   const [protocolNumber, setProtocolNumber] = React.useState("");
+  const [submissionDate, setSubmissionDate] = useState(Timestamp.now());
   const [reviewType, setReviewType] = React.useState("");
-  const [isCheckedHau, setIsCheckedHau] = React.useState(false);
-  const [isCheckedOthers, setIsCheckedOthers] = React.useState(false);
-  const [assignTo, setAssignTo] = React.useState("");
+  const [researchType, setResearchType] = React.useState("");
+  const [isCheckedHau, setIsCheckedHau] = useState(false);
+  const [isCheckedOthers, setIsCheckedOthers] = useState(false);
+  const [assignTo, setAssignTo] = useState([]);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isFormValid, setIsFormValid] = useState(false);
@@ -47,10 +66,11 @@ const Continuingtab = (props) => {
   const [showDownloadDialog, setShowDownloadDialog] = React.useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const formRef = useRef(null);
+  const [users, setUsers] = useState([]);
   const [submissions, setSubmissions] = useState([]);
-  const [users, setUsers] = useState(null);
-
-  console.log(submissions);
+  const [selectAll, setSelectAll] = useState(false);
+  const [open, setOpen] = React.useState(false);
+  const [showModal, setShowModal] = useState(false);
 
   useEffect(() => {
     const db = getFirestore();
@@ -62,7 +82,8 @@ const Continuingtab = (props) => {
         id: doc.id,
         ...doc.data(),
       }));
-      const files = data[0].files.map((file, index) => ({
+
+      const files = data[0].continuing_files.map((file, index) => ({
         id: index + 1,
         name: data[0].name,
         date_sent: new Date(
@@ -87,32 +108,14 @@ const Continuingtab = (props) => {
     });
   }, []);
 
-  const columns = [
-    { field: "documentname", headerName: "DocumentName", width: "180" },
-    { field: "sentby", headerName: "Sent By", width: "175" },
-    { field: "datesent", headerName: "Date Sent", width: "200" },
-    {
-      field: "action",
-      headerName: "Action",
-      width: "100",
-      renderCell: (params) => (
-        <Button style={downloadStyle} onClick={() => handleDownload(params.id)}>
-          Download
-        </Button>
-      ),
-    },
-  ];
-
   const checkFormValidity = () => {
-    const requiredFields = [protocolNumber, reviewType, assignTo];
+    const requiredFields = [protocolNumber, reviewType, assignTo, researchType];
     const isAllFieldsFilledOut = requiredFields.every((field) => !!field);
     const isAnyCheckboxSelected = isCheckedHau || isCheckedOthers;
     const isCheckboxSelectedAndValid =
       isAnyCheckboxSelected && selectedRows.length > 0;
 
-    setIsFormValid(
-      isAllFieldsFilledOut && isCheckboxSelectedAndValid && !!protocolNumber
-    );
+    setIsFormValid(isAllFieldsFilledOut && isCheckboxSelectedAndValid);
   };
 
   useEffect(() => {
@@ -128,16 +131,23 @@ const Continuingtab = (props) => {
     submissions,
   ]);
 
-  const handleProtocolNumberChange = (event) => {
-    setProtocolNumber(event.target.value);
-    checkFormValidity();
+  const handleSelectAll = () => {
+    if (!selectAll) {
+      // Select all users
+      setAssignTo(
+        users
+          .filter(
+            (user) => user.role === "scientist" || user.role === "non-scientist"
+          )
+          .map((user) => user.email)
+      );
+      setSelectAll(true);
+    } else {
+      // Deselect all users
+      setAssignTo([]);
+      setSelectAll(false);
+    }
   };
-
-  const handleReviewTypeChange = (event) => {
-    setReviewType(event.target.value);
-    checkFormValidity();
-  };
-
   const handleCheckboxChange = (event) => {
     const { name, checked } = event.target;
 
@@ -152,7 +162,14 @@ const Continuingtab = (props) => {
   };
 
   const handleAssignToChange = (event) => {
-    setAssignTo(event.target.value);
+    if (event.target.value.includes("select-all")) {
+      // "Select all" option was selected, toggle selectAll state
+      setSelectAll(!selectAll);
+    } else {
+      // Other option was selected, update assignTo state
+      setAssignTo(event.target.value);
+      setSelectAll(false);
+    }
   };
 
   const handleDownload = async (params) => {
@@ -163,28 +180,7 @@ const Continuingtab = (props) => {
     );
   };
 
-  const handleOpenDownloadDialog = () => {
-    if (isAnyCheckboxSelected) {
-      setShowDownloadDialog(true);
-    } else {
-      setShowAlert(true);
-    }
-  };
-
-  const handleCloseDownloadDialog = () => {
-    setShowDownloadDialog(false);
-  };
-
-  const handleDownloadAll = async () => {
-    for (const row of submissions) {
-      if (selectedRows.includes(row.id)) {
-        await handleDownload(row.id);
-      }
-    }
-    setShowDownloadDialog(false);
-  };
-
-  const handleSubmit = (event) => {
+  async function handleSubmit(event) {
     event.preventDefault();
     formRef.current.reset();
     checkFormValidity();
@@ -197,7 +193,7 @@ const Continuingtab = (props) => {
       const q = query(
         submissionsRef,
         where("uid", "==", props.uid),
-        where("status", "==", "initial")
+        where("status", "==", "continuing")
       );
 
       getDocs(q).then((querySnapshot) => {
@@ -209,12 +205,48 @@ const Continuingtab = (props) => {
         // Update the first document in the query snapshot
         const docRef = doc(db, "submissions", data[0].id);
         updateDoc(docRef, {
-          protocol_no: protocolNumber,
-          review_type: reviewType,
-          reviewer: assignTo,
-          school: isCheckedHau ? "HAU" : "Others",
+          rev_date_sent: serverTimestamp(),
+        });
+
+        const updatedInitialFiles = data[0].continuing_files.map((file) => {
+          if (selectedId.includes(file.id)) {
+            return {
+              ...file,
+              forReview: true,
+            };
+          }
+          return file;
+        });
+
+        updateDoc(docRef, {
+          continuing_files: updatedInitialFiles,
         });
       });
+
+      const notificationsRef = collection(db, "notifications");
+
+      // Check if all users have been selected
+      if (assignTo.length === users.length) {
+        const newNotification = {
+          id: doc(notificationsRef).id,
+          message: `There's a forwarded form for you to review.`,
+          read: false,
+          recipientEmail: "all",
+          senderEmail: auth.currentUser.email,
+          timestamp: serverTimestamp(),
+        };
+        await setDoc(doc(notificationsRef), newNotification);
+      } else {
+        const newNotification = {
+          id: doc(notificationsRef).id,
+          message: `There's a forwarded form for you to review.`,
+          read: false,
+          recipientEmail: assignTo.join(", "),
+          senderEmail: auth.currentUser.email,
+          timestamp: serverTimestamp(),
+        };
+        await setDoc(doc(notificationsRef), newNotification);
+      }
 
       console.log({
         protocolNumber,
@@ -226,6 +258,36 @@ const Continuingtab = (props) => {
     } else {
       alert("Please select at least one checkbox");
     }
+  }
+
+  const handleOpenDownloadDialog = () => {
+    if (isAnyCheckboxSelected) {
+      setShowDownloadDialog(true);
+    } else {
+      setShowAlert(true);
+    }
+  };
+
+  const handleCloseDownloadDialog = () => {
+    setShowDownloadDialog(false);
+    setShowAlert(false);
+  };
+
+  function modalhandleOpen() {
+    setShowModal(true);
+  }
+
+  function modalhandleClose() {
+    setShowModal(false);
+  }
+
+  const handleDownloadAll = async () => {
+    for (const row of submissions) {
+      if (selectedRows.includes(row.id)) {
+        await handleDownload(row.id);
+      }
+    }
+    setShowDownloadDialog(false);
   };
 
   const handleClose = () => {
@@ -245,6 +307,31 @@ const Continuingtab = (props) => {
     color: "white",
     backgroundColor: "maroon",
   };
+
+  const columns = [
+    { field: "fieldname", headerName: "DocumentName", width: "180" },
+    { field: "name", headerName: "Sent By", width: "175" },
+    {
+      field: "forReview",
+      headerName: "Status",
+      width: "200",
+      renderCell: (params) => <span>{params.value ? "Forwarded" : ""}</span>,
+    },
+    { field: "date_sent", headerName: "Date Sent", width: "200" },
+    {
+      field: "action",
+      headerName: "Action",
+      width: "100",
+      renderCell: (params) => (
+        <Button style={downloadStyle} onClick={() => handleDownload(params)}>
+          Download
+        </Button>
+      ),
+    },
+  ];
+
+  const [selectedId, setSelectedId] = useState([]);
+
   return (
     <div style={{ height: 400, width: "100%" }}>
       <DataGrid
@@ -255,11 +342,19 @@ const Continuingtab = (props) => {
         rowsPerPageOptions={[5]}
         checkboxSelection
         onSelectionModelChange={(newSelection) => {
-          setSelectedRows(newSelection);
+          const selectedRowData = newSelection.map((id) =>
+            submissions.find((row) => row.id === id)
+          );
+          setSelectedRows(selectedRowData);
+
+          const id = selectedRowData.map((row) => row.id);
+          setSelectedId(id);
+
           setIsAnyCheckboxSelected(newSelection.length > 0);
           checkFormValidity();
         }}
       />
+
       <div className="mt-[1rem]">
         {showAlert && !isDownloadSuccessful && (
           <Alert severity="warning" onClose={() => setShowAlert(false)}>
@@ -282,36 +377,83 @@ const Continuingtab = (props) => {
         >
           Download
         </Button>
+        <div>
+          <Button
+            size="medium"
+            sx={{
+              color: "white",
+              backgroundColor: "maroon",
+              "&:hover": {
+                backgroundColor: "maroon",
+              },
+            }}
+            variant="contained"
+            onClick={modalhandleOpen}
+          >
+            Message Applicant
+          </Button>
+          <Modal
+            open={showModal}
+            onClose={modalhandleClose}
+            aria-labelledby="modal-modal-title"
+            aria-describedby="modal-modal-description"
+          >
+            <Box sx={style}>
+              <AdminTransfer uid={props.uid} />
+            </Box>
+          </Modal>
+        </div>
       </div>
       <Box
+        ref={formRef}
         component="form"
         onSubmit={(e) => {
           e.preventDefault();
           setShowConfirmation(true);
         }}
       >
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "1rem",
-            marginTop: "1rem",
-          }}
-        >
-          <FormControl required sx={{ minWidth: 120, marginBottom: "2rem" }}>
-            <InputLabel>Assign To</InputLabel>
-            <Select value={assignTo} onChange={handleAssignToChange}>
-              {users &&
-                users
-                  .filter(
-                    (user) =>
-                      user.role === "scientist" || user.role === "non-scientist"
-                  )
-                  .map((user, index) => (
-                    <MenuItem key={user.id} value={user.id}>
-                      Reviewer {index + 1}
-                    </MenuItem>
-                  ))}
+        <Box sx={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
+          <FormControl fullWidth sx={{ marginBottom: "2rem" }}>
+            <InputLabel id="assign-to-label">Assign To</InputLabel>
+            <Select
+              labelId="assign-to-label"
+              id="assign-to"
+              multiple
+              value={assignTo}
+              onChange={handleAssignToChange}
+              label="Assign To"
+              renderValue={(selected) => (
+                <div>
+                  {selected.length === 0
+                    ? "Select reviewers"
+                    : selected.length === users.length
+                    ? "All reviewers selected"
+                    : `${selected.length} reviewers selected`}
+                </div>
+              )}
+            >
+              <MenuItem key="select-all" value="select-all">
+                <Checkbox
+                  checked={assignTo.length === users.length}
+                  indeterminate={
+                    assignTo.length > 0 && assignTo.length < users.length
+                  }
+                  onClick={handleSelectAll}
+                />
+                Select all
+              </MenuItem>
+
+              {users
+                .filter(
+                  (user) =>
+                    user.role === "scientist" || user.role === "non-scientist"
+                )
+                .map((user) => (
+                  <MenuItem key={user.email} value={user.email}>
+                    <Checkbox checked={assignTo.indexOf(user.email) > -1} />
+                    {user.email}
+                  </MenuItem>
+                ))}
             </Select>
           </FormControl>
         </Box>
@@ -326,7 +468,6 @@ const Continuingtab = (props) => {
           <Button
             id="sub"
             type="submit"
-            onClick={() => setShowConfirmation(true)}
             variant="contained"
             disabled={!isFormValid}
           >

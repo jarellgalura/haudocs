@@ -17,8 +17,13 @@ import {
   getDocs,
   query,
   where,
+  doc,
+  getDoc,
+  setDoc,
+  updateDoc,
 } from "firebase/firestore/lite";
 import { db, auth } from "../../firebase";
+import { onAuthStateChanged } from "firebase/auth";
 
 const Continuing = ({ onSubmitted }) => {
   const navigate = useNavigate();
@@ -33,23 +38,50 @@ const Continuing = ({ onSubmitted }) => {
   const [isButtonDisabled, setIsButtonDisabled] = useState(true);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
+  const [userName, setUserName] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setCurrentUser(currentUser);
+
+      if (currentUser) {
+        const userRef = doc(db, "users", currentUser.uid);
+
+        getDoc(userRef).then((doc) => {
+          if (doc.exists()) {
+            const name = doc.data().name;
+            setUserName(name);
+            localStorage.setItem("userName", name);
+          }
+        });
+      }
+    });
+
+    return unsubscribe;
+  }, []);
+
+  function generateId(length) {
+    let result = "";
+    const characters =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    const charactersLength = characters.length;
+    for (let i = 0; i < length; i++) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
+  }
 
   async function handleSubmit() {
     const submissionsRef = collection(db, "submissions");
     const q = query(
       submissionsRef,
       where("uid", "==", auth.currentUser.uid),
-      where("status", "==", "continuing")
+      where("status", "==", "initial")
     );
     const querySnapshot = await getDocs(q);
-    if (!querySnapshot.empty) {
-      // User has already submitted continuing form
-      setShowAlert(true);
-      return false;
-    }
 
     const form = new FormData();
-
     if (firstFile) {
       form.append("HAU-IRB 3.1(A): Progress Report Form", firstFile);
     }
@@ -98,24 +130,51 @@ const Continuing = ({ onSubmitted }) => {
       const data = await response.json();
       console.log(data);
 
-      try {
-        const docRef = await addDoc(collection(db, "submissions"), {
+      const continuingFiles = data.files.map((file) => ({
+        id: generateId(16),
+        forReview: false,
+        ...file,
+      }));
+
+      if (!querySnapshot.empty) {
+        const docRef = querySnapshot.docs[0].ref;
+        await updateDoc(docRef, {
+          continuing_files: [
+            ...querySnapshot.docs[0].data().continuing_files,
+            ...continuingFiles,
+          ],
+        });
+        console.log("Document updated with ID: ", docRef.id);
+        const notificationsRef = collection(db, "notifications");
+        const adminUsersQuery = query(
+          collection(db, "users"),
+          where("role", "==", "admin")
+        );
+        const adminUsersSnapshot = await getDocs(adminUsersQuery);
+        const adminEmails = adminUsersSnapshot.docs.map(
+          (doc) => doc.data().email
+        );
+
+        adminEmails.forEach(async (email) => {
+          const newNotification = {
+            id: doc(notificationsRef).id,
+            message: `There's a new Continuing form submitted`,
+            role: "applicant",
+            read: false,
+            recipientEmail: email,
+            senderEmail: auth.currentUser.email,
+            timestamp: serverTimestamp(),
+          };
+          await setDoc(doc(notificationsRef), newNotification);
+        });
+        onSubmitted();
+      } else {
+        const newSubmissionRef = await addDoc(submissionsRef, {
           uid: auth.currentUser.uid,
           status: "continuing",
-          files: data.files,
-          name: auth.currentUser.displayName,
-          date_sent: serverTimestamp(),
-          due_date: "",
-          protocol_no: "",
-          reviewer: "",
-          review_type: "",
-          decision: "",
-          school: "",
+          continuing_files: continuingFiles,
         });
-        console.log("Document written with ID: ", docRef.id);
-        onSubmitted();
-      } catch (e) {
-        console.log("Error adding document: ", e);
+        console.log("New document created with ID: ", newSubmissionRef.id);
       }
     } catch (error) {
       console.log(error);

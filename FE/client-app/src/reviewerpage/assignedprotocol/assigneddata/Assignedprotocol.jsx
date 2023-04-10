@@ -61,7 +61,6 @@ function AssignedProtocol() {
   }
 
   function handleCloseModal() {
-    setProtocolNo(null);
     setShowModal(false);
   }
 

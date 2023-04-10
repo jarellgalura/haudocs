@@ -2,39 +2,26 @@ import React from "react";
 import Adminsidebar from "../Adminsidebar";
 import Button from "@mui/material/Button";
 import { DataGrid } from "@mui/x-data-grid";
-import DeleteIcon from "@mui/icons-material/Delete";
 import "./archiving.css";
 import { Box } from "@mui/system";
 
 const Archiving = () => {
-  // Sample data
   const columns = [
-    { field: "applicantname", headerName: "Applicant Name", width: 230 },
-    { field: "documentname", headerName: "Document Name", width: 230 },
+    { field: "protocol_no", headerName: "Protocol Number", width: 230 },
+    { field: "review_type", headerName: "Review Type", width: 230 },
     { field: "reviewer", headerName: "Reviewer", width: 230 },
-    { field: "date", headerName: "Date", width: 190 },
+    { field: "date", headerName: "Date Completed", width: 190 },
     {
       field: "action",
       headerName: "Action",
-      renderCell: (params) => <DeleteCell {...params} />,
+      renderCell: (params) => <ViewCell {...params} />,
       width: 180,
     },
   ];
 
-  function DeleteCell(props) {
-    const handleDelete = () => {};
-
-    return (
-      <Button style={deleteStyle} startIcon={<DeleteIcon />}>
-        Delete
-      </Button>
-    );
+  function ViewCell(props) {
+    return <Button>View</Button>;
   }
-
-  const deleteStyle = {
-    color: "maroon",
-    borderColor: "maroon",
-  };
 
   const rows = [];
 
