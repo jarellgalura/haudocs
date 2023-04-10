@@ -119,14 +119,16 @@ const AdminTransfer = () => {
               />
               <FormGroup>
                 <FormControlLabel
-                  control={<Checkbox defaultChecked />}
-                  label="Mark As Completed"
+                  required
+                  control={<Checkbox />}
+                  label="Mark Protocol As Completed (For Archiving)"
                 />
               </FormGroup>
 
               <FormControl sx={{ width: "100%" }}>
                 <InputLabel>Decision</InputLabel>
                 <Select
+                  required
                   label="Decision"
                   value={decision}
                   onChange={handleDecisionChange}

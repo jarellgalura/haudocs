@@ -95,7 +95,10 @@ function Assignedmodal(props) {
         </Box>
 
         <TabPanel value={value} index={0}>
-          <AssignedmodalInitial handleCloseModal={handleCloseModal} />
+          <AssignedmodalInitial
+            protocol_no={props.protocol_no}
+            handleCloseModal={handleCloseModal}
+          />
         </TabPanel>
 
         {/* Continuing TAB */}

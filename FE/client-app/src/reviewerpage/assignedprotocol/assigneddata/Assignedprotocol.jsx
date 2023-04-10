@@ -20,6 +20,7 @@ import { auth } from "../../../firebase";
 function AssignedProtocol() {
   const [showModal, setShowModal] = useState(false);
   const [submissions, setSubmissions] = useState([]);
+  const [protocolNo, setProtocolNo] = useState(null);
 
   useEffect(() => {
     const db = getFirestore();
@@ -54,7 +55,13 @@ function AssignedProtocol() {
     }
   }, []);
 
+  function handleOpenModal(protocol_no) {
+    setProtocolNo(protocol_no);
+    setShowModal(true);
+  }
+
   function handleCloseModal() {
+    setProtocolNo(null);
     setShowModal(false);
   }
 
@@ -89,9 +96,13 @@ function AssignedProtocol() {
   ];
 
   function ViewCell(id) {
+    console.log(id.row.protocol_no);
     return (
       <div>
-        <Button onClick={() => setShowModal(true)} style={viewStyle}>
+        <Button
+          onClick={() => handleOpenModal(id.row.protocol_no)}
+          style={viewStyle}
+        >
           View
         </Button>
         <Modal
@@ -101,7 +112,12 @@ function AssignedProtocol() {
           aria-describedby="modal-modal-description"
         >
           <Box sx={style}>
-            <Assignedmodal handleCloseModal={handleCloseModal} />
+            {protocolNo && (
+              <Assignedmodal
+                protocol_no={protocolNo}
+                handleCloseModal={handleCloseModal}
+              />
+            )}
           </Box>
         </Modal>
       </div>
