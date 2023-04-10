@@ -181,24 +181,19 @@ const Assignedmodalinitial = (props) => {
       headerName: "Action",
       width: "100",
       renderCell: (params) => (
-        <Button style={downloadStyle} onClick={() => handleDownload(params.id)}>
+        <Button style={downloadStyle} onClick={() => handleDownload(params)}>
           Download
         </Button>
       ),
     },
   ];
 
-  const handleDownload = async (id) => {
-    const fileRef = ref(storage, `Submissions/${id}.docx`);
-
-    try {
-      // Get the download URL for the file
-      const downloadURL = await getDownloadURL(fileRef);
-      // Open the file in a new tab/window
-      window.open(downloadURL, "_blank");
-    } catch (error) {
-      console.error(error);
-    }
+  const handleDownload = async (params) => {
+    console.log(params.row.downloadLink);
+    window.open(
+      `${process.env.REACT_APP_BACKEND_URL}${params.row.downloadLink}`,
+      "_blank"
+    );
   };
 
   const handleOpenDownloadDialog = () => {

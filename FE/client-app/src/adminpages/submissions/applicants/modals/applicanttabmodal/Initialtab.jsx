@@ -31,10 +31,12 @@ import {
   doc,
   Timestamp,
   serverTimestamp,
-} from "firebase/firestore/lite";
+  setDoc,
+} from "firebase/firestore";
 import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import { auth } from "../../../../../firebase";
 
 const Initialtab = (props) => {
   const navigate = useNavigate();
@@ -57,6 +59,7 @@ const Initialtab = (props) => {
   const formRef = useRef(null);
   const [users, setUsers] = useState([]);
   const [submissions, setSubmissions] = useState([]);
+  const [selectAll, setSelectAll] = useState(false);
 
   useEffect(() => {
     const db = getFirestore();
@@ -138,22 +141,23 @@ const Initialtab = (props) => {
     checkFormValidity();
   };
 
-  const handleSelectAll = (event) => {
-    const allUsers = users
-      .filter(
-        (user) => user.role === "scientist" || user.role === "non-scientist"
-      )
-      .map((user) => user.email);
-
-    if (event.target.checked) {
+  const handleSelectAll = () => {
+    if (!selectAll) {
       // Select all users
-      setAssignTo(allUsers);
+      setAssignTo(
+        users
+          .filter(
+            (user) => user.role === "scientist" || user.role === "non-scientist"
+          )
+          .map((user) => user.email)
+      );
+      setSelectAll(true);
     } else {
       // Deselect all users
       setAssignTo([]);
+      setSelectAll(false);
     }
   };
-
   const handleCheckboxChange = (event) => {
     const { name, checked } = event.target;
 
@@ -168,8 +172,14 @@ const Initialtab = (props) => {
   };
 
   const handleAssignToChange = (event) => {
-    setAssignTo(event.target.value);
-    checkFormValidity();
+    if (event.target.value.includes("select-all")) {
+      // "Select all" option was selected, toggle selectAll state
+      setSelectAll(!selectAll);
+    } else {
+      // Other option was selected, update assignTo state
+      setAssignTo(event.target.value);
+      setSelectAll(false);
+    }
   };
 
   const handleDownload = async (params) => {
@@ -180,7 +190,7 @@ const Initialtab = (props) => {
     );
   };
 
-  const handleSubmit = (event) => {
+  async function handleSubmit(event) {
     event.preventDefault();
     formRef.current.reset();
     checkFormValidity();
@@ -230,6 +240,31 @@ const Initialtab = (props) => {
         });
       });
 
+      const notificationsRef = collection(db, "notifications");
+
+      // Check if all users have been selected
+      if (assignTo.length === users.length) {
+        const newNotification = {
+          id: doc(notificationsRef).id,
+          message: `There's a forwarded form for you to review.`,
+          read: false,
+          recipientEmail: "all",
+          senderEmail: auth.currentUser.email,
+          timestamp: serverTimestamp(),
+        };
+        await setDoc(doc(notificationsRef), newNotification);
+      } else {
+        const newNotification = {
+          id: doc(notificationsRef).id,
+          message: `There's a forwarded form for you to review.`,
+          read: false,
+          recipientEmail: assignTo.join(", "),
+          senderEmail: auth.currentUser.email,
+          timestamp: serverTimestamp(),
+        };
+        await setDoc(doc(notificationsRef), newNotification);
+      }
+
       console.log({
         protocolNumber,
         reviewType,
@@ -240,7 +275,7 @@ const Initialtab = (props) => {
     } else {
       alert("Please select at least one checkbox");
     }
-  };
+  }
 
   const handleOpenDownloadDialog = () => {
     if (isAnyCheckboxSelected) {
@@ -451,12 +486,13 @@ const Initialtab = (props) => {
                 </div>
               )}
             >
-              <MenuItem value="select-all" onClick={handleSelectAll}>
+              <MenuItem key="select-all" value="select-all">
                 <Checkbox
                   checked={assignTo.length === users.length}
                   indeterminate={
                     assignTo.length > 0 && assignTo.length < users.length
                   }
+                  onClick={handleSelectAll}
                 />
                 Select all
               </MenuItem>
