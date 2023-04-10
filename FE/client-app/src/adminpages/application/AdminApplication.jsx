@@ -8,6 +8,7 @@ import {
   onSnapshot,
   query,
   where,
+  orderBy,
 } from "firebase/firestore";
 
 const AdminApplication = () => {
@@ -18,21 +19,39 @@ const AdminApplication = () => {
     const submissionsCollection = collection(db, "submissions");
     const submissionsQuery = query(
       submissionsCollection,
-      where("protocol_no", "!=", "")
+      where("reviewer", "!=", "")
     );
     const unsubscribe = onSnapshot(submissionsQuery, (snapshot) => {
-      const submissionsData = snapshot.docs.map((doc) => {
+      const submissionsData = [];
+      snapshot.docs.forEach((doc) => {
         const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          rev_date_sent: data.rev_date_sent
-            ? new Date(data.rev_date_sent.seconds * 1000).toLocaleString()
-            : null,
-          due_date: data.due_date
-            ? new Date(data.due_date.seconds * 1000).toLocaleString()
-            : null,
-        };
+        if (data.reviewer) {
+          if (Array.isArray(data.reviewer)) {
+            data.reviewer.forEach((reviewer, index) => {
+              submissionsData.push({
+                id: `${doc.id}_${index}`,
+                protocol_no: data.protocol_no,
+                review_type: data.review_type,
+                rev_date_sent: data.rev_date_sent
+                  ? new Date(data.rev_date_sent.seconds * 1000).toLocaleString()
+                  : null,
+                reviewer: reviewer,
+                status: data.status,
+              });
+            });
+          } else {
+            submissionsData.push({
+              id: doc.id,
+              protocol_no: data.protocol_no,
+              review_type: data.review_type,
+              rev_date_sent: data.rev_date_sent
+                ? new Date(data.rev_date_sent.seconds * 1000).toLocaleString()
+                : null,
+              reviewer: data.reviewer,
+              status: data.status,
+            });
+          }
+        }
       });
       setSubmissions(submissionsData);
     });

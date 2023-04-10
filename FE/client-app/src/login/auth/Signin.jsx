@@ -106,6 +106,7 @@ function Signin() {
         }, 2000);
       }
     } catch (error) {
+      setIsLoading(false);
       switch (error.code) {
         case "auth/user-not-found":
           setErrorMessages(

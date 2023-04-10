@@ -172,16 +172,28 @@ function Initial({ onSubmitted }) {
         });
         console.log("Document written with ID: ", docRef.id);
         const notificationsRef = collection(db, "notifications");
-        const newNotification = {
-          id: doc(notificationsRef).id,
-          message: `Theres a new Initial form submitted`,
-          role: "applicant",
-          read: false,
-          recipientEmail: "haudocsirb@gmail.com",
-          senderEmail: auth.currentUser.email,
-          timestamp: serverTimestamp(),
-        };
-        await setDoc(doc(notificationsRef), newNotification);
+        const adminUsersQuery = query(
+          collection(db, "users"),
+          where("role", "==", "admin")
+        );
+        const adminUsersSnapshot = await getDocs(adminUsersQuery);
+        const adminEmails = adminUsersSnapshot.docs.map(
+          (doc) => doc.data().email
+        );
+
+        // Create and send notification to each admin user
+        adminEmails.forEach(async (email) => {
+          const newNotification = {
+            id: doc(notificationsRef).id,
+            message: `There's a new Initial form submitted`,
+            role: "applicant",
+            read: false,
+            recipientEmail: email,
+            senderEmail: auth.currentUser.email,
+            timestamp: serverTimestamp(),
+          };
+          await setDoc(doc(notificationsRef), newNotification);
+        });
         onSubmitted();
       } catch (e) {
         console.log("Error adding document: ", e);

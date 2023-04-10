@@ -12,10 +12,13 @@ import {
   DialogContent,
   DialogActions,
   Typography,
+  FormGroup,
+  FormControlLabel,
 } from "@mui/material";
 import Adminsidebar from "../Adminsidebar";
 import "./transfer.css";
 import "../../App.css";
+import Checkbox from "@mui/material/Checkbox";
 
 const AdminTransfer = () => {
   const [file, setFile] = useState(null);
@@ -24,14 +27,27 @@ const AdminTransfer = () => {
   const [comment, setComment] = useState("");
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
+  const [showExemptReviewTextField, setShowExemptReviewTextField] =
+    useState(false);
   const formRef = useRef(null);
+  const [protocolNumber, setProtocolNumber] = useState("");
+  const [decision, setDecision] = useState("");
 
   const handleFileUpload = (event) => {
     setFile(event.target.files[0]);
   };
 
+  const handleDecisionChange = (event) => {
+    setDecision(event.target.value);
+  };
+
+  const handleProtocolNumberChange = (event) => {
+    setProtocolNumber(event.target.value);
+  };
+
   const handleReviewTypeChange = (event) => {
     setReviewType(event.target.value);
+    setShowExemptReviewTextField(event.target.value === "Type A");
   };
 
   const handleSendToChange = (event) => {
@@ -61,8 +77,8 @@ const AdminTransfer = () => {
   return (
     <Adminsidebar>
       <div className="transfer">
-        <Box sx={{ py: 2 }}>
-          <Box sx={{ maxWidth: "600px", margin: "0 auto", px: 2 }}>
+        <Box>
+          <Box sx={{ maxWidth: "600px", margin: "0 auto" }}>
             <Box
               ref={formRef}
               component="form"
@@ -73,7 +89,6 @@ const AdminTransfer = () => {
               sx={{
                 display: "flex",
                 flexDirection: "column",
-                alignItems: "center",
                 gap: 2,
                 borderWidth: 2,
                 borderColor: "black",
@@ -82,7 +97,17 @@ const AdminTransfer = () => {
                 boxShadow: 4,
               }}
             >
-              <InputLabel htmlFor="file-upload">Transfer Files</InputLabel>
+              <InputLabel
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  textAlign: "center",
+                  justifyContent: "center",
+                }}
+                htmlFor="file-upload"
+              >
+                Transfer Files
+              </InputLabel>
               <input
                 multiple
                 required
@@ -92,15 +117,51 @@ const AdminTransfer = () => {
                 onChange={handleFileUpload}
                 style={{ width: "100%" }}
               />
+              <FormGroup>
+                <FormControlLabel
+                  control={<Checkbox defaultChecked />}
+                  label="Mark As Completed"
+                />
+              </FormGroup>
+
+              <FormControl sx={{ width: "100%" }}>
+                <InputLabel>Decision</InputLabel>
+                <Select
+                  label="Decision"
+                  value={decision}
+                  onChange={handleDecisionChange}
+                >
+                  <MenuItem value="Decision A">Protocol Approved</MenuItem>
+                  <MenuItem value="Decision B">Protocol Disapproved</MenuItem>
+                  <MenuItem value="Decision C">Approved with Major</MenuItem>
+                  <MenuItem value="Decision D">Approved with Minor</MenuItem>
+                  <MenuItem value="Decision E">None</MenuItem>
+                </Select>
+              </FormControl>
 
               <FormControl sx={{ width: "100%" }}>
                 <InputLabel>Review Type</InputLabel>
-                <Select value={reviewType} onChange={handleReviewTypeChange}>
+                <Select
+                  label="Review Type"
+                  value={reviewType}
+                  onChange={handleReviewTypeChange}
+                >
                   <MenuItem value="Type A">Exempt from Review</MenuItem>
                   <MenuItem value="Type B">Full Board Review</MenuItem>
                   <MenuItem value="Type C">Expedited Review</MenuItem>
                 </Select>
               </FormControl>
+
+              {showExemptReviewTextField && (
+                <TextField
+                  label="Protocol Number"
+                  required
+                  autoComplete="off"
+                  fullWidth
+                  value={protocolNumber}
+                  onChange={handleProtocolNumberChange}
+                />
+              )}
 
               <TextField
                 label="Send To"
