@@ -45,7 +45,7 @@ const Initialtab = (props) => {
   const [researchType, setResearchType] = React.useState("");
   const [isCheckedHau, setIsCheckedHau] = useState(false);
   const [isCheckedOthers, setIsCheckedOthers] = useState(false);
-  const [assignTo, setAssignTo] = React.useState("");
+  const [assignTo, setAssignTo] = useState([]);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [isFormValid, setIsFormValid] = useState(false);
@@ -102,9 +102,7 @@ const Initialtab = (props) => {
     const isCheckboxSelectedAndValid =
       isAnyCheckboxSelected && selectedRows.length > 0;
 
-    setIsFormValid(
-      isAllFieldsFilledOut && isCheckboxSelectedAndValid && !!protocolNumber
-    );
+    setIsFormValid(isAllFieldsFilledOut && isCheckboxSelectedAndValid);
   };
 
   useEffect(() => {
@@ -138,6 +136,22 @@ const Initialtab = (props) => {
   const handleDateChange = (date) => {
     setSubmissionDate(date);
     checkFormValidity();
+  };
+
+  const handleSelectAll = (event) => {
+    const allUsers = users
+      .filter(
+        (user) => user.role === "scientist" || user.role === "non-scientist"
+      )
+      .map((user) => user.email);
+
+    if (event.target.checked) {
+      // Select all users
+      setAssignTo(allUsers);
+    } else {
+      // Deselect all users
+      setAssignTo([]);
+    }
   };
 
   const handleCheckboxChange = (event) => {
@@ -385,7 +399,11 @@ const Initialtab = (props) => {
           <Box required sx={{ display: "flex", gap: "1rem" }}>
             <FormControl sx={{ width: "100%" }}>
               <InputLabel>Review Type</InputLabel>
-              <Select value={reviewType} onChange={handleReviewTypeChange}>
+              <Select
+                label="Review Type"
+                value={reviewType}
+                onChange={handleReviewTypeChange}
+              >
                 <MenuItem value="Full Board Review">Full Board Review</MenuItem>
                 <MenuItem value="Expedited Review">Expedited Review</MenuItem>
               </Select>
@@ -395,7 +413,11 @@ const Initialtab = (props) => {
           <Box required sx={{ display: "flex", gap: "1rem" }}>
             <FormControl sx={{ width: "100%" }}>
               <InputLabel>Research Type</InputLabel>
-              <Select value={researchType} onChange={handleResearchTypeChange}>
+              <Select
+                label="ResearchType"
+                value={researchType}
+                onChange={handleResearchTypeChange}
+              >
                 <MenuItem value="Biomedical Studies">
                   Biomedical Studies
                 </MenuItem>
@@ -410,20 +432,46 @@ const Initialtab = (props) => {
               </Select>
             </FormControl>
           </Box>
-          <FormControl required sx={{ minWidth: 120, marginBottom: "2rem" }}>
-            <InputLabel>Assign To</InputLabel>
-            <Select value={assignTo} onChange={handleAssignToChange}>
-              {users &&
-                users
-                  .filter(
-                    (user) =>
-                      user.role === "scientist" || user.role === "non-scientist"
-                  )
-                  .map((user) => (
-                    <MenuItem key={user.email} value={user.email}>
-                      {user.email}
-                    </MenuItem>
-                  ))}
+          <FormControl fullWidth sx={{ marginBottom: "2rem" }}>
+            <InputLabel id="assign-to-label">Assign To</InputLabel>
+            <Select
+              labelId="assign-to-label"
+              id="assign-to"
+              multiple
+              value={assignTo}
+              onChange={handleAssignToChange}
+              label="Assign To"
+              renderValue={(selected) => (
+                <div>
+                  {selected.length === 0
+                    ? "Select reviewers"
+                    : selected.length === users.length
+                    ? "All reviewers selected"
+                    : `${selected.length} reviewers selected`}
+                </div>
+              )}
+            >
+              <MenuItem value="select-all" onClick={handleSelectAll}>
+                <Checkbox
+                  checked={assignTo.length === users.length}
+                  indeterminate={
+                    assignTo.length > 0 && assignTo.length < users.length
+                  }
+                />
+                Select all
+              </MenuItem>
+
+              {users
+                .filter(
+                  (user) =>
+                    user.role === "scientist" || user.role === "non-scientist"
+                )
+                .map((user) => (
+                  <MenuItem key={user.email} value={user.email}>
+                    <Checkbox checked={assignTo.indexOf(user.email) > -1} />
+                    {user.email}
+                  </MenuItem>
+                ))}
             </Select>
           </FormControl>
         </Box>

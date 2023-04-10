@@ -48,6 +48,8 @@ import {
   getDoc,
   deleteDoc,
   getDocs,
+  query,
+  where,
 } from "firebase/firestore";
 import { getFirestore } from "firebase/firestore";
 
@@ -238,8 +240,13 @@ const Adminsidebar = ({ children }) => {
   }, []);
 
   useEffect(() => {
+    const currentUser = auth.currentUser;
     const notificationsRef = collection(db, "notifications");
-    const unsubscribe = onSnapshot(notificationsRef, (querySnapshot) => {
+    const notificationsQuery = query(
+      notificationsRef,
+      where("recipientEmail", "==", currentUser.email)
+    );
+    const unsubscribe = onSnapshot(notificationsQuery, (querySnapshot) => {
       const notifications = querySnapshot.docs.map((doc) => {
         return { ...doc.data(), id: doc.id };
       });

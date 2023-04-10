@@ -2,18 +2,9 @@ import React, { useState, useEffect } from "react";
 import { auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { ref, getDownloadURL } from "firebase/storage";
-import { db } from "../firebase";
-import { doc, getDoc } from "firebase/firestore/lite";
 import userIcon from "../assets/usericon.png";
 import { storage } from "../firebase";
-import {
-  Dashboard,
-  AssignmentTurnedIn,
-  CloudDownload,
-  SwapHoriz,
-  Archive,
-  People,
-} from "@mui/icons-material";
+import { Dashboard, AssignmentTurnedIn } from "@mui/icons-material";
 import { NavLink } from "react-router-dom";
 import { styled } from "@mui/material/styles";
 import {
@@ -34,6 +25,10 @@ import {
   BottomNavigation,
   BottomNavigationAction,
   ClickAwayListener,
+  Dialog,
+  DialogContent,
+  Button,
+  Checkbox,
 } from "@mui/material";
 import { Notifications, ExitToApp } from "@mui/icons-material";
 import Settings from "@mui/icons-material/Settings";
@@ -42,6 +37,17 @@ import AppBar from "@mui/material/AppBar";
 import MenuIcon from "@mui/icons-material/Menu";
 import Logout from "@mui/icons-material/Logout";
 import AssignmentIcon from "@mui/icons-material/Assignment";
+import {
+  onSnapshot,
+  collection,
+  doc,
+  getDoc,
+  deleteDoc,
+  getDocs,
+  query,
+  where,
+} from "firebase/firestore";
+import { getFirestore } from "firebase/firestore";
 
 const drawerWidth = 220;
 
@@ -85,6 +91,7 @@ const DrawerHeader = styled(Toolbar)(({ theme }) => ({
 }));
 
 const Reviewersidebar = ({ children }) => {
+  const db = getFirestore();
   const [anchorEl, setAnchorEl] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [value, setValue] = useState(0);
@@ -103,22 +110,11 @@ const Reviewersidebar = ({ children }) => {
   const [imageUrl, setImageUrl] = useState(
     localStorage.getItem("profileImageUrl") || null
   );
-  const [notifications, setNotifications] = useState([
-    {
-      id: 1,
-      message: "New notification 1",
-      read: false,
-    },
-    {
-      id: 2,
-      message: "New notification 2",
-      read: false,
-    },
-  ]);
-
-  const handleMenuClick = (event) => {
-    setAnchorEl2(event.currentTarget);
-  };
+  const [notifications, setNotifications] = useState([]);
+  const [showAll, setShowAll] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [selectedNotifications, setSelectedNotifications] = useState([]);
+  const [selectAllChecked, setSelectAllChecked] = useState(false);
 
   const handleLogout = () => {
     auth.signOut();
@@ -128,6 +124,56 @@ const Reviewersidebar = ({ children }) => {
       navigate("/");
     }, 1000);
     handleClose();
+  };
+
+  const handleCheckboxChange = (event, notificationId) => {
+    if (event.target.checked) {
+      setSelectedNotifications((prevSelected) => [
+        ...prevSelected,
+        notificationId,
+      ]);
+    } else {
+      setSelectedNotifications((prevSelected) =>
+        prevSelected.filter((id) => id !== notificationId)
+      );
+    }
+    const allSelected = selectedNotifications.length === notifications.length;
+    const currentSelected = selectedNotifications.includes(notificationId);
+
+    if (allSelected && !currentSelected) {
+      setSelectAllChecked(false);
+    } else if (!allSelected && currentSelected) {
+      setSelectAllChecked(true);
+    }
+
+    event.stopPropagation();
+  };
+
+  const handleSelectAll = () => {
+    if (selectAllChecked) {
+      setSelectedNotifications([]);
+      setSelectAllChecked(false);
+    } else {
+      setSelectedNotifications(notifications.map((n) => n.id));
+      setSelectAllChecked(true);
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    const deletePromises = selectedNotifications.map((id) =>
+      deleteDoc(doc(db, "notifications", id))
+    );
+    await Promise.all(deletePromises);
+    setSelectedNotifications([]);
+    const notificationsRef = collection(db, "notifications");
+    const querySnapshot = await getDocs(notificationsRef);
+    const notifications = querySnapshot.docs.map((doc) => {
+      return { ...doc.data(), id: doc.id };
+    });
+    setNotifications(notifications.sort((a, b) => b.timestamp - a.timestamp));
+  };
+  const handleMenuClick = (event) => {
+    setAnchorEl2(event.currentTarget);
   };
 
   const handleSettings = () => {
@@ -141,6 +187,7 @@ const Reviewersidebar = ({ children }) => {
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
+    handleNotificationClick();
   };
 
   const handleClose = () => {
@@ -149,6 +196,11 @@ const Reviewersidebar = ({ children }) => {
 
   const handleClose2 = () => {
     setIsOpen(false);
+  };
+
+  const handleClose3 = () => {
+    setSelectedNotifications([]);
+    setShowAll(false);
   };
 
   const handleChange = (event, newValue) => {
@@ -223,6 +275,65 @@ const Reviewersidebar = ({ children }) => {
     });
 
     return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    const currentUser = auth.currentUser;
+    const notificationsRef = collection(db, "notifications");
+    const notificationsQuery = query(
+      notificationsRef,
+      where("recipientEmail", "==", currentUser.email)
+    );
+    const unsubscribe = onSnapshot(notificationsQuery, (querySnapshot) => {
+      const notifications = querySnapshot.docs.map((doc) => {
+        return { ...doc.data(), id: doc.id };
+      });
+      const readNotifications = JSON.parse(
+        localStorage.getItem("readNotifications") || "[]"
+      );
+      const updatedNotifications = notifications.map((n) => {
+        if (readNotifications.includes(n.id)) {
+          return { ...n, read: true };
+        }
+        return n;
+      });
+      setNotifications(
+        updatedNotifications.sort((a, b) => b.timestamp - a.timestamp)
+      );
+      const unreadNotifications = updatedNotifications.filter((n) => !n.read);
+      setUnreadCount(unreadNotifications.length);
+      localStorage.setItem(
+        "hasUnreadNotifications",
+        JSON.stringify(unreadNotifications.length > 0)
+      );
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  const handleNotificationClick = () => {
+    const newNotifications = notifications.map((n) => ({ ...n, read: true }));
+    setNotifications(newNotifications);
+    const readNotifications = newNotifications
+      .filter((n) => n.read)
+      .map((n) => n.id);
+    localStorage.setItem(
+      "readNotifications",
+      JSON.stringify(readNotifications)
+    );
+    setUnreadCount(0);
+    localStorage.setItem("hasUnreadNotifications", JSON.stringify(false));
+  };
+
+  useEffect(() => {
+    const hasUnreadNotifications = JSON.parse(
+      localStorage.getItem("hasUnreadNotifications") || "false"
+    );
+    if (!hasUnreadNotifications) {
+      setUnreadCount(0);
+    }
   }, []);
 
   const hasPhotoURL = currentUser && currentUser.photoURL;
@@ -466,7 +577,7 @@ const Reviewersidebar = ({ children }) => {
         <div>
           <Badge
             badgeContent={notifications.filter((n) => !n.read).length}
-            color="error"
+            color="primary"
           >
             <Notifications sx={{ cursor: "pointer" }} onClick={handleClick} />
           </Badge>
@@ -475,13 +586,106 @@ const Reviewersidebar = ({ children }) => {
             open={Boolean(anchorEl)}
             onClose={handleClose}
           >
-            {notifications.map((n) => (
-              <MenuItem key={n.id} onClick={handleClose}>
-                {n.message}
-              </MenuItem>
-            ))}
-            <MenuItem onClick={handleMarkAllRead}>Mark all as read</MenuItem>
+            <MenuItem sx={{ fontWeight: "bold" }} onClick={handleClose}>
+              Notifications
+            </MenuItem>
+            <div style={{ maxHeight: "300px", overflowY: "scroll" }}>
+              {notifications.length > 0 ? (
+                notifications.map((n) => (
+                  <MenuItem key={n.id} onClick={handleClose}>
+                    <Typography
+                      noWrap={false}
+                      sx={{ overflowWrap: "break-word" }}
+                    >
+                      <small>
+                        <strong>{n.senderEmail}</strong>
+                      </small>
+                      <br />
+                      {n.message} <br />
+                      <small>
+                        {new Date(n.timestamp?.toDate()).toLocaleString()}
+                      </small>
+                    </Typography>
+                  </MenuItem>
+                ))
+              ) : (
+                <MenuItem onClick={handleClose}>
+                  <Typography sx={{ fontStyle: "italic" }}>
+                    No new notifications
+                  </Typography>
+                </MenuItem>
+              )}
+            </div>
+            <Divider />
+            <MenuItem
+              sx={{ fontWeight: "bold" }}
+              onClick={() => setShowAll(true)}
+            >
+              See All
+            </MenuItem>
           </Menu>
+          <Dialog open={showAll} onClose={handleClose3}>
+            <DialogContent>
+              <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
+                All Notifications
+              </Typography>
+              {notifications.length > 0 ? (
+                <>
+                  <MenuItem sx={{ display: "flex", alignItems: "center" }}>
+                    <Checkbox
+                      checked={selectAllChecked}
+                      indeterminate={
+                        selectedNotifications.length > 0 &&
+                        selectedNotifications.length < notifications.length
+                      }
+                      onChange={handleSelectAll}
+                    />
+                    <Typography sx={{ fontWeight: "bold" }}>
+                      Select All Notifications
+                    </Typography>
+                  </MenuItem>
+                  {notifications.map((n) => (
+                    <MenuItem
+                      key={n.id}
+                      sx={{ display: "flex", alignItems: "center" }}
+                    >
+                      <Checkbox
+                        checked={selectedNotifications.includes(n.id)}
+                        onChange={(event) => handleCheckboxChange(event, n.id)}
+                      />
+                      <Typography
+                        noWrap={false}
+                        sx={{ overflowWrap: "break-word", ml: 1 }}
+                      >
+                        <small>
+                          <strong>{n.senderEmail}</strong>
+                        </small>
+                        <br />
+                        {n.message} <br />
+                        <small>
+                          {new Date(n.timestamp?.toDate()).toLocaleString()}
+                        </small>
+                      </Typography>
+                    </MenuItem>
+                  ))}
+                  <div className="flex items-end justify-end">
+                    <Button
+                      sx={{
+                        mt: 2,
+                        color: "maroon",
+                      }}
+                      onClick={handleDeleteSelected}
+                      disabled={selectedNotifications.length === 0}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <Typography>No notifications to display.</Typography>
+              )}
+            </DialogContent>
+          </Dialog>
         </div>
       </DrawerHeader>
       <List>

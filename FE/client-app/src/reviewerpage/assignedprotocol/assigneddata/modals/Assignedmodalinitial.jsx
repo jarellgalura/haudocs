@@ -54,7 +54,7 @@ const Assignedmodalinitial = (props) => {
     const submissionsRef = collection(db, "submissions");
     const q = query(
       submissionsRef,
-      where("reviewer", "==", auth.currentUser.uid)
+      where("reviewer", "array-contains", auth.currentUser.email)
     );
 
     getDocs(q).then((querySnapshot) => {
