@@ -79,7 +79,6 @@ const Initialtab = (props) => {
           data[0].date_sent.seconds * 1000 +
             data[0].date_sent.nanoseconds / 1000000
         ).toLocaleString(),
-        status_indicator: data[0].status_indicator,
         ...file,
       }));
       setSubmissions(files);
@@ -228,7 +227,6 @@ const Initialtab = (props) => {
           if (selectedId.includes(file.id)) {
             return {
               ...file,
-              status_indicator: "Forwarded",
               forReview: true,
             };
           }
@@ -320,7 +318,12 @@ const Initialtab = (props) => {
   const columns = [
     { field: "fieldname", headerName: "DocumentName", width: "180" },
     { field: "name", headerName: "Sent By", width: "175" },
-    { field: "status_indicator", headerName: "Status", width: "200" },
+    {
+      field: "forReview",
+      headerName: "Status",
+      width: "200",
+      renderCell: (params) => <span>{params.value ? "Forwarded" : ""}</span>,
+    },
     { field: "date_sent", headerName: "Date Sent", width: "200" },
     {
       field: "action",

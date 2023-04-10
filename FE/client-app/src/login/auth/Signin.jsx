@@ -151,14 +151,6 @@ function Signin() {
     }
   };
 
-  if (isLoading) {
-    return (
-      <div>
-        <LoadingPage />
-      </div>
-    );
-  }
-
   const myStyle = {
     backgroundImage: `url(${bgimage})`,
     backgroundPosition: "center",

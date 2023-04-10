@@ -64,15 +64,17 @@ const Assignedmodalinitial = (props) => {
         ...doc.data(),
       }));
 
-      const files = data[0].initial_files.map((file, index) => ({
-        id: index + 1,
-        name: data[0].name,
-        date_sent: new Date(
-          data[0].date_sent.seconds * 1000 +
-            data[0].date_sent.nanoseconds / 1000000
-        ).toLocaleString(),
-        ...file,
-      }));
+      const files = data[0].initial_files
+        .filter((file) => file.forReview)
+        .map((file, index) => ({
+          id: index + 1,
+          name: data[0].name,
+          date_sent: new Date(
+            data[0].date_sent.seconds * 1000 +
+              data[0].date_sent.nanoseconds / 1000000
+          ).toLocaleString(),
+          ...file,
+        }));
       setSubmissions(files);
       console.log(files);
     });
