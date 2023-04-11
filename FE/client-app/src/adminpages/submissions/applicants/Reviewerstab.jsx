@@ -7,12 +7,12 @@ import { Button } from "@mui/material";
 import Modal from "@mui/material/Modal";
 import Reviewersmodal from "./modals/Reviewersmodal";
 import {
-  getFirestore,
-  collection,
-  query,
-  where,
-  getDocs,
-  onSnapshot,
+    getFirestore,
+    collection,
+    query,
+    where,
+    getDocs,
+    onSnapshot,
 } from "firebase/firestore";
 import { auth } from "../../../firebase";
 
@@ -118,47 +118,95 @@ function Reviewersstab(props) {
     );
   }
 
-  const viewStyle = {
-    color: "maroon",
-  };
+    const columns = [
+        {
+            field: "protocol_no",
+            headerName: "Protocol Number",
+            width: "350",
+        },
+        { field: "date_sent", headerName: "Date Sent", width: "350" },
+        { field: "due_date", headerName: "Due Date", width: "350" },
+        {
+            field: "action",
+            headerName: "Action",
+            width: "200",
+            renderCell: (params) => <ViewCell {...params} />,
+        },
+    ];
 
-  function TabPanel(props) {
-    const { children, value, index, ...other } = props;
+    const rows = [
+        {
+            id: "",
+            protocolnumber: "2023-001-NAME-TITLE",
+            datesent: "January 28, 2023",
+            duedate: "March 26, 2023",
+        },
+    ];
+
+    function ViewCell(id) {
+        return (
+            <div>
+                <Button
+                    onClick={() => handleOpenModal(props.uid)}
+                    style={viewStyle}
+                >
+                    View
+                </Button>
+                <Modal
+                    open={showModal}
+                    onClose={handleCloseModal}
+                    aria-labelledby="modal-modal-title"
+                    aria-describedby="modal-modal-description"
+                >
+                    <Box sx={style}>
+                        <Reviewersmodal handleCloseModal={handleCloseModal} />
+                    </Box>
+                </Modal>
+            </div>
+        );
+    }
+
+    const viewStyle = {
+        color: "maroon",
+    };
+
+    function TabPanel(props) {
+        const { children, value, index, ...other } = props;
+
+        return (
+            <div
+                role="tabpanel"
+                hidden={value !== index}
+                id={`simple-tabpanel-${index}`}
+                aria-labelledby={`simple-tab-${index}`}
+                {...other}
+            >
+                {value === index && (
+                    <Box>
+                        <Typography>{children}</Typography>
+                    </Box>
+                )}
+            </div>
+        );
+    }
+
+    TabPanel.propTypes = {
+        children: PropTypes.node,
+        index: PropTypes.number.isRequired,
+        value: PropTypes.number.isRequired,
+    };
 
     return (
-      <div
-        role="tabpanel"
-        hidden={value !== index}
-        id={`simple-tabpanel-${index}`}
-        aria-labelledby={`simple-tab-${index}`}
-        {...other}
-      >
-        {value === index && (
-          <Box>
-            <Typography>{children}</Typography>
-          </Box>
-        )}
-      </div>
+        <div className="shadow-md" style={{ height: 400, width: "100%" }}>
+            <DataGrid
+                classes={{ header: "custom-header" }}
+                rows={submissions}
+                columns={columns}
+                pageSize={5}
+                rowsPerPageOptions={[5]}
+            />
+        </div>
     );
-  }
-
-  TabPanel.propTypes = {
-    children: PropTypes.node,
-    index: PropTypes.number.isRequired,
-    value: PropTypes.number.isRequired,
-  };
-
-  return (
-    <div className="shadow-md" style={{ height: 400, width: "100%" }}>
-      <DataGrid
-        classes={{ header: "custom-header" }}
-        rows={submissions}
-        columns={columns}
-        pageSize={5}
-        rowsPerPageOptions={[5]}
-      />
-    </div>
-  );
 }
 
 export default Reviewersstab;
