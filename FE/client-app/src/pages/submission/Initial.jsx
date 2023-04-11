@@ -445,7 +445,7 @@ function Initial({ onSubmitted }) {
                   </Dialog>
 
                   <Dialog open={showAlert} onClose={() => setShowAlert(false)}>
-                    <DialogTitle>{"Sorry"}</DialogTitle>
+                    <DialogTitle>"Sorry"</DialogTitle>
                     <DialogContent>
                       <div>You have already submitted the initial form.</div>
                     </DialogContent>
