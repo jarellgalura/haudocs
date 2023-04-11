@@ -28,6 +28,7 @@ import {
   getDocs,
   query,
   where,
+  serverTimestamp,
 } from "firebase/firestore/lite";
 import { db, auth } from "../../../../firebase";
 import { getFirestore } from "firebase/firestore/lite";
@@ -148,6 +149,7 @@ const Assignedmodalinitial = (props) => {
         await updateDoc(submissionRef, {
           rev_initial_files: updatedReviewerFiles,
           sent_by: sentBy,
+          rev_to_admin_sent_date: serverTimestamp(),
         });
 
         console.log("Document updated with ID: ", docSnapshot.id);

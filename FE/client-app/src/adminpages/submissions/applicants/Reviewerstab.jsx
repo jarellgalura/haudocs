@@ -17,82 +17,106 @@ import {
 import { auth } from "../../../firebase";
 
 function Reviewersstab(props) {
-    const [showModal, setShowModal] = useState(false);
-    const [selectedUid, setSelectedUid] = useState(null);
-    const [submissions, setSubmissions] = useState([]);
+  const [showModal, setShowModal] = useState(false);
+  const [selectedUid, setSelectedUid] = useState(null);
+  const [submissions, setSubmissions] = useState([]);
 
-    useEffect(() => {
-        const db = getFirestore();
-        const submissionsCollection = collection(db, "submissions");
-        const unsubscribe = onSnapshot(
-            query(submissionsCollection, where("rev_initial_files", "!=", [])),
-            (snapshot) => {
-                const submissionsData = snapshot.docs.map((doc) => {
-                    const data = doc.data();
-                    return {
-                        id: doc.id,
-                        ...data,
-                        date_sent: data.date_sent
-                            ? new Date(
-                                  data.date_sent.seconds * 1000
-                              ).toLocaleString()
-                            : null,
-                        due_date: data.due_date
-                            ? new Date(
-                                  data.due_date.seconds * 1000
-                              ).toLocaleString()
-                            : null,
-                    };
-                });
-                setSubmissions(submissionsData);
-            }
-        );
-        return () => {
-            unsubscribe();
-        };
-    }, []);
-
-    function handleOpenModal(uid) {
-        setSelectedUid(uid);
-        setShowModal(true);
-    }
-
-    function handleCloseModal() {
-        setSelectedUid(null);
-        setShowModal(false);
-    }
-
-    function handleOpenModal(uid) {
-        setSelectedUid(uid);
-        setShowModal(true);
-    }
-
-    function handleCloseModal() {
-        setSelectedUid(null);
-        setShowModal(false);
-    }
-
-    function handleCloseModal() {
-        setShowModal(false);
-    }
-
-    const style = {
-        position: "absolute",
-        top: "50%",
-        left: "50%",
-        transform: "translate(-50%, -50%)",
-        width: "50%",
-        minHeight: "70vh",
-        bgcolor: "background.paper",
-        border: "2px solid #000",
-        boxShadow: 24,
-        overflow: "auto",
-        p: 4,
-        "@media (max-width: 600px)": {
-            width: "100%",
-            minHeight: "70vh",
-        },
+  useEffect(() => {
+    const db = getFirestore();
+    const submissionsCollection = collection(db, "submissions");
+    const unsubscribe = onSnapshot(
+      query(submissionsCollection, where("rev_initial_files", "!=", [])),
+      (snapshot) => {
+        const submissionsData = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            rev_to_admin_sent_date: data.rev_to_admin_sent_date
+              ? new Date(
+                  data.rev_to_admin_sent_date.seconds * 1000
+                ).toLocaleString()
+              : null,
+            due_date: data.due_date
+              ? new Date(data.due_date.seconds * 1000).toLocaleString()
+              : null,
+          };
+        });
+        setSubmissions(submissionsData);
+      }
+    );
+    return () => {
+      unsubscribe();
     };
+  }, []);
+
+  function handleOpenModal(uid) {
+    setSelectedUid(uid);
+    setShowModal(true);
+  }
+
+  function handleCloseModal() {
+    setSelectedUid(null);
+    setShowModal(false);
+  }
+
+  const style = {
+    position: "absolute",
+    top: "50%",
+    left: "50%",
+    transform: "translate(-50%, -50%)",
+    width: "50%",
+    minHeight: "70vh",
+    bgcolor: "background.paper",
+    border: "2px solid #000",
+    boxShadow: 24,
+    overflow: "auto",
+    p: 4,
+    "@media (max-width: 600px)": {
+      width: "100%",
+      minHeight: "70vh",
+    },
+  };
+
+  const columns = [
+    { field: "protocol_no", headerName: "Protocol Number", width: "350" },
+    { field: "rev_to_admin_sent_date", headerName: "Date Sent", width: "350" },
+    { field: "due_date", headerName: "Due Date", width: "350" },
+    {
+      field: "action",
+      headerName: "Action",
+      width: "200",
+      renderCell: (params) => <ViewCell {...params} />,
+    },
+  ];
+
+  function ViewCell(props) {
+    return (
+      <div>
+        <Button
+          onClick={() => handleOpenModal(props.row.uid)}
+          style={viewStyle}
+        >
+          View
+        </Button>
+        <Modal
+          open={showModal}
+          onClose={handleCloseModal}
+          aria-labelledby="modal-modal-title"
+          aria-describedby="modal-modal-description"
+        >
+          <Box sx={style}>
+            {selectedUid && (
+              <Reviewersmodal
+                uid={selectedUid}
+                handleCloseModal={handleCloseModal}
+              />
+            )}
+          </Box>
+        </Modal>
+      </div>
+    );
+  }
 
     const columns = [
         {

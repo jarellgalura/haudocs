@@ -83,6 +83,9 @@ const Continuingtab = (props) => {
         ...doc.data(),
       }));
 
+      const protocolNo = data[0].protocol_no;
+      setProtocolNumber(protocolNo);
+
       const files = data[0].continuing_files.map((file, index) => ({
         id: index + 1,
         name: data[0].name,
@@ -114,7 +117,9 @@ const Continuingtab = (props) => {
     const isCheckboxSelectedAndValid =
       isAnyCheckboxSelected && selectedRows.length > 0;
 
-    setIsFormValid(isAllFieldsFilledOut && isCheckboxSelectedAndValid);
+    setIsFormValid(
+      isAllFieldsFilledOut && isCheckboxSelectedAndValid && assignTo
+    );
   };
 
   const handleSelectAll = () => {
@@ -203,7 +208,9 @@ const Continuingtab = (props) => {
       if (assignTo.length === users.length) {
         const newNotification = {
           id: doc(notificationsRef).id,
-          message: `There's a forwarded form for you to review.`,
+          message:
+            `Protocol number: ${protocolNumber} has been \n` +
+            `forwarded for continuing review.`,
           read: false,
           recipientEmail: "all",
           senderEmail: auth.currentUser.email,
@@ -213,7 +220,8 @@ const Continuingtab = (props) => {
       } else {
         const newNotification = {
           id: doc(notificationsRef).id,
-          message: `There's a forwarded form for you to review.`,
+          message: `Protocol number: ${protocolNumber} has been
+   forwarded for continuing review.`,
           read: false,
           recipientEmail: assignTo.join(", "),
           senderEmail: auth.currentUser.email,
@@ -469,7 +477,7 @@ const Continuingtab = (props) => {
             id="sub"
             type="submit"
             variant="contained"
-            disabled={!isFormValid}
+            /*             disabled={!isFormValid} */
           >
             Forward
           </Button>

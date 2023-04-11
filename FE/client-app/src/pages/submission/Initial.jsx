@@ -184,7 +184,7 @@ function Initial({ onSubmitted }) {
         adminEmails.forEach(async (email) => {
           const newNotification = {
             id: doc(notificationsRef).id,
-            message: `There's a new Initial form submitted`,
+            message: `Applicant ${userName} has submissions for initial review.`,
             role: "applicant",
             read: false,
             recipientEmail: email,
@@ -445,7 +445,7 @@ function Initial({ onSubmitted }) {
                   </Dialog>
 
                   <Dialog open={showAlert} onClose={() => setShowAlert(false)}>
-                    <DialogTitle>"Sorry"</DialogTitle>
+                    <DialogTitle>Sorry</DialogTitle>
                     <DialogContent>
                       <div>You have already submitted the initial form.</div>
                     </DialogContent>

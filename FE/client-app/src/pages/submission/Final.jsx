@@ -104,7 +104,7 @@ const Final = ({ onSubmitted }) => {
         const docRef = querySnapshot.docs[0].ref;
         await updateDoc(docRef, {
           final_files: [
-            ...querySnapshot.docs[0].data().continuing_files,
+            ...querySnapshot.docs[0].data().final_files,
             ...finalFiles,
           ],
           status: "final",
@@ -123,7 +123,7 @@ const Final = ({ onSubmitted }) => {
         adminEmails.forEach(async (email) => {
           const newNotification = {
             id: doc(notificationsRef).id,
-            message: `There's a new Final form submitted`,
+            message: `Applicant ${userName} has submissions for final review.`,
             role: "applicant",
             read: false,
             recipientEmail: email,
