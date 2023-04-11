@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { Button } from "@mui/material";
 import {
@@ -10,79 +10,122 @@ import {
   Box,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { ref, getDownloadURL } from "firebase/storage";
-import { storage } from "../../../../firebase";
+import {
+  collection,
+  doc,
+  updateDoc,
+  getDocs,
+  query,
+  where,
+  getDoc,
+  setDoc,
+  serverTimestamp,
+} from "firebase/firestore/lite";
+import { db, auth } from "../../../../firebase";
+import { getFirestore } from "firebase/firestore/lite";
+import { onAuthStateChanged } from "firebase/auth";
 
 const AssignedmodalFinal = (props) => {
   const navigate = useNavigate();
   const [value, setValue] = React.useState(0);
-  const [fileUploads, setfileUpload] = useState(null);
+  const [files, setfiles] = useState(null);
   const [open, setOpen] = useState(false);
   const { handleCloseModal } = props;
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState([]);
   const [isSubmitEnabled, setIsSubmitEnabled] = useState(false);
+  const [submissions, setSubmissions] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [userName, setUserName] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setCurrentUser(currentUser);
+
+      if (currentUser) {
+        const userRef = doc(db, "users", currentUser.uid);
+
+        getDoc(userRef).then((doc) => {
+          if (doc.exists()) {
+            const name = doc.data().name;
+            setUserName(name);
+            localStorage.setItem("userName", name);
+          }
+        });
+      }
+    });
+
+    return unsubscribe;
+  }, []);
+
+  useEffect(() => {
+    const db = getFirestore();
+    const submissionsRef = collection(db, "submissions");
+    const q = query(
+      submissionsRef,
+      where("protocol_no", "==", props.protocol_no)
+    );
+
+    getDocs(q).then((querySnapshot) => {
+      const data = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      const files = data[0].final_files
+        .filter((file) => file.forReview)
+        .map((file, index) => ({
+          id: index + 1,
+          name: data[0].name,
+          date_sent: new Date(
+            data[0].date_sent.seconds * 1000 +
+              data[0].date_sent.nanoseconds / 1000000
+          ).toLocaleString(),
+          ...file,
+        }));
+      setSubmissions(files);
+      console.log(files);
+    });
+  }, [auth.currentUser.uid]);
 
   const handleFileUpload = (event) => {
     const files = Array.from(event.target.files);
     setIsSubmitEnabled(true);
     setSelectedFiles(files);
-    const newFileUploads = [...fileUploads];
+    const newFileUploads = [...files];
 
     for (let i = 0; i < files.length; i++) {
       newFileUploads.push(files[i]);
     }
 
-    setfileUpload(newFileUploads);
+    setfiles(newFileUploads);
 
     const fileNames = files.map((file) => file.name).join(", ");
     document.getElementById("multiple_files").value = fileNames;
   };
 
-  const rows = [
-    {
-      id: "HAU-IRB FORM 3.7(A) Final Report Form",
-      documentname: "HAU-IRB FORM 3.7(A): Final Report Form",
-      sentby: "Stephanie David",
-      datesent: "January 28, 2023",
-    },
-  ];
-
   const columns = [
-    { field: "documentname", headerName: "DocumentName", width: "550" },
+    { field: "fieldname", headerName: "DocumentName", width: "550" },
 
     {
       field: "action",
       headerName: "Action",
       width: "100",
       renderCell: (params) => (
-        <Button style={downloadStyle} onClick={() => handleDownload(params.id)}>
+        <Button style={downloadStyle} onClick={() => handleDownload(params)}>
           Download
         </Button>
       ),
     },
   ];
 
-  const handleDownload = async (id) => {
-    // Get the reference to the file you want to download
-    const fileRef = ref(storage, `Submissions/${id}.docx`);
-
-    try {
-      // Get the download URL for the file
-      const downloadURL = await getDownloadURL(fileRef);
-      // Open the file in a new tab/window
-      window.open(downloadURL, "_blank");
-    } catch (error) {
-      console.error(error);
-    }
-  };
-  const handleOpen = () => {
-    setOpen(true);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
+  const handleDownload = async (params) => {
+    console.log(params.row.downloadLink);
+    window.open(
+      `${process.env.REACT_APP_BACKEND_URL}${params.row.downloadLink}`,
+      "_blank"
+    );
   };
 
   function handlesSuccess() {
@@ -90,7 +133,100 @@ const AssignedmodalFinal = (props) => {
     setShowConfirmation(false);
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
+    // Create a new FormData instance
+    const form = new FormData();
+
+    // Append the files to the FormData instance
+    files.forEach((fileObj, index) => {
+      if (fileObj.file) {
+        form.append(`file_${index}`, fileObj.file);
+      }
+    });
+
+    // Perform the fetch request
+    try {
+      const response = await fetch(
+        `${process.env.REACT_APP_BACKEND_URL}/files`,
+        {
+          method: "POST",
+          headers: {
+            filefolder: `${auth.currentUser.uid}/final`,
+          },
+          body: form,
+        }
+      );
+
+      const data = await response.json();
+      console.log(data);
+
+      const submissionsRef = collection(db, "submissions");
+      const q = query(
+        submissionsRef,
+        where("protocol_no", "==", props.protocol_no)
+      );
+      const querySnapshot = await getDocs(q);
+
+      // Check if the submission exists
+      if (!querySnapshot.empty) {
+        // Get the first matching document (there should be only one)
+        const docSnapshot = querySnapshot.docs[0];
+
+        // Get the current date as a UNIX timestamp
+        const currentDate = Date.now();
+
+        // Offset the current date to GMT+8
+        const offsetHours = 8;
+        const offsetMilliseconds = offsetHours * 60 * 60 * 1000;
+        const currentDateGMT8 = currentDate + offsetMilliseconds;
+
+        // Add the offset current date to each file in the data.files array
+        const filesWithDate = data.files.map((file) => ({
+          ...file,
+          upload_date: currentDateGMT8, // Add the offset current date as a UNIX timestamp
+        }));
+
+        const existingReviewerFiles = docSnapshot.data().rev_final_files || [];
+
+        // Concatenate the existing and new files arrays
+        const updatedReviewerFiles =
+          existingReviewerFiles.concat(filesWithDate);
+
+        const submissionRef = doc(db, "submissions", docSnapshot.id);
+        await updateDoc(submissionRef, {
+          rev_final_files: updatedReviewerFiles,
+        });
+
+        console.log("Document updated with ID: ", docSnapshot.id);
+        const notificationsRef = collection(db, "notifications");
+        const adminUsersQuery = query(
+          collection(db, "users"),
+          where("role", "==", "admin")
+        );
+        const adminUsersSnapshot = await getDocs(adminUsersQuery);
+        const adminEmails = adminUsersSnapshot.docs.map(
+          (doc) => doc.data().email
+        );
+
+        adminEmails.forEach(async (email) => {
+          const newNotification = {
+            id: doc(notificationsRef).id,
+            message: `Reviewer ${userName} has submitted final review for protocol ${props.protocol_no}.`,
+            read: false,
+            recipientEmail: email,
+            senderEmail: auth.currentUser.email,
+            timestamp: serverTimestamp(),
+          };
+          await setDoc(doc(notificationsRef), newNotification);
+        });
+      } else {
+        console.log("No submission found with the given protocol_no");
+      }
+    } catch (error) {
+      console.log(error);
+      return false;
+    }
+
     navigate("/reviewerstatus");
     setOpen(false);
   }
@@ -113,7 +249,7 @@ const AssignedmodalFinal = (props) => {
     <div style={{ height: 400, width: "100%" }}>
       <DataGrid
         classes={{ header: "custom-header" }}
-        rows={rows}
+        rows={submissions}
         columns={columns}
         pageSize={5}
         rowsPerPageOptions={[5]}

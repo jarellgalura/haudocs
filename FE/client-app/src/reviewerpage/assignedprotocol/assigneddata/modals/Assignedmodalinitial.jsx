@@ -28,10 +28,13 @@ import {
   getDocs,
   query,
   where,
+  setDoc,
   serverTimestamp,
+  getDoc,
 } from "firebase/firestore/lite";
 import { db, auth } from "../../../../firebase";
 import { getFirestore } from "firebase/firestore/lite";
+import { onAuthStateChanged } from "firebase/auth";
 
 const Assignedmodalinitial = (props) => {
   const navigate = useNavigate();
@@ -49,6 +52,28 @@ const Assignedmodalinitial = (props) => {
   const [showAlert, setShowAlert] = useState(false);
   const [isDownloadSuccessful, setIsDownloadSuccessful] = useState(false);
   const [submissions, setSubmissions] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [userName, setUserName] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setCurrentUser(currentUser);
+
+      if (currentUser) {
+        const userRef = doc(db, "users", currentUser.uid);
+
+        getDoc(userRef).then((doc) => {
+          if (doc.exists()) {
+            const name = doc.data().name;
+            setUserName(name);
+            localStorage.setItem("userName", name);
+          }
+        });
+      }
+    });
+
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     const db = getFirestore();
@@ -80,7 +105,8 @@ const Assignedmodalinitial = (props) => {
     });
   }, [auth.currentUser.uid]);
 
-  async function handleSubmit() {
+  async function handleSubmit(e) {
+    e.preventDefault();
     // Create a new FormData instance
     const form = new FormData();
 
@@ -151,8 +177,28 @@ const Assignedmodalinitial = (props) => {
           sent_by: sentBy,
           rev_to_admin_sent_date: serverTimestamp(),
         });
-
         console.log("Document updated with ID: ", docSnapshot.id);
+        const notificationsRef = collection(db, "notifications");
+        const adminUsersQuery = query(
+          collection(db, "users"),
+          where("role", "==", "admin")
+        );
+        const adminUsersSnapshot = await getDocs(adminUsersQuery);
+        const adminEmails = adminUsersSnapshot.docs.map(
+          (doc) => doc.data().email
+        );
+
+        adminEmails.forEach(async (email) => {
+          const newNotification = {
+            id: doc(notificationsRef).id,
+            message: `Reviewer ${userName} has submitted an initial review for protocol ${props.protocol_no}.`,
+            read: false,
+            recipientEmail: email,
+            senderEmail: auth.currentUser.email,
+            timestamp: serverTimestamp(),
+          };
+          await setDoc(doc(notificationsRef), newNotification);
+        });
       } else {
         console.log("No submission found with the given protocol_no");
       }
@@ -252,14 +298,6 @@ const Assignedmodalinitial = (props) => {
       .catch((error) => {
         console.error("Error:", error);
       });
-  };
-
-  const handleOpen = () => {
-    setOpen(true);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
   };
 
   function handlesSuccess() {

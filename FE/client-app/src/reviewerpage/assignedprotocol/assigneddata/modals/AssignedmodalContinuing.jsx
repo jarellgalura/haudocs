@@ -15,8 +15,6 @@ import {
   InputAdornment,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { ref, getDownloadURL } from "firebase/storage";
-import { storage } from "../../../../firebase";
 import IconButton from "@mui/material/IconButton";
 import RemoveIcon from "@mui/icons-material/Remove";
 import AddIcon from "@mui/icons-material/Add";
@@ -27,9 +25,13 @@ import {
   getDocs,
   query,
   where,
+  getDoc,
+  setDoc,
+  serverTimestamp,
 } from "firebase/firestore/lite";
 import { db, auth } from "../../../../firebase";
 import { getFirestore } from "firebase/firestore/lite";
+import { onAuthStateChanged } from "firebase/auth";
 
 const AssignedmodalContinuing = (props) => {
   const navigate = useNavigate();
@@ -47,6 +49,28 @@ const AssignedmodalContinuing = (props) => {
   const [showAlert, setShowAlert] = useState(false);
   const [isDownloadSuccessful, setIsDownloadSuccessful] = useState(false);
   const [submissions, setSubmissions] = useState([]);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [userName, setUserName] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setCurrentUser(currentUser);
+
+      if (currentUser) {
+        const userRef = doc(db, "users", currentUser.uid);
+
+        getDoc(userRef).then((doc) => {
+          if (doc.exists()) {
+            const name = doc.data().name;
+            setUserName(name);
+            localStorage.setItem("userName", name);
+          }
+        });
+      }
+    });
+
+    return unsubscribe;
+  }, []);
 
   useEffect(() => {
     const db = getFirestore();
@@ -167,14 +191,6 @@ const AssignedmodalContinuing = (props) => {
       });
   };
 
-  const handleOpen = () => {
-    setOpen(true);
-  };
-
-  const handleClose = () => {
-    setOpen(false);
-  };
-
   function handlesSuccess() {
     setShowSuccess(true);
     setShowConfirmation(false);
@@ -198,7 +214,7 @@ const AssignedmodalContinuing = (props) => {
         {
           method: "POST",
           headers: {
-            filefolder: `${auth.currentUser.uid}/initial`,
+            filefolder: `${auth.currentUser.uid}/continuing`,
           },
           body: form,
         }
@@ -233,21 +249,40 @@ const AssignedmodalContinuing = (props) => {
           upload_date: currentDateGMT8, // Add the offset current date as a UNIX timestamp
         }));
 
-        // Get the existing rev_initial_files array or an empty array if it doesn't exist
         const existingReviewerFiles =
-          docSnapshot.data().rev_initial_files || [];
+          docSnapshot.data().rev_continuing_files || [];
 
         // Concatenate the existing and new files arrays
         const updatedReviewerFiles =
           existingReviewerFiles.concat(filesWithDate);
 
-        // Update the document with the updated rev_initial_files
         const submissionRef = doc(db, "submissions", docSnapshot.id);
         await updateDoc(submissionRef, {
-          rev_initial_files: updatedReviewerFiles,
+          rev_continuing_files: updatedReviewerFiles,
         });
 
         console.log("Document updated with ID: ", docSnapshot.id);
+        const notificationsRef = collection(db, "notifications");
+        const adminUsersQuery = query(
+          collection(db, "users"),
+          where("role", "==", "admin")
+        );
+        const adminUsersSnapshot = await getDocs(adminUsersQuery);
+        const adminEmails = adminUsersSnapshot.docs.map(
+          (doc) => doc.data().email
+        );
+
+        adminEmails.forEach(async (email) => {
+          const newNotification = {
+            id: doc(notificationsRef).id,
+            message: `Reviewer ${userName} has submitted an continuing review for protocol ${props.protocol_no}.`,
+            read: false,
+            recipientEmail: email,
+            senderEmail: auth.currentUser.email,
+            timestamp: serverTimestamp(),
+          };
+          await setDoc(doc(notificationsRef), newNotification);
+        });
       } else {
         console.log("No submission found with the given protocol_no");
       }

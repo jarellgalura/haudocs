@@ -178,11 +178,7 @@ const Continuing = (props) => {
         >
           Download All Files
         </Button>
-        <Button
-          onClick={handleCloseModal}
-          style={closeStyle}
-          variant="outlined"
-        >
+        <Button onClick={handleCloseModal} variant="outlined">
           Close
         </Button>
       </div>
