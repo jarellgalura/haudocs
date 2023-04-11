@@ -94,17 +94,17 @@ function Reviewersmodal(props) {
           </ThemeProvider>
         </Box>
         <TabPanel value={value} index={0}>
-          <Initial handleCloseModal={handleCloseModal} />
+          <Initial uid={props.uid} handleCloseModal={handleCloseModal} />
         </TabPanel>
 
         {/* Continuing TAB */}
         <TabPanel value={value} index={1}>
-          <Continuing handleCloseModal={handleCloseModal} />
+          <Continuing uid={props.uid} handleCloseModal={handleCloseModal} />
         </TabPanel>
 
         {/* Final TAB */}
         <TabPanel value={value} index={2}>
-          <Final handleCloseModal={handleCloseModal} />
+          <Final uid={props.uid} handleCloseModal={handleCloseModal} />
         </TabPanel>
       </Box>
     </div>

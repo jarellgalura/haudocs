@@ -1,4 +1,4 @@
-import React, { useState, useContext } from "react";
+import React, { useState, useEffect } from "react";
 import FormData from "form-data";
 import { useNavigate } from "react-router-dom";
 import {
@@ -17,22 +17,60 @@ import {
   getDocs,
   query,
   where,
+  doc,
+  getDoc,
+  updateDoc,
+  setDoc,
 } from "firebase/firestore/lite";
 import { db, auth } from "../../firebase";
+import { onAuthStateChanged } from "firebase/auth";
 
-const Final = () => {
+const Final = ({ onSubmitted }) => {
   const navigate = useNavigate();
   const [firstFile, setFirstFile] = useState(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
+  const [userName, setUserName] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
+      setCurrentUser(currentUser);
+
+      if (currentUser) {
+        const userRef = doc(db, "users", currentUser.uid);
+
+        getDoc(userRef).then((doc) => {
+          if (doc.exists()) {
+            const name = doc.data().name;
+            setUserName(name);
+            localStorage.setItem("userName", name);
+          }
+        });
+      }
+    });
+
+    return unsubscribe;
+  }, []);
+
+  function generateId(length) {
+    let result = "";
+    const characters =
+      "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789";
+    const charactersLength = characters.length;
+    for (let i = 0; i < length; i++) {
+      result += characters.charAt(Math.floor(Math.random() * charactersLength));
+    }
+    return result;
+  }
 
   async function handleSubmit() {
     const submissionsRef = collection(db, "submissions");
     const q = query(
       submissionsRef,
       where("uid", "==", auth.currentUser.uid),
-      where("status", "==", "final")
+      where("status", "==", "continuing")
     );
     const querySnapshot = await getDocs(q);
     if (!querySnapshot.empty) {
@@ -61,23 +99,53 @@ const Final = () => {
       const data = await response.json();
       console.log(data);
 
-      try {
-        const docRef = await addDoc(collection(db, "submissions"), {
+      const finalFiles = data.files.map((file) => ({
+        id: generateId(16),
+        status: "final",
+        forReview: false,
+        ...file,
+      }));
+
+      if (!querySnapshot.empty) {
+        const docRef = querySnapshot.docs[0].ref;
+        await updateDoc(docRef, {
+          final_files: [
+            ...querySnapshot.docs[0].data().continuing_files,
+            ...finalFiles,
+          ],
+          status: "final",
+        });
+        console.log("Document updated with ID: ", docRef.id);
+        const notificationsRef = collection(db, "notifications");
+        const adminUsersQuery = query(
+          collection(db, "users"),
+          where("role", "==", "admin")
+        );
+        const adminUsersSnapshot = await getDocs(adminUsersQuery);
+        const adminEmails = adminUsersSnapshot.docs.map(
+          (doc) => doc.data().email
+        );
+
+        adminEmails.forEach(async (email) => {
+          const newNotification = {
+            id: doc(notificationsRef).id,
+            message: `There's a new Final form submitted`,
+            role: "applicant",
+            read: false,
+            recipientEmail: email,
+            senderEmail: auth.currentUser.email,
+            timestamp: serverTimestamp(),
+          };
+          await setDoc(doc(notificationsRef), newNotification);
+        });
+        onSubmitted();
+      } else {
+        const newSubmissionRef = await addDoc(submissionsRef, {
           uid: auth.currentUser.uid,
           status: "final",
-          files: data.files,
-          name: auth.currentUser.displayName,
-          date_sent: serverTimestamp(),
-          due_date: "",
-          protocol_no: "",
-          reviewer: "",
-          review_type: "",
-          decision: "",
-          school: "",
+          final_files: finalFiles,
         });
-        console.log("Document written with ID: ", docRef.id);
-      } catch (e) {
-        console.log("Error adding document: ", e);
+        console.log("New document created with ID: ", newSubmissionRef.id);
       }
     } catch (error) {
       console.log(error);

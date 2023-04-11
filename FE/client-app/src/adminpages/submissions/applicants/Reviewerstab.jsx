@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import PropTypes from "prop-types";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
@@ -6,11 +6,55 @@ import { DataGrid } from "@mui/x-data-grid";
 import { Button } from "@mui/material";
 import Modal from "@mui/material/Modal";
 import Reviewersmodal from "./modals/Reviewersmodal";
+import {
+  getFirestore,
+  collection,
+  query,
+  where,
+  getDocs,
+  onSnapshot,
+} from "firebase/firestore";
+import { auth } from "../../../firebase";
 
 function Reviewersstab(props) {
   const [showModal, setShowModal] = useState(false);
+  const [selectedUid, setSelectedUid] = useState(null);
+  const [submissions, setSubmissions] = useState([]);
+
+  useEffect(() => {
+    const db = getFirestore();
+    const submissionsCollection = collection(db, "submissions");
+    const unsubscribe = onSnapshot(
+      query(submissionsCollection, where("rev_initial_files", "!=", [])),
+      (snapshot) => {
+        const submissionsData = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            date_sent: data.date_sent
+              ? new Date(data.date_sent.seconds * 1000).toLocaleString()
+              : null,
+            due_date: data.due_date
+              ? new Date(data.due_date.seconds * 1000).toLocaleString()
+              : null,
+          };
+        });
+        setSubmissions(submissionsData);
+      }
+    );
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  function handleOpenModal(uid) {
+    setSelectedUid(uid);
+    setShowModal(true);
+  }
 
   function handleCloseModal() {
+    setSelectedUid(null);
     setShowModal(false);
   }
 
@@ -33,9 +77,9 @@ function Reviewersstab(props) {
   };
 
   const columns = [
-    { field: "protocolnumber", headerName: "Protocol Number", width: "350" },
-    { field: "datesent", headerName: "Date Sent", width: "350" },
-    { field: "duedate", headerName: "Due Date", width: "350" },
+    { field: "protocol_no", headerName: "Protocol Number", width: "350" },
+    { field: "date_sent", headerName: "Date Sent", width: "350" },
+    { field: "due_date", headerName: "Due Date", width: "350" },
     {
       field: "action",
       headerName: "Action",
@@ -44,19 +88,13 @@ function Reviewersstab(props) {
     },
   ];
 
-  const rows = [
-    {
-      id: "",
-      protocolnumber: "2023-001-NAME-TITLE",
-      datesent: "January 28, 2023",
-      duedate: "March 26, 2023",
-    },
-  ];
-
-  function ViewCell(id) {
+  function ViewCell(props) {
     return (
       <div>
-        <Button onClick={() => setShowModal(true)} style={viewStyle}>
+        <Button
+          onClick={() => handleOpenModal(props.row.uid)}
+          style={viewStyle}
+        >
           View
         </Button>
         <Modal
@@ -66,7 +104,12 @@ function Reviewersstab(props) {
           aria-describedby="modal-modal-description"
         >
           <Box sx={style}>
-            <Reviewersmodal handleCloseModal={handleCloseModal} />
+            {selectedUid && (
+              <Reviewersmodal
+                uid={selectedUid}
+                handleCloseModal={handleCloseModal}
+              />
+            )}
           </Box>
         </Modal>
       </div>
@@ -107,7 +150,7 @@ function Reviewersstab(props) {
     <div className="shadow-md" style={{ height: 400, width: "100%" }}>
       <DataGrid
         classes={{ header: "custom-header" }}
-        rows={rows}
+        rows={submissions}
         columns={columns}
         pageSize={5}
         rowsPerPageOptions={[5]}
