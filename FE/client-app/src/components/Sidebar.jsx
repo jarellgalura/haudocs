@@ -229,7 +229,7 @@ const Sidebar = ({ children }) => {
     },
     {
       path: "/download",
-      name: "Download",
+      name: "Download Forms",
       icon: <GetApp />,
     },
     {

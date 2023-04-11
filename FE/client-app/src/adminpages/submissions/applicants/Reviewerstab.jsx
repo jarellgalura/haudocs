@@ -32,8 +32,10 @@ function Reviewersstab(props) {
           return {
             id: doc.id,
             ...data,
-            date_sent: data.date_sent
-              ? new Date(data.date_sent.seconds * 1000).toLocaleString()
+            rev_to_admin_sent_date: data.rev_to_admin_sent_date
+              ? new Date(
+                  data.rev_to_admin_sent_date.seconds * 1000
+                ).toLocaleString()
               : null,
             due_date: data.due_date
               ? new Date(data.due_date.seconds * 1000).toLocaleString()
@@ -78,7 +80,7 @@ function Reviewersstab(props) {
 
   const columns = [
     { field: "protocol_no", headerName: "Protocol Number", width: "350" },
-    { field: "date_sent", headerName: "Date Sent", width: "350" },
+    { field: "rev_to_admin_sent_date", headerName: "Date Sent", width: "350" },
     { field: "due_date", headerName: "Due Date", width: "350" },
     {
       field: "action",

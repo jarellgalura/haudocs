@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { ref, getDownloadURL } from "firebase/storage";
 import { storage } from "../../../../../firebase";
@@ -11,6 +11,13 @@ import {
   DialogContentText,
   Alert,
 } from "@mui/material";
+import {
+  getFirestore,
+  collection,
+  query,
+  where,
+  getDocs,
+} from "firebase/firestore";
 
 const Continuing = (props) => {
   const { handleCloseModal } = props;
@@ -19,6 +26,32 @@ const Continuing = (props) => {
   const [isAnyCheckboxSelected, setIsAnyCheckboxSelected] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const [isDownloadSuccessful, setIsDownloadSuccessful] = useState(false);
+  const [submissions, setSubmissions] = useState([]);
+
+  useEffect(() => {
+    const db = getFirestore();
+    const submissionsRef = collection(db, "submissions");
+    const q = query(submissionsRef, where("uid", "==", props.uid));
+
+    getDocs(q).then((querySnapshot) => {
+      const data = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      const files = data[0].rev_continuing_files.map((file, index) => ({
+        id: index + 1,
+        name: data[0].name,
+        date_sent: new Date(
+          data[0].date_sent.seconds * 1000 +
+            data[0].date_sent.nanoseconds / 1000000
+        ).toLocaleString(),
+        ...file,
+        sent_by: data[0].sent_by,
+      }));
+      setSubmissions(files);
+    });
+  }, [props.uid]);
 
   const handleDownload = async (id) => {
     const fileRef = ref(storage, `Submissions/${id}.docx`);
@@ -45,64 +78,44 @@ const Continuing = (props) => {
   };
 
   const handleDownloadAll = async () => {
-    for (const row of rows) {
-      if (selectedRows.includes(row.id)) {
-        await handleDownload(row.id);
-      }
+    const keys = [];
+    for (const row of submissions) {
+      keys.push(row.downloadLink.replace("/files/", ""));
     }
-    setShowDownloadDialog(false);
+
+    fetch(`${process.env.REACT_APP_BACKEND_URL}/files/zip`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ keys: keys }),
+    })
+      .then((response) => {
+        if (response.ok) {
+          return response.blob();
+        } else {
+          throw new Error("Request failed");
+        }
+      })
+      .then((blob) => {
+        // Download the zip file
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "files.zip";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
   };
 
-  const rows = [
-    {
-      id: "HAU-IRB FORM 3.1(A) Progress Report Form",
-      documentname: "HAU-IRB FORM 3.1(A): Progress Report Form",
-      sentby: "Stephanie David",
-      datesent: "January 28, 2023",
-    },
-    {
-      id: "HAU-IRB FORM 3.2(A) Early Termination Report Form",
-      documentname: "HAU-IRB FORM 3.2(A): Early Termination Report Form",
-      sentby: "Stephanie David",
-      datesent: "January 28, 2023",
-    },
-    {
-      id: "HAU-IRB FORM 3.3(A) Amendment Review Form",
-      documentname: "HAU-IRB FORM 3.3(A): Amendment Review Form",
-      sentby: "Stephanie David",
-      datesent: "January 28, 2023",
-    },
-    {
-      id: "HAU-IRB FORM 3.4(A) Protocol DeviationViolation Report Form",
-      documentname:
-        "HAU-IRB FORM 3.4(A): Protocol DeviationViolation Report Form",
-      sentby: "Stephanie David",
-      datesent: "January 28, 2023",
-    },
-    {
-      id: "HAU-IRB FORM 3.5(A) Serious Adverse Event Form",
-      documentname: "HAU-IRB FORM 3.5(A): Serious Adverse Event Form",
-      sentby: "Stephanie David",
-      datesent: "January 28, 2023",
-    },
-    {
-      id: "HAU-IRB FORM 3.5(B) Reportable Negative Events Form",
-      documentname: "HAU-IRB FORM 3.5(B): Reportable Negative Events Form",
-      sentby: "Stephanie David",
-      datesent: "January 28, 2023",
-    },
-    {
-      id: "HAU-IRB FORM 3.6(A) Application for Continuing Review",
-      documentname: "HAU-IRB FORM 3.6(A) Application for Continuing Review",
-      sentby: "Stephanie David",
-      datesent: "January 28, 2023",
-    },
-  ];
-
   const columns = [
-    { field: "documentname", headerName: "DocumentName", width: "180" },
-    { field: "sentby", headerName: "Sent By", width: "175" },
-    { field: "datesent", headerName: "Date Sent", width: "200" },
+    { field: "fieldname", headerName: "DocumentName", width: "180" },
+    { field: "sent_by", headerName: "Sent By", width: "175" },
+    { field: "date_sent", headerName: "Date Sent", width: "200" },
     {
       field: "action",
       headerName: "Action",
@@ -123,11 +136,12 @@ const Continuing = (props) => {
   const downloadStyle = {
     color: "maroon",
   };
+
   return (
     <div style={{ height: 400, width: "100%" }}>
       <DataGrid
         classes={{ header: "custom-header" }}
-        rows={rows}
+        rows={submissions}
         columns={columns}
         pageSize={5}
         rowsPerPageOptions={[5]}
@@ -138,7 +152,6 @@ const Continuing = (props) => {
           setIsAnyCheckboxSelected(newSelection.length > 0);
         }}
       />
-
       <div className="mt-[1rem]">
         {showAlert && !isDownloadSuccessful && (
           <Alert severity="warning" onClose={() => setShowAlert(false)}>

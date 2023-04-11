@@ -159,7 +159,7 @@ const Continuing = ({ onSubmitted }) => {
         adminEmails.forEach(async (email) => {
           const newNotification = {
             id: doc(notificationsRef).id,
-            message: `There's a new Continuing form submitted`,
+            message: `Applicant ${userName} has submissions for continuing review.`,
             role: "applicant",
             read: false,
             recipientEmail: email,

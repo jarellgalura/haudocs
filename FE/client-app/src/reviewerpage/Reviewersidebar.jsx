@@ -601,7 +601,7 @@ const Reviewersidebar = ({ children }) => {
                         <strong>{n.senderEmail}</strong>
                       </small>
                       <br />
-                      {n.message} <br />
+                      <small>{n.message}</small> <br />
                       <small>
                         {new Date(n.timestamp?.toDate()).toLocaleString()}
                       </small>
@@ -625,7 +625,7 @@ const Reviewersidebar = ({ children }) => {
             </MenuItem>
           </Menu>
           <Dialog open={showAll} onClose={handleClose3}>
-            <DialogContent>
+            <DialogContent sx={{ width: "100%" }}>
               <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
                 All Notifications
               </Typography>
@@ -655,7 +655,7 @@ const Reviewersidebar = ({ children }) => {
                       />
                       <Typography
                         noWrap={false}
-                        sx={{ overflowWrap: "break-word", ml: 1 }}
+                        sx={{ overflowWrap: "break-word" }}
                       >
                         <small>
                           <strong>{n.senderEmail}</strong>

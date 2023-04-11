@@ -9,13 +9,13 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 
 const Download = () => {
   const initialgoogleDriveLink =
-    "https://drive.google.com/drive/folders/1Yspdco-rPZBfFFcodV4H-RD8yHCAGc4n?usp=share_link";
+    " https://1drv.ms/f/s!AuF48Vlw3XM-avEjfrjOUCJbbJY?e=sd1Adi";
 
   const continuinggoogleDriveLink =
-    "https://drive.google.com/drive/folders/1odBAMYIf46gbPyRkLbCH5A2XqBqFcwJk?usp=share_link";
+    "https://1drv.ms/f/s!AuF48Vlw3XM-ayLE5lP5ggZH9gg?e=orAX6D";
 
   const finalgoogleDriveLink =
-    "https://drive.google.com/drive/folders/13DrN_67A_cX56FYmSfjuqA3B3I9HZ1jJ?usp=share_link";
+    "https://1drv.ms/f/s!AuF48Vlw3XM-bMMRsAuG3x6K8Yk?e=InSyWb";
   return (
     <Sidebar>
       <div className="download-accordion">

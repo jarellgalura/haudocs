@@ -17,11 +17,6 @@ import {
   query,
   where,
   getDocs,
-  updateDoc,
-  doc,
-  Timestamp,
-  serverTimestamp,
-  setDoc,
 } from "firebase/firestore";
 
 const Initial = (props) => {

@@ -1,39 +1,62 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { Button } from "@mui/material";
 import { ref, getDownloadURL } from "firebase/storage";
 import { storage } from "../../../../../firebase";
+import {
+  getFirestore,
+  collection,
+  query,
+  where,
+  getDocs,
+} from "firebase/firestore";
 
 const Final = (props) => {
   const { handleCloseModal } = props;
+  const [submissions, setSubmissions] = useState([]);
+  const [isDownloadSuccessful, setIsDownloadSuccessful] = useState(false);
+
+  useEffect(() => {
+    const db = getFirestore();
+    const submissionsRef = collection(db, "submissions");
+    const q = query(submissionsRef, where("uid", "==", props.uid));
+
+    getDocs(q).then((querySnapshot) => {
+      const data = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      const files = data[0].rev_continuing_files.map((file, index) => ({
+        id: index + 1,
+        name: data[0].name,
+        date_sent: new Date(
+          data[0].date_sent.seconds * 1000 +
+            data[0].date_sent.nanoseconds / 1000000
+        ).toLocaleString(),
+        ...file,
+        sent_by: data[0].sent_by,
+      }));
+      setSubmissions(files);
+    });
+  }, [props.uid]);
 
   const handleDownload = async (id) => {
-    // Get the reference to the file you want to download
     const fileRef = ref(storage, `Submissions/${id}.docx`);
-
     try {
       // Get the download URL for the file
       const downloadURL = await getDownloadURL(fileRef);
-      // Open the file in a new tab/window
       window.open(downloadURL, "_blank");
+      setIsDownloadSuccessful(true);
     } catch (error) {
       console.error(error);
     }
   };
 
-  const rows = [
-    {
-      id: "HAU-IRB FORM 3.7(A) Final Report Form",
-      documentname: "HAU-IRB FORM 3.7(A): Final Report Form",
-      sentby: "Stephanie David",
-      datesent: "January 28, 2023",
-    },
-  ];
-
   const columns = [
-    { field: "documentname", headerName: "DocumentName", width: "180" },
-    { field: "sentby", headerName: "Sent By", width: "175" },
-    { field: "datesent", headerName: "Date Sent", width: "200" },
+    { field: "fieldname", headerName: "DocumentName", width: "180" },
+    { field: "sent_by", headerName: "Sent By", width: "175" },
+    { field: "date_sent", headerName: "Date Sent", width: "200" },
     {
       field: "action",
       headerName: "Action",
@@ -58,7 +81,7 @@ const Final = (props) => {
     <div style={{ height: 400, width: "100%" }}>
       <DataGrid
         classes={{ header: "custom-header" }}
-        rows={rows}
+        rows={submissions}
         columns={columns}
         pageSize={5}
         rowsPerPageOptions={[5]}

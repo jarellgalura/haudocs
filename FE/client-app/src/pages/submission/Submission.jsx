@@ -7,29 +7,32 @@ import Final from "./Final";
 
 function Submission() {
   const [activeTab, setActiveTab] = useState(0);
-  const [formSubmitted, setFormSubmitted] = useState(false);
-
+  const [initialSubmitted, setInitialSubmitted] = useState(
+    localStorage.getItem("initialSubmitted") === "true"
+  );
+  const [continuingSubmitted, setContinuingSubmitted] = useState(
+    localStorage.getItem("continuingSubmitted") === "true"
+  );
   const tabs = [
     {
       label: "Initial Process",
-      content: <Initial onSubmitted={() => setFormSubmitted(true)} />,
+      content: <Initial onSubmitted={() => setInitialSubmitted(true)} />,
     },
     {
       label: "Continuing Review",
-      content: (
-        <Continuing
-          onSubmitted={() => setFormSubmitted(true)}
-          disabled={!formSubmitted}
-        />
-      ),
-      disabled: !formSubmitted,
+      content: <Continuing onSubmitted={() => setContinuingSubmitted(true)} />,
+      disabled: !initialSubmitted,
     },
     {
       label: "Final Review",
       content: <Final />,
-      disabled: !formSubmitted,
+      disabled: !continuingSubmitted,
     },
   ];
+
+  useEffect(() => {
+    localStorage.setItem("initialSubmitted", initialSubmitted);
+  }, [initialSubmitted]);
 
   return (
     <Sidebar>

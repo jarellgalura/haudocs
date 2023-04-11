@@ -1,36 +1,61 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import Reviewersidebar from "../Reviewersidebar";
 import Button from "@mui/material/Button";
 import { DataGrid } from "@mui/x-data-grid";
 import "./reviewerstatus.css";
+import {
+  getFirestore,
+  collection,
+  query,
+  where,
+  getDocs,
+  onSnapshot,
+} from "firebase/firestore";
 
 const Reviewstatus = () => {
-  // Sample data
+  const [submissions, setSubmissions] = useState([]);
+
+  useEffect(() => {
+    const db = getFirestore();
+    const submissionsCollection = collection(db, "submissions");
+    const unsubscribe = onSnapshot(
+      query(submissionsCollection, where("rev_initial_files", "!=", [])),
+      (snapshot) => {
+        const submissionsData = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            rev_to_admin_sent_date: data.rev_to_admin_sent_date
+              ? new Date(
+                  data.rev_to_admin_sent_date.seconds * 1000
+                ).toLocaleString()
+              : null,
+            due_date: data.due_date
+              ? new Date(data.due_date.seconds * 1000).toLocaleString()
+              : null,
+          };
+        });
+        setSubmissions(submissionsData);
+      }
+    );
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
   const columns = [
-    { field: "protocolnumber", headerName: "Protocol Number", width: 200 },
-    { field: "documentname", headerName: "Document Name", width: 200 },
-    { field: "classification", headerName: "Classification", width: 200 },
-    { field: "datesent", headerName: "Date Sent", width: 200 },
+    { field: "protocol_no", headerName: "Protocol Number", width: 200 },
+    { field: "status", headerName: "Classification", width: 200 },
+    { field: "rev_to_admin_sent_date", headerName: "Date Sent", width: 200 },
     {
-      field: "duedate",
+      field: "due_date",
       headerName: "Due Date",
       width: 200,
     },
     {
-      field: "status",
+      field: "decision",
       headerName: "Status",
-    },
-  ];
-
-  const rows = [
-    {
-      id: "",
-      protocolnumber: "2023-001-NAME-TITLE",
-      documentname: "",
-      classification: "",
-      datesent: "",
-      duedate: "April, 04, 2023",
-      status: "",
     },
   ];
 
@@ -40,7 +65,7 @@ const Reviewstatus = () => {
         <h1 className="text-center text-2xl font-bold">Review Status</h1>
         <div className=" mt-[2rem]" style={{ height: 500 }}>
           <DataGrid
-            rows={rows}
+            rows={submissions}
             columns={columns}
             pageSize={5}
             rowsPerPageOptions={[5]}
