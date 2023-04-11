@@ -69,14 +69,15 @@ function Applicantstab(props) {
     {
       field: "protocol_no",
       headerName: "Protocol Number",
-      width: "350",
+      flex: 1,
     },
-    { field: "date_sent", headerName: "Date Sent", width: "350" },
-    { field: "email", headerName: "Email", width: "350" },
+    { field: "date_sent", headerName: "Date Sent", flex: 1 },
+    { field: "email", headerName: "Email", flex: 1 },
     {
       field: "action",
       headerName: "Action",
-      width: "200",
+      flex: 1,
+
       renderCell: (params) => <ViewCell {...params} />,
     },
   ];
@@ -141,13 +142,15 @@ function Applicantstab(props) {
   };
 
   return (
-    <div className="shadow-md" style={{ height: 400, width: "100%" }}>
+    <div style={{ height: 400 }}>
       <DataGrid
         classes={{ header: "custom-header" }}
         rows={submissions}
         columns={columns}
         pageSize={5}
         rowsPerPageOptions={[5]}
+        autoWidth
+        disableHorizontalScroll
       />
     </div>
   );

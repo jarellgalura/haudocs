@@ -7,10 +7,10 @@ import { Box } from "@mui/system";
 
 const Archiving = () => {
   const columns = [
-    { field: "protocol_no", headerName: "Protocol Number", width: 230 },
-    { field: "review_type", headerName: "Review Type", width: 230 },
-    { field: "reviewer", headerName: "Reviewer", width: 230 },
-    { field: "date", headerName: "Date Completed", width: 190 },
+    { field: "protocol_no", headerName: "Protocol Number", flex: 1 },
+    { field: "review_type", headerName: "Review Type", flex: 1 },
+    { field: "reviewer", headerName: "Reviewer", flex: 1 },
+    { field: "date", headerName: "Date Completed", flex: 1 },
     {
       field: "action",
       headerName: "Action",
@@ -29,9 +29,11 @@ const Archiving = () => {
     <Adminsidebar>
       <div className="archivingdatatable">
         <h1 className="text-center text-2xl font-bold">Archiving</h1>
-        <Box sx={{ height: 500, width: "100%", marginTop: 5 }}>
+        <Box sx={{ height: 400, marginTop: 4 }}>
           <DataGrid
             rows={rows}
+            autoWidth
+            disableHorizontalScroll
             columns={columns}
             pageSize={5}
             rowsPerPageOptions={[5]}

@@ -279,6 +279,8 @@ const AdminUsers = () => {
         <DataGrid
           className="datagrid"
           rows={data}
+          autoWidth
+          disableHorizontalScroll
           columns={userColumns.concat(actionColumn)}
           pageSize={9}
           rowsPerPageOptions={[9]}

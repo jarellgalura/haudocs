@@ -61,17 +61,17 @@ const AdminApplication = () => {
   }, []);
 
   const columns = [
-    { field: "protocol_no", headerName: "Protocol Number", width: 300 },
-    { field: "review_type", headerName: "Review Type", width: 300 },
+    { field: "protocol_no", headerName: "Protocol Number", flex: 1 },
+    { field: "review_type", headerName: "Review Type", flex: 1 },
     {
       field: "rev_date_sent",
       headerName: "Date Sent",
-      width: 200,
+      flex: 1,
     },
     {
       field: "reviewer",
       headerName: "Reviewer",
-      width: 200,
+      flex: 1,
     },
     {
       field: "status",
@@ -83,13 +83,12 @@ const AdminApplication = () => {
     <Adminsidebar>
       <div className="adminreviewdatatable">
         <h1 className="text-center text-2xl font-bold">Review Status</h1>
-        <div
-          className="review mt-4 shadow-md"
-          style={{ height: 500, width: "100%" }}
-        >
+        <div className="review mt-4 shadow-md" style={{ height: 400 }}>
           <DataGrid
             rows={submissions}
             columns={columns}
+            autoWidth
+            disableHorizontalScroll
             pageSize={5}
             rowsPerPageOptions={[5]}
           />

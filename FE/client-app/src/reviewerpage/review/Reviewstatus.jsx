@@ -45,17 +45,18 @@ const Reviewstatus = () => {
   }, []);
 
   const columns = [
-    { field: "protocol_no", headerName: "Protocol Number", width: 200 },
-    { field: "status", headerName: "Classification", width: 200 },
-    { field: "rev_to_admin_sent_date", headerName: "Date Sent", width: 200 },
+    { field: "protocol_no", headerName: "Protocol Number", flex: 1 },
+    { field: "status", headerName: "Classification", flex: 1 },
+    { field: "rev_to_admin_sent_date", headerName: "Date Sent", flex: 1 },
     {
       field: "due_date",
       headerName: "Due Date",
-      width: 200,
+      flex: 1,
     },
     {
       field: "decision",
       headerName: "Status",
+      flex: 1,
     },
   ];
 
@@ -65,6 +66,8 @@ const Reviewstatus = () => {
         <h1 className="text-center text-2xl font-bold">Review Status</h1>
         <div className=" mt-[2rem]" style={{ height: 500 }}>
           <DataGrid
+            autoWidth
+            disableHorizontalScroll
             rows={submissions}
             columns={columns}
             pageSize={5}

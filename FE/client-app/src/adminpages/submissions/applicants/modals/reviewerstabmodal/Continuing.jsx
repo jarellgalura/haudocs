@@ -113,13 +113,13 @@ const Continuing = (props) => {
   };
 
   const columns = [
-    { field: "documentname", headerName: "DocumentName", width: "180" },
-    { field: "sentby", headerName: "Sent By", width: "175" },
-    { field: "datesent", headerName: "Date Sent", width: "200" },
+    { field: "documentname", headerName: "DocumentName", flex: 1 },
+    { field: "sentby", headerName: "Sent By", flex: 1 },
+    { field: "datesent", headerName: "Date Sent", flex: 1 },
     {
       field: "action",
       headerName: "Action",
-      width: "100",
+      flex: 1,
       renderCell: (params) => (
         <Button style={downloadStyle} onClick={() => handleDownload(params.id)}>
           Download
@@ -138,6 +138,8 @@ const Continuing = (props) => {
         classes={{ header: "custom-header" }}
         rows={submissions}
         columns={columns}
+        autoWidth
+        disableHorizontalScroll
         pageSize={5}
         rowsPerPageOptions={[5]}
         checkboxSelection

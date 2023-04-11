@@ -231,12 +231,12 @@ const Assignedmodalinitial = (props) => {
   };
 
   const columns = [
-    { field: "fieldname", headerName: "DocumentName", width: "550" },
+    { field: "fieldname", headerName: "DocumentName", flex: 1 },
 
     {
       field: "action",
       headerName: "Action",
-      width: "100",
+      flex: 1,
       renderCell: (params) => (
         <Button style={downloadStyle} onClick={() => handleDownload(params)}>
           Download
@@ -319,11 +319,13 @@ const Assignedmodalinitial = (props) => {
     backgroundColor: "maroon",
   };
   return (
-    <div style={{ height: 400, width: "100%" }}>
+    <div style={{ height: 400 }}>
       <DataGrid
         classes={{ header: "custom-header" }}
         rows={submissions}
         columns={columns}
+        autoWidth
+        disableHorizontalScroll
         pageSize={5}
         rowsPerPageOptions={[5]}
         checkboxSelection

@@ -79,13 +79,13 @@ function Reviewersstab(props) {
   };
 
   const columns = [
-    { field: "protocol_no", headerName: "Protocol Number", width: "350" },
-    { field: "rev_to_admin_sent_date", headerName: "Date Sent", width: "350" },
-    { field: "due_date", headerName: "Due Date", width: "350" },
+    { field: "protocol_no", headerName: "Protocol Number", flex: 1 },
+    { field: "rev_to_admin_sent_date", headerName: "Date Sent", flex: 1 },
+    { field: "due_date", headerName: "Due Date", flex: 1 },
     {
       field: "action",
       headerName: "Action",
-      width: "200",
+      flex: 1,
       renderCell: (params) => <ViewCell {...params} />,
     },
   ];
@@ -149,13 +149,15 @@ function Reviewersstab(props) {
   };
 
   return (
-    <div className="shadow-md" style={{ height: 400, width: "100%" }}>
+    <div style={{ height: 400 }}>
       <DataGrid
         classes={{ header: "custom-header" }}
         rows={submissions}
         columns={columns}
         pageSize={5}
         rowsPerPageOptions={[5]}
+        disableHorizontalScroll
+        autoWidth
       />
     </div>
   );

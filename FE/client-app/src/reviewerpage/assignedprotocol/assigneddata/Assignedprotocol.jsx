@@ -83,13 +83,13 @@ function AssignedProtocol() {
   };
 
   const columns = [
-    { field: "protocol_no", headerName: "Protocol Number", width: "350" },
-    { field: "rev_date_sent", headerName: "Date Sent", width: "350" },
-    { field: "due_date", headerName: "Due Date", width: "350" },
+    { field: "protocol_no", headerName: "Protocol Number", flex: 1 },
+    { field: "rev_date_sent", headerName: "Date Sent", flex: 1 },
+    { field: "due_date", headerName: "Due Date", flex: 1 },
     {
       field: "action",
       headerName: "Action",
-      width: "200",
+      flex: 1,
       renderCell: (params) => <ViewCell {...params} />,
     },
   ];
@@ -161,6 +161,8 @@ function AssignedProtocol() {
           <DataGrid
             classes={{ header: "custom-header" }}
             rows={submissions}
+            autoWidth
+            disableHorizontalScroll
             columns={columns}
             pageSize={5}
             rowsPerPageOptions={[5]}
