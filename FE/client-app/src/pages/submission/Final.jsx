@@ -73,12 +73,6 @@ const Final = ({ onSubmitted }) => {
       where("status", "==", "continuing")
     );
     const querySnapshot = await getDocs(q);
-    if (!querySnapshot.empty) {
-      // User has already submitted final form
-      setShowAlert(true);
-      return false;
-    }
-
     const form = new FormData();
 
     if (firstFile) {
