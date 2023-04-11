@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { ref, getDownloadURL } from "firebase/storage";
 import { storage } from "../../../../../firebase";
@@ -11,6 +11,18 @@ import {
   DialogContentText,
   Alert,
 } from "@mui/material";
+import {
+  getFirestore,
+  collection,
+  query,
+  where,
+  getDocs,
+  updateDoc,
+  doc,
+  Timestamp,
+  serverTimestamp,
+  setDoc,
+} from "firebase/firestore";
 
 const Initial = (props) => {
   const { handleCloseModal } = props;
@@ -19,6 +31,32 @@ const Initial = (props) => {
   const [isAnyCheckboxSelected, setIsAnyCheckboxSelected] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
   const [isDownloadSuccessful, setIsDownloadSuccessful] = useState(false);
+  const [submissions, setSubmissions] = useState([]);
+
+  useEffect(() => {
+    const db = getFirestore();
+    const submissionsRef = collection(db, "submissions");
+    const q = query(submissionsRef, where("uid", "==", props.uid));
+
+    getDocs(q).then((querySnapshot) => {
+      const data = querySnapshot.docs.map((doc) => ({
+        id: doc.id,
+        ...doc.data(),
+      }));
+
+      const files = data[0].rev_initial_files.map((file, index) => ({
+        id: index + 1,
+        name: data[0].name,
+        date_sent: new Date(
+          data[0].date_sent.seconds * 1000 +
+            data[0].date_sent.nanoseconds / 1000000
+        ).toLocaleString(),
+        ...file,
+        sent_by: data[0].sent_by,
+      }));
+      setSubmissions(files);
+    });
+  }, [props.uid]);
 
   const handleDownload = async (id) => {
     const fileRef = ref(storage, `Submissions/${id}.docx`);
@@ -45,58 +83,44 @@ const Initial = (props) => {
   };
 
   const handleDownloadAll = async () => {
-    for (const row of rows) {
-      if (selectedRows.includes(row.id)) {
-        await handleDownload(row.id);
-      }
+    const keys = [];
+    for (const row of submissions) {
+      keys.push(row.downloadLink.replace("/files/", ""));
     }
-    setShowDownloadDialog(false);
+
+    fetch(`${process.env.REACT_APP_BACKEND_URL}/files/zip`, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+      },
+      body: JSON.stringify({ keys: keys }),
+    })
+      .then((response) => {
+        if (response.ok) {
+          return response.blob();
+        } else {
+          throw new Error("Request failed");
+        }
+      })
+      .then((blob) => {
+        // Download the zip file
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.href = url;
+        link.download = "files.zip";
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      })
+      .catch((error) => {
+        console.error("Error:", error);
+      });
   };
 
-  const rows = [
-    {
-      id: "Research Proposal",
-      documentname: "Research Proposal",
-      sentby: "Stephanie David",
-      datesent: "January 28, 2023",
-    },
-    {
-      id: "Questionnaires Tools",
-      documentname: "Questionnaire/s/Tools",
-      sentby: "Stephanie David",
-      datesent: "January 28, 2023",
-    },
-    {
-      id: "Informed consent assent form",
-      documentname: "Informed consent/assentform",
-      sentby: "Stephanie David",
-      datesent: "January 28, 2023",
-    },
-    {
-      id: "NCIP clearance",
-      documentname:
-        "NCIP clearance (for studies involving indigenous groups)(if needed)",
-      sentby: "Stephanie David",
-      datesent: "January 28, 2023",
-    },
-    {
-      id: "HAU-IRB FORM 4.1(A) Protocol Assessment Form",
-      documentname: "HAU-IRB FORM 4.1(A) Protocol Assessment Form",
-      sentby: "Stephanie David",
-      datesent: "January 28, 2023",
-    },
-    {
-      id: "HAU-IRB FORM 4.1(B) Informed Consent Assessment Form",
-      documentname: "HAU-IRB FORM 4.1(B) Informed Consent Assessment Form",
-      sentby: "Stephanie David",
-      datesent: "January 28, 2023",
-    },
-  ];
-
   const columns = [
-    { field: "documentname", headerName: "DocumentName", width: "180" },
-    { field: "sentby", headerName: "Sent By", width: "175" },
-    { field: "datesent", headerName: "Date Sent", width: "200" },
+    { field: "fieldname", headerName: "DocumentName", width: "180" },
+    { field: "sent_by", headerName: "Sent By", width: "175" },
+    { field: "date_sent", headerName: "Date Sent", width: "200" },
     {
       field: "action",
       headerName: "Action",
@@ -122,7 +146,7 @@ const Initial = (props) => {
     <div style={{ height: 400, width: "100%" }}>
       <DataGrid
         classes={{ header: "custom-header" }}
-        rows={rows}
+        rows={submissions}
         columns={columns}
         pageSize={5}
         rowsPerPageOptions={[5]}

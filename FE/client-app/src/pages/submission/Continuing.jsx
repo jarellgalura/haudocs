@@ -80,6 +80,11 @@ const Continuing = ({ onSubmitted }) => {
       where("status", "==", "initial")
     );
     const querySnapshot = await getDocs(q);
+    if (!querySnapshot.empty) {
+      // User has already submitted final form
+      setShowAlert(true);
+      return false;
+    }
 
     const form = new FormData();
     if (firstFile) {
@@ -132,6 +137,7 @@ const Continuing = ({ onSubmitted }) => {
 
       const continuingFiles = data.files.map((file) => ({
         id: generateId(16),
+        status: "continuing",
         forReview: false,
         ...file,
       }));
@@ -143,6 +149,7 @@ const Continuing = ({ onSubmitted }) => {
             ...querySnapshot.docs[0].data().continuing_files,
             ...continuingFiles,
           ],
+          status: "continuing",
         });
         console.log("Document updated with ID: ", docRef.id);
         const notificationsRef = collection(db, "notifications");
