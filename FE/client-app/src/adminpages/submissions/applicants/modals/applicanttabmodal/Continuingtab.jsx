@@ -182,7 +182,7 @@ const Continuingtab = (props) => {
           rev_date_sent: serverTimestamp(),
         });
 
-        const updatedInitialFiles = data[0].continuing_files.map((file) => {
+        const updatedContinuingFiles = data[0].continuing_files.map((file) => {
           if (selectedId.includes(file.id)) {
             return {
               ...file,
@@ -193,7 +193,7 @@ const Continuingtab = (props) => {
         });
 
         updateDoc(docRef, {
-          continuing_files: updatedInitialFiles,
+          continuing_files: updatedContinuingFiles,
         });
       });
 
