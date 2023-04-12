@@ -67,7 +67,7 @@ function Submission() {
     {
       label: "Continuing Review",
       content: <Continuing onSubmitted={() => setContinuingSubmitted(true)} />,
-      disabled: !initialSubmitted,
+      disabled: activeTab !== 1 || !continuingSubmitted,
     },
     {
       label: "Final Review",

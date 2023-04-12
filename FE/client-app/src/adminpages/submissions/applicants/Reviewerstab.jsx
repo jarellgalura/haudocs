@@ -15,11 +15,13 @@ import {
   onSnapshot,
 } from "firebase/firestore";
 import { auth } from "../../../firebase";
+import CircularProgress from "@mui/material/CircularProgress";
 
 function Reviewersstab(props) {
   const [showModal, setShowModal] = useState(false);
   const [selectedUid, setSelectedUid] = useState(null);
   const [submissions, setSubmissions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const db = getFirestore();
@@ -43,6 +45,7 @@ function Reviewersstab(props) {
           };
         });
         setSubmissions(submissionsData);
+        setLoading(false);
       }
     );
     return () => {
@@ -154,6 +157,23 @@ function Reviewersstab(props) {
         classes={{ header: "custom-header" }}
         rows={submissions}
         columns={columns}
+        loading={loading}
+        loadingOverlay={
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <CircularProgress />
+          </div>
+        }
         pageSize={5}
         rowsPerPageOptions={[5]}
         disableHorizontalScroll

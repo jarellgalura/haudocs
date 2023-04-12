@@ -18,6 +18,7 @@ import {
   where,
   getDocs,
 } from "firebase/firestore";
+import CircularProgress from "@mui/material/CircularProgress";
 
 const Initial = (props) => {
   const { handleCloseModal } = props;
@@ -27,6 +28,7 @@ const Initial = (props) => {
   const [showAlert, setShowAlert] = useState(false);
   const [isDownloadSuccessful, setIsDownloadSuccessful] = useState(false);
   const [submissions, setSubmissions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const db = getFirestore();
@@ -50,6 +52,7 @@ const Initial = (props) => {
         sent_by: data[0].sent_by,
       }));
       setSubmissions(files);
+      setLoading(false);
     });
   }, [props.uid]);
 
@@ -113,7 +116,7 @@ const Initial = (props) => {
   };
 
   const columns = [
-    { field: "fieldname", headerName: "DocumentName", flex: 1 },
+    { field: "filename", headerName: "DocumentName", flex: 1 },
     { field: "sent_by", headerName: "Sent By", flex: 1 },
     { field: "date_sent", headerName: "Date Sent", flex: 1 },
     {
@@ -143,11 +146,27 @@ const Initial = (props) => {
         classes={{ header: "custom-header" }}
         rows={submissions}
         columns={columns}
+        loading={loading}
+        loadingOverlay={
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <CircularProgress />
+          </div>
+        }
         autoWidth
         disableHorizontalScroll
         pageSize={5}
         rowsPerPageOptions={[5]}
-        checkboxSelection
         selectionModel={selectedRows}
         onSelectionModelChange={(newSelection) => {
           setSelectedRows(newSelection);
@@ -175,7 +194,7 @@ const Initial = (props) => {
           }}
           onClick={handleOpenDownloadDialog}
         >
-          Download
+          Download All Files
         </Button>
         <Button
           onClick={handleCloseModal}

@@ -10,9 +10,11 @@ import {
   where,
   orderBy,
 } from "firebase/firestore";
+import CircularProgress from "@mui/material/CircularProgress";
 
 const AdminApplication = () => {
   const [submissions, setSubmissions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const db = getFirestore();
@@ -54,6 +56,7 @@ const AdminApplication = () => {
         }
       });
       setSubmissions(submissionsData);
+      setLoading(false);
     });
     return () => {
       unsubscribe();
@@ -87,6 +90,23 @@ const AdminApplication = () => {
           <DataGrid
             rows={submissions}
             columns={columns}
+            loading={loading}
+            loadingOverlay={
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <CircularProgress />
+              </div>
+            }
             autoWidth
             disableHorizontalScroll
             pageSize={5}

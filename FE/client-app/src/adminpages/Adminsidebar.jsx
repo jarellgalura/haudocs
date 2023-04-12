@@ -573,18 +573,17 @@ const Adminsidebar = ({ children }) => {
             <MenuItem sx={{ fontWeight: "bold" }} onClick={handleClose}>
               Notifications
             </MenuItem>
-            <div style={{ maxHeight: "300px", overflowY: "scroll" }}>
+            <div
+              style={{
+                maxHeight: "300px",
+                maxWidth: "300px",
+                overflowY: "auto",
+              }}
+            >
               {notifications.length > 0 ? (
                 notifications.map((n) => (
                   <MenuItem key={n.id} onClick={handleClose}>
-                    <Typography
-                      noWrap={false}
-                      sx={{ overflowWrap: "break-word" }}
-                    >
-                      <small>
-                        <strong>{n.senderEmail}</strong>
-                      </small>
-                      <br />
+                    <Typography style={{ whiteSpace: "break-spaces" }}>
                       {n.message} <br />
                       <small>
                         {new Date(n.timestamp?.toDate()).toLocaleString()}
@@ -613,61 +612,64 @@ const Adminsidebar = ({ children }) => {
               <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
                 All Notifications
               </Typography>
-              {notifications.length > 0 ? (
-                <>
-                  <MenuItem sx={{ display: "flex", alignItems: "center" }}>
-                    <Checkbox
-                      checked={selectAllChecked}
-                      indeterminate={
-                        selectedNotifications.length > 0 &&
-                        selectedNotifications.length < notifications.length
-                      }
-                      onChange={handleSelectAll}
-                    />
-                    <Typography sx={{ fontWeight: "bold" }}>
-                      Select All Notifications
-                    </Typography>
-                  </MenuItem>
-                  {notifications.map((n) => (
-                    <MenuItem
-                      key={n.id}
-                      sx={{ display: "flex", alignItems: "center" }}
-                    >
+              <div
+                style={{
+                  maxHeight: "300px",
+                  maxWidth: "100%",
+                  overflowY: "auto",
+                }}
+              >
+                {notifications.length > 0 ? (
+                  <>
+                    <MenuItem sx={{ display: "flex", alignItems: "center" }}>
                       <Checkbox
-                        checked={selectedNotifications.includes(n.id)}
-                        onChange={(event) => handleCheckboxChange(event, n.id)}
+                        checked={selectAllChecked}
+                        indeterminate={
+                          selectedNotifications.length > 0 &&
+                          selectedNotifications.length < notifications.length
+                        }
+                        onChange={handleSelectAll}
                       />
-                      <Typography
-                        noWrap={false}
-                        sx={{ overflowWrap: "break-word", ml: 1 }}
-                      >
-                        <small>
-                          <strong>{n.senderEmail}</strong>
-                        </small>
-                        <br />
-                        {n.message} <br />
-                        <small>
-                          {new Date(n.timestamp?.toDate()).toLocaleString()}
-                        </small>
+                      <Typography sx={{ fontWeight: "bold" }}>
+                        Select All Notifications
                       </Typography>
                     </MenuItem>
-                  ))}
-                  <div className="flex items-end justify-end">
+                    {notifications.map((n) => (
+                      <MenuItem
+                        key={n.id}
+                        sx={{ display: "flex", alignItems: "center" }}
+                      >
+                        <Checkbox
+                          checked={selectedNotifications.includes(n.id)}
+                          onChange={(event) =>
+                            handleCheckboxChange(event, n.id)
+                          }
+                        />
+                        <Typography style={{ whiteSpace: "break-spaces" }}>
+                          {n.message} <br />
+                          <small>
+                            {new Date(n.timestamp?.toDate()).toLocaleString()}
+                          </small>
+                        </Typography>
+                      </MenuItem>
+                    ))}
+
                     <Button
                       sx={{
-                        mt: 2,
-                        color: "maroon",
+                        mt: 5,
+                        color: "white",
                       }}
+                      variant="contained"
                       onClick={handleDeleteSelected}
                       disabled={selectedNotifications.length === 0}
                     >
                       Delete
                     </Button>
-                  </div>
-                </>
-              ) : (
-                <Typography>No notifications to display.</Typography>
-              )}
+                  </>
+                ) : (
+                  <Typography>No notifications to display.</Typography>
+                )}
+              </div>
             </DialogContent>
           </Dialog>
         </div>

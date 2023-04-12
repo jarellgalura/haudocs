@@ -34,6 +34,7 @@ import {
 import { auth } from "../../../../../firebase";
 import Modal from "@mui/material/Modal";
 import AdminTransfer from "./AdminTransfer";
+import CircularProgress from "@mui/material/CircularProgress";
 
 const style = {
   position: "absolute",
@@ -71,6 +72,7 @@ const Continuingtab = (props) => {
   const [selectAll, setSelectAll] = useState(false);
   const [open, setOpen] = React.useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const db = getFirestore();
@@ -96,6 +98,7 @@ const Continuingtab = (props) => {
         ...file,
       }));
       setSubmissions(files);
+      setLoading(false);
     });
   }, [props.uid]);
 
@@ -115,12 +118,15 @@ const Continuingtab = (props) => {
     const requiredFields = [assignTo];
     const isAllFieldsFilledOut = requiredFields.every((field) => !!field);
     const isCheckboxSelectedAndValid =
-      isAnyCheckboxSelected && selectedRows.length > 0;
+      isAnyCheckboxSelected && selectedRows.length > 0 && assignTo.length > 0;
 
-    setIsFormValid(
-      isAllFieldsFilledOut && isCheckboxSelectedAndValid && assignTo
-    );
+    setIsFormValid(isAllFieldsFilledOut && isCheckboxSelectedAndValid);
   };
+
+  useEffect(() => {
+    setIsAnyCheckboxSelected(assignTo.length || selectedRows.length > 0);
+    checkFormValidity();
+  }, [assignTo, isAnyCheckboxSelected, selectedRows]);
 
   const handleSelectAll = () => {
     if (!selectAll) {
@@ -133,6 +139,7 @@ const Continuingtab = (props) => {
           .map((user) => user.email)
       );
       setSelectAll(true);
+      checkFormValidity();
     } else {
       // Deselect all users
       setAssignTo([]);
@@ -144,6 +151,7 @@ const Continuingtab = (props) => {
     if (event.target.value.includes("select-all")) {
       // "Select all" option was selected, toggle selectAll state
       setSelectAll(!selectAll);
+      checkFormValidity();
     } else {
       // Other option was selected, update assignTo state
       setAssignTo(event.target.value);
@@ -348,6 +356,23 @@ const Continuingtab = (props) => {
         columns={columns}
         autoWidth
         disableHorizontalScroll
+        loading={loading}
+        loadingOverlay={
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <CircularProgress />
+          </div>
+        }
         pageSize={5}
         rowsPerPageOptions={[5]}
         checkboxSelection
@@ -479,7 +504,7 @@ const Continuingtab = (props) => {
             id="sub"
             type="submit"
             variant="contained"
-            /*             disabled={!isFormValid} */
+            disabled={!isFormValid}
           >
             Forward
           </Button>

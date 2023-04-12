@@ -18,6 +18,7 @@ import {
   where,
   getDocs,
 } from "firebase/firestore";
+import CircularProgress from "@mui/material/CircularProgress";
 
 const Continuing = (props) => {
   const { handleCloseModal } = props;
@@ -27,6 +28,7 @@ const Continuing = (props) => {
   const [showAlert, setShowAlert] = useState(false);
   const [isDownloadSuccessful, setIsDownloadSuccessful] = useState(false);
   const [submissions, setSubmissions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const db = getFirestore();
@@ -50,6 +52,7 @@ const Continuing = (props) => {
         sent_by: data[0].sent_by,
       }));
       setSubmissions(files);
+      setLoading(false);
     });
   }, [props.uid]);
 
@@ -113,7 +116,7 @@ const Continuing = (props) => {
   };
 
   const columns = [
-    { field: "documentname", headerName: "DocumentName", flex: 1 },
+    { field: "filename", headerName: "DocumentName", flex: 1 },
     { field: "sentby", headerName: "Sent By", flex: 1 },
     { field: "datesent", headerName: "Date Sent", flex: 1 },
     {
@@ -139,10 +142,26 @@ const Continuing = (props) => {
         rows={submissions}
         columns={columns}
         autoWidth
+        loading={loading}
+        loadingOverlay={
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <CircularProgress />
+          </div>
+        }
         disableHorizontalScroll
         pageSize={5}
         rowsPerPageOptions={[5]}
-        checkboxSelection
         selectionModel={selectedRows}
         onSelectionModelChange={(newSelection) => {
           setSelectedRows(newSelection);

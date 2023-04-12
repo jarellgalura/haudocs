@@ -35,6 +35,7 @@ import {
   Alert,
 } from "@mui/material";
 import { auth, db } from "../../firebase";
+import CircularProgress from "@mui/material/CircularProgress";
 
 const AdminUsers = () => {
   const [data, setData] = useState([]);
@@ -50,6 +51,7 @@ const AdminUsers = () => {
   const secondhandleClose = () => secondsetOpen(false);
   const handleOpen = () => setOpen(true);
   const [showDialog, setShowDialog] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const user = auth.currentUser;
@@ -67,6 +69,7 @@ const AdminUsers = () => {
           querySnapshotRef.forEach((doc) => {
             list.push({ id: doc.id, ...doc.data() });
           });
+          setLoading(false);
           setData(list);
         } catch (err) {
           console.log(err);
@@ -279,6 +282,23 @@ const AdminUsers = () => {
         <DataGrid
           className="datagrid"
           rows={data}
+          loading={loading}
+          loadingOverlay={
+            <div
+              style={{
+                position: "absolute",
+                top: 0,
+                left: 0,
+                width: "100%",
+                height: "100%",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+              }}
+            >
+              <CircularProgress />
+            </div>
+          }
           autoWidth
           disableHorizontalScroll
           columns={userColumns.concat(actionColumn)}

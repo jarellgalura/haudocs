@@ -7,11 +7,13 @@ import { Button } from "@mui/material";
 import Modal from "@mui/material/Modal";
 import Applicanttabmodal from "./modals/Applicanttabmodal";
 import { getFirestore, collection, onSnapshot } from "firebase/firestore";
+import CircularProgress from "@mui/material/CircularProgress";
 
 function Applicantstab(props) {
   const [showModal, setShowModal] = useState(false);
   const [selectedUid, setSelectedUid] = useState(null);
   const [submissions, setSubmissions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const db = getFirestore();
@@ -31,6 +33,7 @@ function Applicantstab(props) {
         };
       });
       setSubmissions(submissionsData);
+      setLoading(false);
     });
     return () => {
       unsubscribe();
@@ -147,6 +150,23 @@ function Applicantstab(props) {
         classes={{ header: "custom-header" }}
         rows={submissions}
         columns={columns}
+        loading={loading}
+        loadingOverlay={
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <CircularProgress />
+          </div>
+        }
         pageSize={5}
         rowsPerPageOptions={[5]}
         autoWidth
