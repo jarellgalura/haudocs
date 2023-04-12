@@ -416,11 +416,16 @@ function Initial({ onSubmitted }) {
                       {loading ? (
                         <>
                           <DialogContent>
-                            <DialogContentText>Submitting...</DialogContentText>
+                            <DialogContentText>
+                              Please wait...
+                            </DialogContentText>
                             <Box
-                              sx={{ display: "flex", justifyContent: "center" }}
+                              sx={{
+                                display: "flex",
+                                justifyContent: "center",
+                              }}
                             >
-                              <LinearProgress color="secondary" />
+                              <CircularProgress />
                             </Box>
                           </DialogContent>
                         </>
