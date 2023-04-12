@@ -24,6 +24,7 @@ import {
 } from "firebase/firestore/lite";
 import { db, auth } from "../../firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import CircularProgress from "@mui/material/CircularProgress";
 
 const Final = ({ onSubmitted }) => {
   const navigate = useNavigate();
@@ -33,6 +34,12 @@ const Final = ({ onSubmitted }) => {
   const [showAlert, setShowAlert] = useState(false);
   const [userName, setUserName] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [loading, setLoading] = useState(false);
+
+  const handleSuccessClose = () => {
+    setShowSuccess(false);
+    navigate("/application");
+  };
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -66,6 +73,7 @@ const Final = ({ onSubmitted }) => {
   }
 
   async function handleSubmit() {
+    setLoading(true);
     const submissionsRef = collection(db, "submissions");
     const q = query(
       submissionsRef,
@@ -109,6 +117,7 @@ const Final = ({ onSubmitted }) => {
           ],
           status: "final",
         });
+        setLoading(false);
         console.log("Document updated with ID: ", docRef.id);
         const notificationsRef = collection(db, "notifications");
         const adminUsersQuery = query(
@@ -177,7 +186,7 @@ const Final = ({ onSubmitted }) => {
           <hr />
           <br />
           <div className="files">
-            <div className="form shadow-2xl">
+            <div className="form">
               <article className="upload">
                 <label
                   class="block mb-5 text-lg font-medium text-gray-900 dark:text-white"
@@ -195,18 +204,7 @@ const Final = ({ onSubmitted }) => {
                   }}
                 />
               </article>
-              <div class="w-full mb-4 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600">
-                <div class="px-4 py-2 bg-white rounded-t-lg dark:bg-gray-800">
-                  <label for="comment" class="sr-only">
-                    Your comment
-                  </label>
-                  <textarea
-                    id="comment"
-                    rows="4"
-                    class="w-full px-0 text-sm text-gray-900 bg-white border-0 dark:bg-gray-800 focus:ring-0 dark:text-white dark:placeholder-gray-400"
-                    placeholder="Write a comment..."
-                  ></textarea>
-                </div>
+              <div class="w-full">
                 <div class="flex space-x-4 items-center justify-end px-3 py-2 border-t dark:border-gray-600">
                   <button
                     type="submit"
@@ -226,18 +224,24 @@ const Final = ({ onSubmitted }) => {
                   </DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                  <Button
-                    onClick={handleCloseConfirmation}
-                    sx={{ color: "maroon" }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleConfirmSubmit}
-                    sx={{ color: "maroon" }}
-                  >
-                    Yes
-                  </Button>
+                  {loading ? (
+                    <CircularProgress size={24} />
+                  ) : (
+                    <>
+                      <Button
+                        onClick={handleCloseConfirmation}
+                        sx={{ color: "maroon" }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleConfirmSubmit}
+                        sx={{ color: "maroon" }}
+                      >
+                        Yes
+                      </Button>
+                    </>
+                  )}
                 </DialogActions>
               </Dialog>
               <Dialog open={showSuccess}>
@@ -248,10 +252,7 @@ const Final = ({ onSubmitted }) => {
                   </DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                  <Button
-                    sx={{ color: "maroon" }}
-                    onClick={() => setShowSuccess(false)}
-                  >
+                  <Button sx={{ color: "maroon" }} onClick={handleSuccessClose}>
                     OK
                   </Button>
                 </DialogActions>

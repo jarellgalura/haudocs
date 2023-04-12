@@ -24,6 +24,7 @@ import {
 } from "firebase/firestore/lite";
 import { db, auth } from "../../firebase";
 import { onAuthStateChanged } from "firebase/auth";
+import CircularProgress from "@mui/material/CircularProgress";
 
 const Continuing = ({ onSubmitted }) => {
   const navigate = useNavigate();
@@ -40,6 +41,7 @@ const Continuing = ({ onSubmitted }) => {
   const [showAlert, setShowAlert] = useState(false);
   const [userName, setUserName] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -72,7 +74,13 @@ const Continuing = ({ onSubmitted }) => {
     return result;
   }
 
+  const handleSuccessClose = () => {
+    setShowSuccess(false);
+    navigate("/application");
+  };
+
   async function handleSubmit() {
+    setLoading(true);
     const submissionsRef = collection(db, "submissions");
     const q = query(
       submissionsRef,
@@ -145,6 +153,7 @@ const Continuing = ({ onSubmitted }) => {
           ],
           status: "continuing",
         });
+        setLoading(false);
         console.log("Document updated with ID: ", docRef.id);
         const notificationsRef = collection(db, "notifications");
         const adminUsersQuery = query(
@@ -160,7 +169,6 @@ const Continuing = ({ onSubmitted }) => {
           const newNotification = {
             id: doc(notificationsRef).id,
             message: `Applicant ${userName} has submissions for continuing review.`,
-            role: "applicant",
             read: false,
             recipientEmail: email,
             senderEmail: auth.currentUser.email,
@@ -350,18 +358,7 @@ const Continuing = ({ onSubmitted }) => {
                   }}
                 />
               </article>
-              <div class="w-full mb-4 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600">
-                <div class="px-4 py-2 bg-white rounded-t-lg dark:bg-gray-800">
-                  <label for="comment" class="sr-only">
-                    Your comment
-                  </label>
-                  <textarea
-                    id="comment"
-                    rows="4"
-                    class="w-full px-0 text-sm text-gray-900 bg-white border-0 dark:bg-gray-800 focus:ring-0 dark:text-white dark:placeholder-gray-400"
-                    placeholder="Write a comment..."
-                  ></textarea>
-                </div>
+              <div class="w-full">
                 <div class="flex space-x-4 items-center justify-end px-3 py-2 border-t dark:border-gray-600">
                   <button
                     className={`inline-flex items-center py-2.5 px-[3rem] text-xs font-medium text-center text-white bg-maroon hover:bg-red-800 rounded-lg focus:ring-4 focus:ring-blue-200 dark:focus:ring-blue-900 ${
@@ -383,18 +380,24 @@ const Continuing = ({ onSubmitted }) => {
                   </DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                  <Button
-                    onClick={handleCloseConfirmation}
-                    sx={{ color: "maroon" }}
-                  >
-                    Cancel
-                  </Button>
-                  <Button
-                    onClick={handleConfirmSubmit}
-                    sx={{ color: "maroon" }}
-                  >
-                    Yes
-                  </Button>
+                  {loading ? (
+                    <CircularProgress size={24} />
+                  ) : (
+                    <>
+                      <Button
+                        onClick={handleCloseConfirmation}
+                        sx={{ color: "maroon" }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleConfirmSubmit}
+                        sx={{ color: "maroon" }}
+                      >
+                        Yes
+                      </Button>
+                    </>
+                  )}
                 </DialogActions>
               </Dialog>
               <Dialog open={showSuccess}>
@@ -405,10 +408,7 @@ const Continuing = ({ onSubmitted }) => {
                   </DialogContentText>
                 </DialogContent>
                 <DialogActions>
-                  <Button
-                    sx={{ color: "maroon" }}
-                    onClick={() => setShowSuccess(false)}
-                  >
+                  <Button sx={{ color: "maroon" }} onClick={handleSuccessClose}>
                     OK
                   </Button>
                 </DialogActions>
