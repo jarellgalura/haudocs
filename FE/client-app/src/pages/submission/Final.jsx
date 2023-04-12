@@ -9,6 +9,7 @@ import {
   DialogActions,
   Typography,
   DialogContentText,
+  Box,
 } from "@mui/material";
 import {
   collection,
@@ -24,7 +25,7 @@ import {
 } from "firebase/firestore/lite";
 import { db, auth } from "../../firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import CircularProgress from "@mui/material/CircularProgress";
+import LinearProgress from "@mui/material/LinearProgress";
 
 const Final = ({ onSubmitted }) => {
   const navigate = useNavigate();
@@ -225,7 +226,14 @@ const Final = ({ onSubmitted }) => {
                 </DialogContent>
                 <DialogActions>
                   {loading ? (
-                    <CircularProgress size={24} />
+                    <>
+                      <DialogContent>
+                        <DialogContentText>Submitting...</DialogContentText>
+                        <Box sx={{ display: "flex", justifyContent: "center" }}>
+                          <LinearProgress color="secondary" />
+                        </Box>
+                      </DialogContent>
+                    </>
                   ) : (
                     <>
                       <Button

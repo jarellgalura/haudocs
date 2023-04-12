@@ -23,7 +23,7 @@ import {
 import { db, auth } from "../../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { getDoc } from "firebase/firestore/lite";
-import CircularProgress from "@mui/material/CircularProgress";
+import LinearProgress from "@mui/material/LinearProgress";
 
 function Initial({ onSubmitted }) {
   const navigate = useNavigate();
@@ -416,13 +416,11 @@ function Initial({ onSubmitted }) {
                       {loading ? (
                         <>
                           <DialogContent>
-                            <DialogContentText>
-                              Please wait...
-                            </DialogContentText>
+                            <DialogContentText>Submitting...</DialogContentText>
                             <Box
                               sx={{ display: "flex", justifyContent: "center" }}
                             >
-                              <CircularProgress />
+                              <LinearProgress color="secondary" />
                             </Box>
                           </DialogContent>
                         </>
