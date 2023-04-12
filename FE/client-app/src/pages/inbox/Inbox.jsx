@@ -17,6 +17,13 @@ import Button from "@mui/material/Button";
 import Modal from "@mui/material/Modal";
 import Box from "@mui/material/Box";
 import Tooltip from "@mui/material/Tooltip";
+import {
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  DialogContentText,
+} from "@mui/material";
 
 const Inbox = () => {
   const [submissions, setSubmissions] = useState([]);
@@ -76,23 +83,42 @@ const Inbox = () => {
       renderCell: (params) => <ViewCell {...params} />,
       width: 180,
     },
-    ,
   ];
 
-  function MessageCell({ comment }) {
+  function MessageCell({ props, comment }) {
     const MAX_LENGTH = 50; // max length of message before truncating
-    const truncatedMessage =
-      comment.length > MAX_LENGTH
-        ? comment.slice(0, MAX_LENGTH) + "..."
-        : comment;
+
+    const [open, setOpen] = useState(false);
+
+    const handleClick = () => {
+      setOpen(true);
+    };
+
+    const handleClose = () => {
+      setOpen(false);
+    };
+
+    const dialogStyle = {
+      minWidth: "400px",
+      maxWidth: "600px",
+      overflowWrap: "break-word",
+      wordWrap: "break-word",
+    };
+
     return (
-      <Tooltip
-        title={comment}
-        placement="top-start"
-        disableHoverListener={comment.length <= MAX_LENGTH}
-      >
-        <span>{truncatedMessage}</span>
-      </Tooltip>
+      <>
+        <Button onClick={handleClick}>Show Message</Button>
+
+        <Dialog open={open} onClose={handleClose}>
+          <DialogTitle>{"Message"}</DialogTitle>
+          <DialogContent style={dialogStyle}>
+            <DialogContentText>{comment}</DialogContentText>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={handleClose}>Close</Button>
+          </DialogActions>
+        </Dialog>
+      </>
     );
   }
 

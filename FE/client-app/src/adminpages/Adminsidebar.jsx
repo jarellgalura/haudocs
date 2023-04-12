@@ -53,6 +53,8 @@ import {
   updateDoc,
 } from "firebase/firestore";
 import { getFirestore } from "firebase/firestore";
+import { ref, getDownloadURL } from "firebase/storage";
+import { storage } from "../firebase";
 
 const drawerWidth = 220;
 
@@ -297,6 +299,32 @@ const Adminsidebar = ({ children }) => {
       }
     });
   };
+
+  useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        if (user.photoURL) {
+          setImageUrl(user.photoURL);
+          localStorage.setItem("profileImageUrl", user.photoURL);
+        } else {
+          const storageRef = ref(storage, `users/${user.uid}/profile_picture`);
+          getDownloadURL(storageRef)
+            .then((url) => {
+              setImageUrl(url);
+              localStorage.setItem("profileImageUrl", url);
+            })
+            .catch((error) => {
+              console.log(error);
+            });
+        }
+      } else {
+        setImageUrl(null);
+        localStorage.removeItem("profileImageUrl");
+      }
+      setCurrentUser(user);
+    });
+    return unsubscribeAuth;
+  }, []);
 
   useEffect(() => {
     const unreadNotifications = notifications.filter(
