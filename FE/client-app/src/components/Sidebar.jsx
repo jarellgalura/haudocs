@@ -154,21 +154,30 @@ const Sidebar = ({ children }) => {
     }
   };
 
+  const handleMenuClick = (event) => {
+    setAnchorEl2(event.currentTarget);
+  };
+
   const handleDeleteSelected = async () => {
-    const deletePromises = selectedNotifications.map((id) =>
-      deleteDoc(doc(db, "notifications", id))
-    );
-    await Promise.all(deletePromises);
+    const deletePromises = selectedNotifications.map(async (id) => {
+      try {
+        await deleteDoc(doc(db, "notifications", id));
+        return id; // return id if delete succeeds
+      } catch (error) {
+        console.error(`Failed to delete notification with id ${id}:`, error);
+        return null; // return null if delete fails
+      }
+    });
+    const deletedIds = await Promise.all(deletePromises).then((ids) =>
+      ids.filter((id) => id !== null)
+    ); // filter out null values (failed deletes)
     setSelectedNotifications([]);
     const notificationsRef = collection(db, "notifications");
     const querySnapshot = await getDocs(notificationsRef);
-    const notifications = querySnapshot.docs.map((doc) => {
-      return { ...doc.data(), id: doc.id };
-    });
+    const notifications = querySnapshot.docs
+      .filter((doc) => !deletedIds.includes(doc.id)) // exclude deleted notifications
+      .map((doc) => ({ ...doc.data(), id: doc.id }));
     setNotifications(notifications.sort((a, b) => b.timestamp - a.timestamp));
-  };
-  const handleMenuClick = (event) => {
-    setAnchorEl2(event.currentTarget);
   };
 
   const handleLogout = () => {
@@ -192,6 +201,11 @@ const Sidebar = ({ children }) => {
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
     handleNotificationClick();
+  };
+
+  const handleCloseNavigate = () => {
+    handleClose();
+    navigate("/inbox");
   };
 
   const handleClose = () => {
@@ -582,7 +596,7 @@ const Sidebar = ({ children }) => {
             >
               {notifications.length > 0 ? (
                 notifications.map((n) => (
-                  <MenuItem key={n.id} onClick={handleClose}>
+                  <MenuItem key={n.id} onClick={handleCloseNavigate}>
                     <Typography style={{ whiteSpace: "break-spaces" }}>
                       {n.message} <br />
                       <small>

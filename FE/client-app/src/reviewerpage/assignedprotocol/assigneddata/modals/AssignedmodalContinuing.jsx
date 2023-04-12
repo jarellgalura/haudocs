@@ -434,7 +434,7 @@ const AssignedmodalContinuing = (props) => {
           <DialogTitle>Confirm Forward</DialogTitle>
           <DialogContent>
             <Typography variant="body1">
-              Are you sure you want to forward the reviewed forms?
+              Are you sure you want to submit the files?
             </Typography>
           </DialogContent>
           <DialogActions>
@@ -445,7 +445,7 @@ const AssignedmodalContinuing = (props) => {
               Cancel
             </Button>
             <Button sx={{ color: "maroon" }} onClick={handleSubmit} autoFocus>
-              Forward
+              SUBMIT
             </Button>
           </DialogActions>
         </Dialog>

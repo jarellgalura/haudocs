@@ -507,7 +507,7 @@ const Continuingtab = (props) => {
             <DialogTitle>Confirm Submit</DialogTitle>
             <DialogContent>
               <Typography variant="body1">
-                Are you sure you want to forward the form?
+                are you sure you want to forward the files?
               </Typography>
             </DialogContent>
             <DialogActions>

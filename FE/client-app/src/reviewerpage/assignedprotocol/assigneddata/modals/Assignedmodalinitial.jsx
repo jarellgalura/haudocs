@@ -434,7 +434,7 @@ const Assignedmodalinitial = (props) => {
             variant="contained"
             disabled={!filesUploaded}
           >
-            Forward
+            SUBMIT
           </Button>
         </div>
         <Dialog
@@ -444,7 +444,7 @@ const Assignedmodalinitial = (props) => {
           <DialogTitle>Confirm Forward</DialogTitle>
           <DialogContent>
             <Typography variant="body1">
-              Are you sure you want to forward the reviewed forms?
+              Are you sure you want to submit the files?
             </Typography>
           </DialogContent>
           <DialogActions>

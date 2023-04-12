@@ -251,7 +251,7 @@ function Initial({ onSubmitted }) {
                   class="block mb-5 text-lg font-medium text-gray-900 dark:text-white"
                   for="file_input"
                 >
-                  1. Research Proposal
+                  1. Research Proposal*
                 </label>
                 <input
                   class="block w-full mb-5 text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
@@ -268,7 +268,7 @@ function Initial({ onSubmitted }) {
                   class="block mb-5 text-lg font-medium text-gray-900 dark:text-white"
                   for="file_input"
                 >
-                  2. Informed consent/assent form
+                  2. Informed consent/assent form*
                 </label>
                 <input
                   class="block w-full mb-5 text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
@@ -285,7 +285,7 @@ function Initial({ onSubmitted }) {
                   for="file_input"
                 >
                   3. Questionnaire/s/Tools (Quantitative), Interview Guide
-                  (Qualitative)
+                  (Qualitative)*
                 </label>
                 <input
                   class="block w-full mb-5 text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
@@ -318,7 +318,7 @@ function Initial({ onSubmitted }) {
                   class="block mb-5 text-lg font-medium text-gray-900 dark:text-white"
                   for="file_input"
                 >
-                  5. Accomplished HAU-IRB Forms
+                  5. Accomplished HAU-IRB Forms*
                 </label>
                 <h1 className="text-base mb-2">
                   HAU-IRB FORM 2(B): Registration and Application Form
@@ -332,7 +332,7 @@ function Initial({ onSubmitted }) {
                   }}
                 />
                 <h1 className="text-base mb-2">
-                  HAU-IRB FORM 4.1(A): Protocol Assessment Form
+                  HAU-IRB FORM 4.1(A): Protocol Assessment Form*
                 </h1>
                 <input
                   class="block w-full mb-5 text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
@@ -343,7 +343,7 @@ function Initial({ onSubmitted }) {
                   }}
                 />
                 <h1 className="text-base mb-2">
-                  HAU-IRB FORM 4.1(B): Informed Consent Assessment Form
+                  HAU-IRB FORM 4.1(B): Informed Consent Assessment Form*
                 </h1>
                 <input
                   class="block w-full mb-5 text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
@@ -359,7 +359,7 @@ function Initial({ onSubmitted }) {
                   class="block mb-5 text-lg font-medium text-gray-900 dark:text-white"
                   for="file_input"
                 >
-                  6. Curriculum Vitae
+                  6. Curriculum Vitae*
                 </label>
                 <input
                   class="block w-full mb-5 text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
