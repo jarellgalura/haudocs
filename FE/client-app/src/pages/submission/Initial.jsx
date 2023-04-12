@@ -22,6 +22,7 @@ import {
 import { db, auth } from "../../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { getDoc } from "firebase/firestore/lite";
+import CircularProgress from "@mui/material/CircularProgress";
 
 function Initial({ onSubmitted }) {
   const navigate = useNavigate();
@@ -39,6 +40,7 @@ function Initial({ onSubmitted }) {
   const [showAlert, setShowAlert] = useState(false);
   const [userName, setUserName] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
+  const [loading, setLoading] = useState(false);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -72,6 +74,7 @@ function Initial({ onSubmitted }) {
   }
 
   async function handleSubmit() {
+    setLoading(true);
     const submissionsRef = collection(db, "submissions");
     const q = query(
       submissionsRef,
@@ -170,6 +173,7 @@ function Initial({ onSubmitted }) {
           decision: "",
           school: "",
         });
+        setLoading(false);
         console.log("Document written with ID: ", docRef.id);
         const notificationsRef = collection(db, "notifications");
         const adminUsersQuery = query(
@@ -193,6 +197,7 @@ function Initial({ onSubmitted }) {
           };
           await setDoc(doc(notificationsRef), newNotification);
         });
+
         onSubmitted();
       } catch (e) {
         console.log("Error adding document: ", e);
@@ -203,6 +208,11 @@ function Initial({ onSubmitted }) {
     }
     return true;
   }
+
+  const handleSuccessClose = () => {
+    setShowSuccess(false);
+    navigate("/application");
+  };
 
   const handleConfirmSubmit = async () => {
     const success = await handleSubmit();
@@ -374,18 +384,7 @@ function Initial({ onSubmitted }) {
                   }}
                 />
               </article>
-              <div class="w-full mb-4 border border-gray-200 rounded-lg bg-gray-50 dark:bg-gray-700 dark:border-gray-600">
-                <div class="px-4 py-2 bg-white rounded-t-lg dark:bg-gray-800">
-                  <label for="comment" class="sr-only">
-                    Your comment
-                  </label>
-                  <textarea
-                    id="comment"
-                    rows="4"
-                    class="w-full px-0 text-sm text-gray-900 bg-white border-0 dark:bg-gray-800 focus:ring-0 dark:text-white dark:placeholder-gray-400"
-                    placeholder="Write a comment..."
-                  ></textarea>
-                </div>
+              <div class="w-full mb-4">
                 <div class="flex space-x-4 items-center justify-end px-3 py-2 border-t dark:border-gray-600">
                   <button
                     id="sub"
@@ -413,18 +412,24 @@ function Initial({ onSubmitted }) {
                       </DialogContentText>
                     </DialogContent>
                     <DialogActions>
-                      <Button
-                        onClick={handleCloseConfirmation}
-                        sx={{ color: "maroon" }}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={handleConfirmSubmit}
-                        sx={{ color: "maroon" }}
-                      >
-                        Yes
-                      </Button>
+                      {loading ? (
+                        <CircularProgress size={24} />
+                      ) : (
+                        <>
+                          <Button
+                            onClick={handleCloseConfirmation}
+                            sx={{ color: "maroon" }}
+                          >
+                            Cancel
+                          </Button>
+                          <Button
+                            onClick={handleConfirmSubmit}
+                            sx={{ color: "maroon" }}
+                          >
+                            Yes
+                          </Button>
+                        </>
+                      )}
                     </DialogActions>
                   </Dialog>
                   <Dialog open={showSuccess}>
@@ -437,7 +442,7 @@ function Initial({ onSubmitted }) {
                     <DialogActions>
                       <Button
                         sx={{ color: "maroon" }}
-                        onClick={() => setShowSuccess(false)}
+                        onClick={handleSuccessClose}
                       >
                         OK
                       </Button>
