@@ -16,11 +16,13 @@ import Assignedmodal from "./modals/Assignedmodal";
 import "../assignedprotocol.css";
 import Reviewersidebar from "../../Reviewersidebar";
 import { auth } from "../../../firebase";
+import CircularProgress from "@mui/material/CircularProgress";
 
 function AssignedProtocol() {
   const [showModal, setShowModal] = useState(false);
   const [submissions, setSubmissions] = useState([]);
   const [protocolNo, setProtocolNo] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const db = getFirestore();
@@ -48,6 +50,7 @@ function AssignedProtocol() {
           };
         });
         setSubmissions(submissionsData);
+        setLoading(false);
       });
       return () => {
         unsubscribe();
@@ -159,13 +162,29 @@ function AssignedProtocol() {
         <h1 className="text-center text-2xl font-bold">Assigned Protocol</h1>
         <div className="mt-[2rem]" style={{ height: 400 }}>
           <DataGrid
-            classes={{ header: "custom-header" }}
-            rows={submissions}
             autoWidth
             disableHorizontalScroll
+            rows={submissions}
             columns={columns}
             pageSize={5}
             rowsPerPageOptions={[5]}
+            loading={loading}
+            loadingOverlay={
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <CircularProgress />
+              </div>
+            }
           />
         </div>
       </div>

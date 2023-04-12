@@ -11,9 +11,11 @@ import {
   getDocs,
   onSnapshot,
 } from "firebase/firestore";
+import CircularProgress from "@mui/material/CircularProgress";
 
 const Reviewstatus = () => {
   const [submissions, setSubmissions] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const db = getFirestore();
@@ -37,6 +39,7 @@ const Reviewstatus = () => {
           };
         });
         setSubmissions(submissionsData);
+        setLoading(false);
       }
     );
     return () => {
@@ -72,6 +75,23 @@ const Reviewstatus = () => {
             columns={columns}
             pageSize={5}
             rowsPerPageOptions={[5]}
+            loading={loading}
+            loadingOverlay={
+              <div
+                style={{
+                  position: "absolute",
+                  top: 0,
+                  left: 0,
+                  width: "100%",
+                  height: "100%",
+                  display: "flex",
+                  justifyContent: "center",
+                  alignItems: "center",
+                }}
+              >
+                <CircularProgress />
+              </div>
+            }
           />
         </div>
       </div>

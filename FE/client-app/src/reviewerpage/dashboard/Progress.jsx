@@ -1,41 +1,81 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { RiLoader2Line } from "react-icons/ri";
+import {
+  getFirestore,
+  collection,
+  query,
+  where,
+  onSnapshot,
+} from "firebase/firestore";
+import { auth } from "../../firebase";
+import CircularProgress from "@mui/material/CircularProgress";
 
 const Progress = () => {
-  const [status, setStatus] = useState(
-    <div className="text-lg text-center font-semibold">
-      NO PROTOCOLS IN PROGRESS
-    </div>
-  );
+  const [status, setStatus] = useState("");
+  const [submissions, setSubmissions] = useState([]);
+  const [numInProgress, setNumInProgress] = useState(0);
+  const [isLoading, setIsLoading] = useState(true);
 
-  const handleStatusChange = (newStatus) => {
-    setStatus(newStatus);
-  };
-  const getStatusIcon = () => {
-    switch (status) {
-      case "":
-        return <div className="flex items-center flex-col"></div>;
-      case "":
-        return <div className="flex items-center flex-col"></div>;
-      case "":
-        return <div className="flex items-center flex-col"></div>;
-      default:
-        return (
-          null,
-          (
-            <div className="flex items-center flex-col mb-5">
-              <RiLoader2Line size={50} color="black" />{" "}
-            </div>
-          )
-        );
+  useEffect(() => {
+    const db = getFirestore();
+    const submissionsCollection = collection(db, "submissions");
+    const currentUser = auth.currentUser;
+
+    if (currentUser) {
+      const submissionsQuery = query(
+        submissionsCollection,
+        where("reviewer", "array-contains", currentUser.email)
+      );
+
+      const unsubscribe = onSnapshot(submissionsQuery, (snapshot) => {
+        const submissionsData = snapshot.docs.map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            rev_date_sent: data.rev_date_sent
+              ? new Date(data.rev_date_sent.seconds * 1000).toLocaleString()
+              : null,
+            due_date: data.due_date
+              ? new Date(data.due_date.seconds * 1000).toLocaleString()
+              : null,
+          };
+        });
+        setSubmissions(submissionsData);
+        setNumInProgress(submissionsData.length);
+        setIsLoading(false);
+      });
+      return () => {
+        unsubscribe();
+      };
     }
-  };
+  }, []);
+
   return (
-    <div>
-      <div>
-        {getStatusIcon()}
-        <p>{status}</p>
-      </div>
+    <div
+      style={{ display: "flex", flexDirection: "column", alignItems: "center" }}
+    >
+      {isLoading ? (
+        <CircularProgress />
+      ) : (
+        <>
+          <div
+            style={{
+              fontSize: "2rem",
+              fontWeight: "bold",
+              marginBottom: "0.5rem",
+              color: "maroon",
+            }}
+          >
+            {numInProgress}
+          </div>
+          <p className="text-xl flex items-center text-center justify-center font-semibold">
+            {numInProgress > 0
+              ? "Protocols in Progress"
+              : "NO PROTOCOLS IN PROGRESS"}
+          </p>
+        </>
+      )}
     </div>
   );
 };

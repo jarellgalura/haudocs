@@ -24,6 +24,7 @@ import {
 import { db, auth } from "../../../../firebase";
 import { getFirestore } from "firebase/firestore/lite";
 import { onAuthStateChanged } from "firebase/auth";
+import CircularProgress from "@mui/material/CircularProgress";
 
 const AssignedmodalFinal = (props) => {
   const navigate = useNavigate();
@@ -38,6 +39,8 @@ const AssignedmodalFinal = (props) => {
   const [submissions, setSubmissions] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [userName, setUserName] = useState(null);
+  const [filesUploaded, setFilesUploaded] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -85,6 +88,7 @@ const AssignedmodalFinal = (props) => {
           ...file,
         }));
       setSubmissions(files);
+      setLoading(false);
       console.log(files);
     });
   }, [auth.currentUser.uid]);
@@ -100,6 +104,7 @@ const AssignedmodalFinal = (props) => {
     }
 
     setfiles(newFileUploads);
+    setFilesUploaded(true);
 
     const fileNames = files.map((file) => file.name).join(", ");
     document.getElementById("multiple_files").value = fileNames;
@@ -136,6 +141,8 @@ const AssignedmodalFinal = (props) => {
   async function handleSubmit() {
     // Create a new FormData instance
     const form = new FormData();
+    setShowConfirmation(false);
+    setShowSuccess(true);
 
     // Append the files to the FormData instance
     files.forEach((fileObj, index) => {
@@ -251,6 +258,23 @@ const AssignedmodalFinal = (props) => {
         classes={{ header: "custom-header" }}
         rows={submissions}
         columns={columns}
+        loading={loading}
+        loadingOverlay={
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <CircularProgress />
+          </div>
+        }
         autoWidth
         disableHorizontalScroll
         pageSize={5}
@@ -270,7 +294,7 @@ const AssignedmodalFinal = (props) => {
           accept=".pdf,.doc,.docx"
           onChange={handleFileUpload}
         />
-        <div className="flex items-end justify-end space-x-2">
+        <div className="flex items-end justify-end space-x-2 pb-[2rem]">
           <Button
             onClick={handleCloseModal}
             style={closeStyle}
@@ -279,10 +303,10 @@ const AssignedmodalFinal = (props) => {
             Close
           </Button>
           <Button
+            onClick={() => setShowConfirmation(true)}
             id="sub"
-            disabled={!isSubmitEnabled}
-            type="submit"
             variant="contained"
+            disabled={!filesUploaded}
           >
             Forward
           </Button>
@@ -291,10 +315,10 @@ const AssignedmodalFinal = (props) => {
           open={showConfirmation}
           onClose={() => setShowConfirmation(false)}
         >
-          <DialogTitle>Confirm Submit</DialogTitle>
+          <DialogTitle>Confirm Forward</DialogTitle>
           <DialogContent>
             <Typography variant="body1">
-              Are you sure you want to forward the form?
+              Are you sure you want to forward the reviewed forms?
             </Typography>
           </DialogContent>
           <DialogActions>
@@ -304,12 +328,18 @@ const AssignedmodalFinal = (props) => {
             >
               Cancel
             </Button>
-            <Button sx={{ color: "maroon" }} onClick={handlesSuccess} autoFocus>
+            <Button sx={{ color: "maroon" }} onClick={handleSubmit} autoFocus>
               Forward
             </Button>
           </DialogActions>
         </Dialog>
-        <Dialog open={showSuccess} onClose={() => setShowSuccess(false)}>
+        <Dialog
+          open={showSuccess}
+          onClose={() => {
+            setShowSuccess(false);
+            navigate("/reviewerstatus");
+          }}
+        >
           <DialogTitle>Success!</DialogTitle>
           <DialogContent>
             <Typography variant="body1">
@@ -317,7 +347,13 @@ const AssignedmodalFinal = (props) => {
             </Typography>
           </DialogContent>
           <DialogActions>
-            <Button sx={{ color: "maroon" }} onClick={handleSubmit}>
+            <Button
+              sx={{ color: "maroon" }}
+              onClick={() => {
+                navigate("/reviewerstatus");
+                setOpen(false);
+              }}
+            >
               Close
             </Button>
           </DialogActions>

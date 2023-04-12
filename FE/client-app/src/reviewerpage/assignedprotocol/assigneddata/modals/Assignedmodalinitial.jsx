@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { DataGrid } from "@mui/x-data-grid";
 import { Button } from "@mui/material";
 import {
@@ -15,8 +15,6 @@ import {
   InputAdornment,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
-import { ref, getDownloadURL } from "firebase/storage";
-import { storage } from "../../../../firebase";
 import IconButton from "@mui/material/IconButton";
 import RemoveIcon from "@mui/icons-material/Remove";
 import AddIcon from "@mui/icons-material/Add";
@@ -35,18 +33,15 @@ import {
 import { db, auth } from "../../../../firebase";
 import { getFirestore } from "firebase/firestore/lite";
 import { onAuthStateChanged } from "firebase/auth";
+import CircularProgress from "@mui/material/CircularProgress";
 
 const Assignedmodalinitial = (props) => {
   const navigate = useNavigate();
-  const [value, setValue] = React.useState(0);
   const [files, setFiles] = useState([{ id: 1, file: null }]);
   const [open, setOpen] = useState(false);
   const { handleCloseModal } = props;
-  const [selectedFiles, setSelectedFiles] = useState([]);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [isSubmitEnabled, setIsSubmitEnabled] = useState(false);
-  const [selectedRows, setSelectedRows] = React.useState([]);
   const [showDownloadDialog, setShowDownloadDialog] = React.useState(false);
   const [isAnyCheckboxSelected, setIsAnyCheckboxSelected] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
@@ -54,6 +49,9 @@ const Assignedmodalinitial = (props) => {
   const [submissions, setSubmissions] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [userName, setUserName] = useState(null);
+  const formRef = useRef(null);
+  const [filesUploaded, setFilesUploaded] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -101,6 +99,7 @@ const Assignedmodalinitial = (props) => {
           ...file,
         }));
       setSubmissions(files);
+      setLoading(false);
       console.log(files);
     });
   }, [auth.currentUser.uid]);
@@ -109,6 +108,8 @@ const Assignedmodalinitial = (props) => {
     e.preventDefault();
     // Create a new FormData instance
     const form = new FormData();
+    setShowConfirmation(false);
+    setShowSuccess(true);
 
     // Append the files to the FormData instance
     files.forEach((fileObj, index) => {
@@ -206,9 +207,6 @@ const Assignedmodalinitial = (props) => {
       console.log(error);
       return false;
     }
-
-    navigate("/reviewerstatus");
-    setOpen(false);
   }
 
   const handleFileUpload = (event, id) => {
@@ -217,6 +215,7 @@ const Assignedmodalinitial = (props) => {
     const index = newFiles.findIndex((file) => file.id === id);
     newFiles[index].file = file;
     setFiles(newFiles);
+    setFilesUploaded(true);
   };
 
   const handleAddFile = () => {
@@ -324,16 +323,27 @@ const Assignedmodalinitial = (props) => {
         classes={{ header: "custom-header" }}
         rows={submissions}
         columns={columns}
+        loading={loading}
+        loadingOverlay={
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <CircularProgress />
+          </div>
+        }
         autoWidth
         disableHorizontalScroll
         pageSize={5}
         rowsPerPageOptions={[5]}
-        checkboxSelection
-        selectionModel={selectedRows}
-        onSelectionModelChange={(newSelection) => {
-          setSelectedRows(newSelection);
-          setIsAnyCheckboxSelected(newSelection.length > 0);
-        }}
       />
 
       <div className="mt-[1rem]">
@@ -345,6 +355,7 @@ const Assignedmodalinitial = (props) => {
       </div>
 
       <Box
+        ref={formRef}
         component="form"
         onSubmit={(e) => {
           e.preventDefault();
@@ -372,6 +383,7 @@ const Assignedmodalinitial = (props) => {
                 <Grid item xs={12} key={file.id}>
                   <input
                     type="file"
+                    required
                     variant="outlined"
                     onChange={(event) => handleFileUpload(event, file.id)}
                     InputProps={{
@@ -417,10 +429,10 @@ const Assignedmodalinitial = (props) => {
             Close
           </Button>
           <Button
+            onClick={() => setShowConfirmation(true)}
             id="sub"
-            onClick={handleSubmit}
-            disabled={isSubmitEnabled}
             variant="contained"
+            disabled={!filesUploaded}
           >
             Forward
           </Button>
@@ -442,12 +454,18 @@ const Assignedmodalinitial = (props) => {
             >
               Cancel
             </Button>
-            <Button sx={{ color: "maroon" }} onClick={handlesSuccess} autoFocus>
+            <Button sx={{ color: "maroon" }} onClick={handleSubmit} autoFocus>
               Forward
             </Button>
           </DialogActions>
         </Dialog>
-        <Dialog open={showSuccess} onClose={() => setShowSuccess(false)}>
+        <Dialog
+          open={showSuccess}
+          onClose={() => {
+            setShowSuccess(false);
+            navigate("/reviewerstatus");
+          }}
+        >
           <DialogTitle>Success!</DialogTitle>
           <DialogContent>
             <Typography variant="body1">

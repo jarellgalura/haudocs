@@ -32,6 +32,7 @@ import {
 import { db, auth } from "../../../../firebase";
 import { getFirestore } from "firebase/firestore/lite";
 import { onAuthStateChanged } from "firebase/auth";
+import CircularProgress from "@mui/material/CircularProgress";
 
 const AssignedmodalContinuing = (props) => {
   const navigate = useNavigate();
@@ -41,9 +42,6 @@ const AssignedmodalContinuing = (props) => {
   const { handleCloseModal } = props;
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [selectedFiles, setSelectedFiles] = useState([]);
-  const [isSubmitEnabled, setIsSubmitEnabled] = useState(false);
-  const [selectedRows, setSelectedRows] = React.useState([]);
   const [showDownloadDialog, setShowDownloadDialog] = React.useState(false);
   const [isAnyCheckboxSelected, setIsAnyCheckboxSelected] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
@@ -51,6 +49,8 @@ const AssignedmodalContinuing = (props) => {
   const [submissions, setSubmissions] = useState([]);
   const [currentUser, setCurrentUser] = useState(null);
   const [userName, setUserName] = useState(null);
+  const [filesUploaded, setFilesUploaded] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -98,6 +98,7 @@ const AssignedmodalContinuing = (props) => {
           ...file,
         }));
       setSubmissions(files);
+      setLoading(false);
       console.log(files);
     });
   }, [auth.currentUser.uid]);
@@ -108,6 +109,7 @@ const AssignedmodalContinuing = (props) => {
     const index = newFiles.findIndex((file) => file.id === id);
     newFiles[index].file = file;
     setFiles(newFiles);
+    setFilesUploaded(true);
   };
 
   const handleAddFile = () => {
@@ -199,6 +201,8 @@ const AssignedmodalContinuing = (props) => {
   async function handleSubmit() {
     // Create a new FormData instance
     const form = new FormData();
+    setShowConfirmation(false);
+    setShowSuccess(true);
 
     // Append the files to the FormData instance
     files.forEach((fileObj, index) => {
@@ -290,9 +294,6 @@ const AssignedmodalContinuing = (props) => {
       console.log(error);
       return false;
     }
-
-    navigate("/reviewerstatus");
-    setOpen(false);
   }
 
   const downloadStyle = {
@@ -315,16 +316,27 @@ const AssignedmodalContinuing = (props) => {
         classes={{ header: "custom-header" }}
         rows={submissions}
         columns={columns}
+        loading={loading}
+        loadingOverlay={
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <CircularProgress />
+          </div>
+        }
         autoWidth
         disableHorizontalScroll
         pageSize={5}
         rowsPerPageOptions={[5]}
-        checkboxSelection
-        selectionModel={selectedRows}
-        onSelectionModelChange={(newSelection) => {
-          setSelectedRows(newSelection);
-          setIsAnyCheckboxSelected(newSelection.length > 0);
-        }}
       />
       <Box
         component="form"
@@ -398,7 +410,7 @@ const AssignedmodalContinuing = (props) => {
           </div>
         </DialogContent>
 
-        <div className="flex items-end justify-end space-x-2  pb-[2rem]">
+        <div className="flex items-end justify-end space-x-2 pb-[2rem]">
           <Button
             onClick={handleCloseModal}
             style={closeStyle}
@@ -407,10 +419,10 @@ const AssignedmodalContinuing = (props) => {
             Close
           </Button>
           <Button
+            onClick={() => setShowConfirmation(true)}
             id="sub"
-            type="submit"
-            disabled={!isSubmitEnabled}
             variant="contained"
+            disabled={!filesUploaded}
           >
             Forward
           </Button>
@@ -432,12 +444,18 @@ const AssignedmodalContinuing = (props) => {
             >
               Cancel
             </Button>
-            <Button sx={{ color: "maroon" }} onClick={handlesSuccess} autoFocus>
+            <Button sx={{ color: "maroon" }} onClick={handleSubmit} autoFocus>
               Forward
             </Button>
           </DialogActions>
         </Dialog>
-        <Dialog open={showSuccess} onClose={() => setShowSuccess(false)}>
+        <Dialog
+          open={showSuccess}
+          onClose={() => {
+            setShowSuccess(false);
+            navigate("/reviewerstatus");
+          }}
+        >
           <DialogTitle>Success!</DialogTitle>
           <DialogContent>
             <Typography variant="body1">
@@ -445,7 +463,13 @@ const AssignedmodalContinuing = (props) => {
             </Typography>
           </DialogContent>
           <DialogActions>
-            <Button sx={{ color: "maroon" }} onClick={handleSubmit}>
+            <Button
+              sx={{ color: "maroon" }}
+              onClick={() => {
+                navigate("/reviewerstatus");
+                setOpen(false);
+              }}
+            >
               Close
             </Button>
           </DialogActions>

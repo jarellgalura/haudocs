@@ -557,7 +557,7 @@ const Adminsidebar = ({ children }) => {
             height={30}
           />
         </div>
-        <div>{userName}</div>
+        <small>{userName}</small>
         <div>
           <Badge
             badgeContent={notifications.filter((n) => !n.read).length}

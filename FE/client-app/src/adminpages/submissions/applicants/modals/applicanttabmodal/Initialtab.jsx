@@ -39,6 +39,7 @@ import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 import { auth } from "../../../../../firebase";
 import Modal from "@mui/material/Modal";
 import AdminTransfer from "./AdminTransfer";
+import CircularProgress from "@mui/material/CircularProgress";
 
 const style = {
   position: "absolute",
@@ -76,6 +77,7 @@ const Initialtab = (props) => {
   const [selectAll, setSelectAll] = useState(false);
   const [open, setOpen] = React.useState(false);
   const [showModal, setShowModal] = useState(false);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const db = getFirestore();
@@ -98,6 +100,7 @@ const Initialtab = (props) => {
         ...file,
       }));
       setSubmissions(files);
+      setLoading(false);
     });
   }, [props.uid]);
 
@@ -396,6 +399,23 @@ const Initialtab = (props) => {
         classes={{ header: "custom-header" }}
         rows={submissions}
         columns={columns}
+        loading={loading}
+        loadingOverlay={
+          <div
+            style={{
+              position: "absolute",
+              top: 0,
+              left: 0,
+              width: "100%",
+              height: "100%",
+              display: "flex",
+              justifyContent: "center",
+              alignItems: "center",
+            }}
+          >
+            <CircularProgress />
+          </div>
+        }
         autoWidth
         disableHorizontalScroll
         pageSize={5}
