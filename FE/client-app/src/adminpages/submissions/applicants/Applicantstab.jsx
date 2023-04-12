@@ -6,7 +6,13 @@ import { DataGrid } from "@mui/x-data-grid";
 import { Button } from "@mui/material";
 import Modal from "@mui/material/Modal";
 import Applicanttabmodal from "./modals/Applicanttabmodal";
-import { getFirestore, collection, onSnapshot } from "firebase/firestore";
+import {
+  getFirestore,
+  collection,
+  onSnapshot,
+  where,
+  query,
+} from "firebase/firestore";
 import CircularProgress from "@mui/material/CircularProgress";
 
 function Applicantstab(props) {
@@ -18,7 +24,9 @@ function Applicantstab(props) {
   useEffect(() => {
     const db = getFirestore();
     const submissionsCollection = collection(db, "submissions");
-    const unsubscribe = onSnapshot(submissionsCollection, (snapshot) => {
+    const q = query(submissionsCollection, where("completed", "==", false));
+
+    const unsubscribe = onSnapshot(q, (snapshot) => {
       const submissionsData = snapshot.docs.map((doc) => {
         const data = doc.data();
         return {

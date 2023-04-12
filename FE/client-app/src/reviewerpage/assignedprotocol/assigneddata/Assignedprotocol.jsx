@@ -32,7 +32,8 @@ function AssignedProtocol() {
     if (currentUser) {
       const submissionsQuery = query(
         submissionsCollection,
-        where("reviewer", "array-contains", currentUser.email)
+        where("reviewer", "array-contains", currentUser.email),
+        where("completed", "==", false)
       );
 
       const unsubscribe = onSnapshot(submissionsQuery, (snapshot) => {

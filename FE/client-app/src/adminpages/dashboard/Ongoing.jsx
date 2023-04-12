@@ -11,19 +11,21 @@ const Ongoing = () => {
     const db = getFirestore();
     const submissionsCollection = collection(db, "submissions");
     const unsubscribe = onSnapshot(submissionsCollection, (snapshot) => {
-      const submissionsData = snapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          date_sent: data.date_sent
-            ? new Date(data.date_sent.seconds * 1000).toLocaleString()
-            : null,
-          due_date: data.due_date
-            ? new Date(data.due_date.seconds * 1000).toLocaleString()
-            : null,
-        };
-      });
+      const submissionsData = snapshot.docs
+        .map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            date_sent: data.date_sent
+              ? new Date(data.date_sent.seconds * 1000).toLocaleString()
+              : null,
+            due_date: data.due_date
+              ? new Date(data.due_date.seconds * 1000).toLocaleString()
+              : null,
+          };
+        })
+        .filter((submission) => submission.completed === false);
       setSubmissions(submissionsData);
       const numInProgress = submissionsData.filter(
         (submission) => submission.reviewer !== ""

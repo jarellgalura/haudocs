@@ -11,21 +11,29 @@ const Count = () => {
     const db = getFirestore();
     const submissionsCollection = collection(db, "submissions");
     const unsubscribe = onSnapshot(submissionsCollection, (snapshot) => {
-      const submissionsData = snapshot.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          id: doc.id,
-          ...data,
-          date_sent: data.date_sent
-            ? new Date(data.date_sent.seconds * 1000).toLocaleString()
-            : null,
-          due_date: data.due_date
-            ? new Date(data.due_date.seconds * 1000).toLocaleString()
-            : null,
-        };
-      });
+      const submissionsData = snapshot.docs
+        .map((doc) => {
+          const data = doc.data();
+          return {
+            id: doc.id,
+            ...data,
+            rev_to_admin_sent_date: data.rev_to_admin_sent_date
+              ? new Date(
+                  data.rev_to_admin_sent_date.seconds * 1000
+                ).toLocaleString()
+              : null,
+            due_date: data.due_date
+              ? new Date(data.due_date.seconds * 1000).toLocaleString()
+              : null,
+          };
+        })
+        .filter((submission) => submission.completed === false);
+      setNumInProgress(
+        submissionsData.filter((submission) => submission.reviewer !== [])
+          .length
+      );
+
       setSubmissions(submissionsData);
-      setNumInProgress(submissionsData.length);
       setIsLoading(false);
     });
     return () => {

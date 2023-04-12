@@ -1,11 +1,7 @@
 import React, { useState, useEffect } from "react";
 import { auth } from "../firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import { ref, getDownloadURL } from "firebase/storage";
-import { db } from "../firebase";
-import { doc, getDoc } from "firebase/firestore/lite";
 import userIcon from "../assets/usericon.png";
-import { storage } from "../firebase";
 import "./sidebar.css";
 import {
   Dashboard,
@@ -27,14 +23,17 @@ import {
   ListItemText,
   Toolbar,
   Divider,
-  ClickAwayListener,
   IconButton,
   Typography,
+  Tooltip,
+  Paper,
   BottomNavigation,
   BottomNavigationAction,
-  Paper,
-  useMediaQuery,
-  Tooltip,
+  ClickAwayListener,
+  Dialog,
+  DialogContent,
+  Checkbox,
+  Button,
 } from "@mui/material";
 import { Inbox, Notifications, ExitToApp } from "@mui/icons-material";
 import Settings from "@mui/icons-material/Settings";
@@ -43,7 +42,18 @@ import MenuIcon from "@mui/icons-material/Menu";
 import { useNavigate } from "react-router-dom";
 import { signOut } from "firebase/auth";
 import Logout from "@mui/icons-material/Logout";
-import { deleteDoc } from "firebase/firestore/lite";
+import {
+  onSnapshot,
+  collection,
+  doc,
+  getDoc,
+  deleteDoc,
+  getDocs,
+  query,
+  where,
+  updateDoc,
+  getFirestore,
+} from "firebase/firestore";
 
 const drawerWidth = 220;
 
@@ -87,6 +97,7 @@ const DrawerHeader = styled(Toolbar)(({ theme }) => ({
 }));
 
 const Sidebar = ({ children }) => {
+  const db = getFirestore();
   const [anchorEl, setAnchorEl] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [value, setValue] = useState(0);
@@ -104,23 +115,73 @@ const Sidebar = ({ children }) => {
     localStorage.getItem("profileImageUrl") || null
   );
   const [notifications, setNotifications] = useState([]);
+  const [showAll, setShowAll] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [selectedNotifications, setSelectedNotifications] = useState([]);
+  const [selectAllChecked, setSelectAllChecked] = useState(false);
+  const [readNotifications, setReadNotifications] = useState([]);
 
+  const handleCheckboxChange = (event, notificationId) => {
+    if (event.target.checked) {
+      setSelectedNotifications((prevSelected) => [
+        ...prevSelected,
+        notificationId,
+      ]);
+    } else {
+      setSelectedNotifications((prevSelected) =>
+        prevSelected.filter((id) => id !== notificationId)
+      );
+    }
+    const allSelected = selectedNotifications.length === notifications.length;
+    const currentSelected = selectedNotifications.includes(notificationId);
+
+    if (allSelected && !currentSelected) {
+      setSelectAllChecked(false);
+    } else if (!allSelected && currentSelected) {
+      setSelectAllChecked(true);
+    }
+
+    event.stopPropagation();
+  };
+
+  const handleSelectAll = () => {
+    if (selectAllChecked) {
+      setSelectedNotifications([]);
+      setSelectAllChecked(false);
+    } else {
+      setSelectedNotifications(notifications.map((n) => n.id));
+      setSelectAllChecked(true);
+    }
+  };
+
+  const handleDeleteSelected = async () => {
+    const deletePromises = selectedNotifications.map((id) =>
+      deleteDoc(doc(db, "notifications", id))
+    );
+    await Promise.all(deletePromises);
+    setSelectedNotifications([]);
+    const notificationsRef = collection(db, "notifications");
+    const querySnapshot = await getDocs(notificationsRef);
+    const notifications = querySnapshot.docs.map((doc) => {
+      return { ...doc.data(), id: doc.id };
+    });
+    setNotifications(notifications.sort((a, b) => b.timestamp - a.timestamp));
+  };
   const handleMenuClick = (event) => {
     setAnchorEl2(event.currentTarget);
   };
 
-  const handleLogout = async () => {
-    try {
-      await signOut(auth);
+  const handleLogout = () => {
+    auth.signOut();
+
+    setTimeout(() => {
       navigate("/");
-    } catch (error) {
-      console.error(error);
-    }
+    }, 1000);
     handleClose();
   };
 
   const handleSettings = () => {
-    navigate("/setting");
+    navigate("/adminsettings");
     handleClose();
   };
 
@@ -130,10 +191,16 @@ const Sidebar = ({ children }) => {
 
   const handleClick = (event) => {
     setAnchorEl(event.currentTarget);
+    handleNotificationClick();
   };
 
   const handleClose = () => {
     setAnchorEl(null);
+  };
+
+  const handleClose3 = () => {
+    setSelectedNotifications([]);
+    setShowAll(false);
   };
 
   const handleClose2 = () => {
@@ -151,47 +218,6 @@ const Sidebar = ({ children }) => {
     handleResize();
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
-
-  const handleMarkRead = async () => {
-    const notificationsToMarkRead = notifications.filter((n) => !n.read);
-    const deletePromises = notificationsToMarkRead.map((n) =>
-      deleteDoc(doc(db, "notifications", n.id))
-    );
-    await Promise.all(deletePromises);
-    const updatedNotifications = notifications.map((n) =>
-      notificationsToMarkRead.some((d) => d.id === n.id)
-        ? { ...n, read: true }
-        : n
-    );
-    setNotifications(updatedNotifications);
-    handleClose();
-  };
-
-  useEffect(() => {
-    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
-      if (user) {
-        if (user.photoURL) {
-          setImageUrl(user.photoURL);
-          localStorage.setItem("profileImageUrl", user.photoURL);
-        } else {
-          const storageRef = ref(storage, `users/${user.uid}/profile_picture`);
-          getDownloadURL(storageRef)
-            .then((url) => {
-              setImageUrl(url);
-              localStorage.setItem("profileImageUrl", url);
-            })
-            .catch((error) => {
-              console.log(error);
-            });
-        }
-      } else {
-        setImageUrl(null);
-        localStorage.removeItem("profileImageUrl");
-      }
-      setCurrentUser(user);
-    });
-    return unsubscribeAuth;
   }, []);
 
   useEffect(() => {
@@ -213,6 +239,57 @@ const Sidebar = ({ children }) => {
 
     return unsubscribe;
   }, []);
+
+  useEffect(() => {
+    const currentUser = auth.currentUser;
+    const notificationsRef = collection(db, "notifications");
+    const notificationsQuery = query(
+      notificationsRef,
+      where("recipientEmail", "==", currentUser.email)
+    );
+    const unsubscribe = onSnapshot(notificationsQuery, (querySnapshot) => {
+      const notifications = querySnapshot.docs.map((doc) => {
+        return { ...doc.data(), id: doc.id };
+      });
+      const updatedNotifications = notifications.map((n) => {
+        if (readNotifications.includes(n.id)) {
+          return { ...n, read: true };
+        }
+        return n;
+      });
+      setNotifications(
+        updatedNotifications.sort((a, b) => b.timestamp - a.timestamp)
+      );
+      const unreadNotifications = updatedNotifications.filter((n) => !n.read);
+      setUnreadCount(unreadNotifications.length);
+    });
+
+    return () => {
+      unsubscribe();
+    };
+  }, []);
+
+  const handleNotificationClick = () => {
+    const newNotifications = notifications.map((n) => ({ ...n, read: true }));
+    setNotifications(newNotifications);
+    const readNotificationIds = newNotifications
+      .filter((n) => n.read)
+      .map((n) => n.id);
+    setReadNotifications(readNotificationIds);
+    setUnreadCount(0);
+    notifications.forEach((notification) => {
+      if (readNotificationIds.includes(notification.id)) {
+        updateDoc(doc(db, "notifications", notification.id), { read: true });
+      }
+    });
+  };
+
+  useEffect(() => {
+    const unreadNotifications = notifications.filter(
+      (n) => !readNotifications.includes(n.id)
+    );
+    setUnreadCount(unreadNotifications.length);
+  }, [notifications, readNotifications]);
 
   const hasPhotoURL = currentUser && currentUser.photoURL;
 
@@ -317,7 +394,7 @@ const Sidebar = ({ children }) => {
                 {n.message}
               </MenuItem>
             ))}
-            <MenuItem onClick={handleMarkRead}>Mark all as read</MenuItem>
+            <MenuItem>Mark all as read</MenuItem>
           </Menu>
           <div className="menu-trigger">
             <Tooltip title="Account settings">
@@ -496,32 +573,105 @@ const Sidebar = ({ children }) => {
             <MenuItem sx={{ fontWeight: "bold" }} onClick={handleClose}>
               Notifications
             </MenuItem>
-            {notifications.length > 0 ? (
-              notifications.map((n) => (
-                <MenuItem key={n.id} onClick={handleClose}>
-                  <Typography
-                    noWrap={false}
-                    sx={{ overflowWrap: "break-word" }}
-                  >
-                    {n.message} <br />
-                    <small>
-                      {new Date(n.timestamp?.toDate()).toLocaleString()}
-                    </small>
+            <div
+              style={{
+                maxHeight: "300px",
+                maxWidth: "300px",
+                overflowY: "auto",
+              }}
+            >
+              {notifications.length > 0 ? (
+                notifications.map((n) => (
+                  <MenuItem key={n.id} onClick={handleClose}>
+                    <Typography style={{ whiteSpace: "break-spaces" }}>
+                      {n.message} <br />
+                      <small>
+                        {new Date(n.timestamp?.toDate()).toLocaleString()}
+                      </small>
+                    </Typography>
+                  </MenuItem>
+                ))
+              ) : (
+                <MenuItem onClick={handleClose}>
+                  <Typography sx={{ fontStyle: "italic" }}>
+                    No new notifications
                   </Typography>
                 </MenuItem>
-              ))
-            ) : (
-              <MenuItem onClick={handleClose}>
-                <Typography sx={{ fontStyle: "italic" }}>
-                  No new notifications
-                </Typography>
-              </MenuItem>
-            )}
+              )}
+            </div>
             <Divider />
-            <MenuItem sx={{ fontWeight: "bold" }} onClick={handleMarkRead}>
-              Mark Read
+            <MenuItem
+              sx={{ fontWeight: "bold" }}
+              onClick={() => setShowAll(true)}
+            >
+              See All
             </MenuItem>
           </Menu>
+          <Dialog open={showAll} onClose={handleClose3}>
+            <DialogContent>
+              <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
+                All Notifications
+              </Typography>
+              <div
+                style={{
+                  maxHeight: "300px",
+                  maxWidth: "100%",
+                  overflowY: "auto",
+                }}
+              >
+                {notifications.length > 0 ? (
+                  <>
+                    <MenuItem sx={{ display: "flex", alignItems: "center" }}>
+                      <Checkbox
+                        checked={selectAllChecked}
+                        indeterminate={
+                          selectedNotifications.length > 0 &&
+                          selectedNotifications.length < notifications.length
+                        }
+                        onChange={handleSelectAll}
+                      />
+                      <Typography sx={{ fontWeight: "bold" }}>
+                        Select All Notifications
+                      </Typography>
+                    </MenuItem>
+                    {notifications.map((n) => (
+                      <MenuItem
+                        key={n.id}
+                        sx={{ display: "flex", alignItems: "center" }}
+                      >
+                        <Checkbox
+                          checked={selectedNotifications.includes(n.id)}
+                          onChange={(event) =>
+                            handleCheckboxChange(event, n.id)
+                          }
+                        />
+                        <Typography style={{ whiteSpace: "break-spaces" }}>
+                          {n.message} <br />
+                          <small>
+                            {new Date(n.timestamp?.toDate()).toLocaleString()}
+                          </small>
+                        </Typography>
+                      </MenuItem>
+                    ))}
+
+                    <Button
+                      sx={{
+                        mt: 5,
+                        color: "white",
+                      }}
+                      variant="contained"
+                      onClick={handleDeleteSelected}
+                      disabled={selectedNotifications.length === 0}
+                    >
+                      Delete
+                    </Button>
+                  </>
+                ) : (
+                  <Typography>No notifications to display.</Typography>
+                )}
+              </div>
+            </DialogContent>
+          </Dialog>
         </div>
       </DrawerHeader>
       <List>

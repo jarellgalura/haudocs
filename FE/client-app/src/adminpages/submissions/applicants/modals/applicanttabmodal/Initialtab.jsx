@@ -78,6 +78,7 @@ const Initialtab = (props) => {
   const [open, setOpen] = React.useState(false);
   const [showModal, setShowModal] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [isCompleted, setIsCompleted] = useState(false);
 
   useEffect(() => {
     const db = getFirestore();
@@ -99,6 +100,10 @@ const Initialtab = (props) => {
         ).toLocaleString(),
         ...file,
       }));
+      if (data[0].completed) {
+        setIsCompleted(true);
+      }
+      console.log(data[0].completed);
       setSubmissions(files);
       setLoading(false);
     });
@@ -438,226 +443,239 @@ const Initialtab = (props) => {
         >
           Download All Files
         </Button>
-        <div>
-          <Button
-            size="medium"
-            sx={{
-              color: "white",
-              backgroundColor: "maroon",
-              "&:hover": {
+        {!isCompleted && (
+          <div>
+            <Button
+              size="medium"
+              sx={{
+                color: "white",
                 backgroundColor: "maroon",
-              },
-            }}
-            variant="contained"
-            onClick={modalhandleOpen}
-          >
-            Message Applicant
-          </Button>
-          <Modal
-            open={showModal}
-            onClose={modalhandleClose}
-            aria-labelledby="modal-modal-title"
-            aria-describedby="modal-modal-description"
-          >
-            <Box sx={style}>
-              <AdminTransfer uid={props.uid} />
-            </Box>
-          </Modal>
-        </div>
-      </div>
-      <Box
-        ref={formRef}
-        component="form"
-        onSubmit={(e) => {
-          e.preventDefault();
-          setShowConfirmation(true);
-        }}
-      >
-        <Box sx={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={isCheckedHau}
-                onChange={handleCheckboxChange}
-                name="Hau"
-              />
-            }
-            label="Hau"
-          />
-          <FormControlLabel
-            control={
-              <Checkbox
-                checked={isCheckedOthers}
-                onChange={handleCheckboxChange}
-                name="Others"
-              />
-            }
-            label="Others"
-          />
-        </Box>
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            gap: "1rem",
-          }}
-        >
-          <TextField
-            className="no-outline"
-            label="Protocol Number"
-            value={protocolNumber}
-            onChange={handleProtocolNumberChange}
-          />
-
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <DatePicker value={submissionDate} onChange={handleDateChange} />
-          </LocalizationProvider>
-
-          <Box required sx={{ display: "flex", gap: "1rem" }}>
-            <FormControl sx={{ width: "100%" }}>
-              <InputLabel>Review Type</InputLabel>
-              <Select
-                label="Review Type"
-                value={reviewType}
-                onChange={handleReviewTypeChange}
-              >
-                <MenuItem value="Full Board Review">Full Board Review</MenuItem>
-                <MenuItem value="Expedited Review">Expedited Review</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-
-          <Box required sx={{ display: "flex", gap: "1rem" }}>
-            <FormControl sx={{ width: "100%" }}>
-              <InputLabel>Research Type</InputLabel>
-              <Select
-                label="ResearchType"
-                value={researchType}
-                onChange={handleResearchTypeChange}
-              >
-                <MenuItem value="Biomedical Studies">
-                  Biomedical Studies
-                </MenuItem>
-                <MenuItem value="Health Operations Research">
-                  Health Operations Research
-                </MenuItem>
-                <MenuItem value="Clinical Trials">Clinical Trials</MenuItem>
-                <MenuItem value="Public Health Research">
-                  Public Health Research
-                </MenuItem>
-                <MenuItem value="Social Research">Social Research</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-          <FormControl fullWidth sx={{ marginBottom: "2rem" }}>
-            <InputLabel id="assign-to-label">Assign To</InputLabel>
-            <Select
-              labelId="assign-to-label"
-              id="assign-to"
-              multiple
-              value={assignTo}
-              onChange={handleAssignToChange}
-              label="Assign To"
-              renderValue={(selected) => (
-                <div>
-                  {selected.length === 0
-                    ? "Select reviewers"
-                    : selected.length === users.length
-                    ? "All reviewers selected"
-                    : `${selected.length} reviewers selected`}
-                </div>
-              )}
-            >
-              <MenuItem key="select-all" value="select-all">
-                <Checkbox
-                  checked={assignTo.length === users.length}
-                  indeterminate={
-                    assignTo.length > 0 && assignTo.length < users.length
-                  }
-                  onClick={handleSelectAll}
-                />
-                Select all
-              </MenuItem>
-
-              {users
-                .filter(
-                  (user) =>
-                    user.role === "scientist" || user.role === "non-scientist"
-                )
-                .map((user) => (
-                  <MenuItem key={user.email} value={user.email}>
-                    <Checkbox checked={assignTo.indexOf(user.email) > -1} />
-                    {user.email}
-                  </MenuItem>
-                ))}
-            </Select>
-          </FormControl>
-        </Box>
-        <div className="flex items-end justify-end space-x-2 pb-[2rem]">
-          <Button
-            style={closeStyle}
-            onClick={handleCloseModal}
-            variant="outlined"
-          >
-            Close
-          </Button>
-          <Button
-            id="sub"
-            type="submit"
-            variant="contained"
-            disabled={!isFormValid}
-          >
-            Forward
-          </Button>
-        </div>
-        <Dialog
-          open={showConfirmation}
-          onClose={() => setShowConfirmation(false)}
-        >
-          <DialogTitle>Confirm Submit</DialogTitle>
-          <DialogContent>
-            <Typography variant="body1">
-              Are you sure you want to forward the form?
-            </Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button
-              sx={{ color: "maroon" }}
-              onClick={() => setShowConfirmation(false)}
-            >
-              Cancel
-            </Button>
-            <Button sx={{ color: "maroon" }} onClick={handleSubmit} autoFocus>
-              Forward
-            </Button>
-          </DialogActions>
-        </Dialog>
-        <Dialog
-          open={showSuccess}
-          onClose={() => {
-            setShowSuccess(false);
-            navigate("/adminapplication");
-          }}
-        >
-          <DialogTitle>Success!</DialogTitle>
-          <DialogContent>
-            <Typography variant="body1">
-              You have successfully transferred the files.
-            </Typography>
-          </DialogContent>
-          <DialogActions>
-            <Button
-              sx={{ color: "maroon" }}
-              onClick={() => {
-                navigate("/adminapplication");
-                setOpen(false);
+                "&:hover": {
+                  backgroundColor: "maroon",
+                },
               }}
+              variant="contained"
+              onClick={modalhandleOpen}
+            >
+              Transfer/Archive
+            </Button>
+            <Modal
+              open={showModal}
+              onClose={modalhandleClose}
+              aria-labelledby="modal-modal-title"
+              aria-describedby="modal-modal-description"
+            >
+              <Box sx={style}>
+                <AdminTransfer uid={props.uid} />
+              </Box>
+            </Modal>
+          </div>
+        )}
+      </div>
+      {!isCompleted && (
+        <Box
+          ref={formRef}
+          component="form"
+          onSubmit={(e) => {
+            e.preventDefault();
+            setShowConfirmation(true);
+          }}
+        >
+          <Box sx={{ display: "flex", gap: "1rem", marginTop: "1rem" }}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={isCheckedHau}
+                  onChange={handleCheckboxChange}
+                  name="Hau"
+                />
+              }
+              label="Hau"
+            />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={isCheckedOthers}
+                  onChange={handleCheckboxChange}
+                  name="Others"
+                />
+              }
+              label="Others"
+            />
+          </Box>
+
+          <Box
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              gap: "1rem",
+            }}
+          >
+            <TextField
+              className="no-outline"
+              label="Protocol Number"
+              value={protocolNumber}
+              onChange={handleProtocolNumberChange}
+            />
+
+            <LocalizationProvider dateAdapter={AdapterDayjs}>
+              <DatePicker
+                label="Due Date"
+                value={submissionDate}
+                onChange={handleDateChange}
+              />
+            </LocalizationProvider>
+
+            <Box required sx={{ display: "flex", gap: "1rem" }}>
+              <FormControl sx={{ width: "100%" }}>
+                <InputLabel>Review Type</InputLabel>
+                <Select
+                  label="Review Type"
+                  value={reviewType}
+                  onChange={handleReviewTypeChange}
+                >
+                  <MenuItem value="Full Board Review">
+                    Full Board Review
+                  </MenuItem>
+                  <MenuItem value="Expedited Review">Expedited Review</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+
+            <Box required sx={{ display: "flex", gap: "1rem" }}>
+              <FormControl sx={{ width: "100%" }}>
+                <InputLabel>Research Type</InputLabel>
+                <Select
+                  label="ResearchType"
+                  value={researchType}
+                  onChange={handleResearchTypeChange}
+                >
+                  <MenuItem value="Biomedical Studies">
+                    Biomedical Studies
+                  </MenuItem>
+                  <MenuItem value="Health Operations Research">
+                    Health Operations Research
+                  </MenuItem>
+                  <MenuItem value="Clinical Trials">Clinical Trials</MenuItem>
+                  <MenuItem value="Public Health Research">
+                    Public Health Research
+                  </MenuItem>
+                  <MenuItem value="Social Research">Social Research</MenuItem>
+                  <MenuItem value="Others">Others</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+
+            <FormControl fullWidth sx={{ marginBottom: "2rem" }}>
+              <InputLabel id="assign-to-label">Assign To</InputLabel>
+              <Select
+                labelId="assign-to-label"
+                id="assign-to"
+                multiple
+                value={assignTo}
+                onChange={handleAssignToChange}
+                label="Assign To"
+                renderValue={(selected) => (
+                  <div>
+                    {selected.length === 0
+                      ? "Select reviewers"
+                      : selected.length === users.length
+                      ? "All reviewers selected"
+                      : `${selected.length} reviewers selected`}
+                  </div>
+                )}
+              >
+                <MenuItem key="select-all" value="select-all">
+                  <Checkbox
+                    checked={assignTo.length === users.length}
+                    indeterminate={
+                      assignTo.length > 0 && assignTo.length < users.length
+                    }
+                    onClick={handleSelectAll}
+                  />
+                  Select all
+                </MenuItem>
+
+                {users
+                  .filter(
+                    (user) =>
+                      user.role === "scientist" || user.role === "non-scientist"
+                  )
+                  .map((user) => (
+                    <MenuItem key={user.email} value={user.email}>
+                      <Checkbox checked={assignTo.indexOf(user.email) > -1} />
+                      {user.email}
+                    </MenuItem>
+                  ))}
+              </Select>
+            </FormControl>
+          </Box>
+          <div className="flex items-end justify-end space-x-2 pb-[2rem]">
+            <Button
+              style={closeStyle}
+              onClick={handleCloseModal}
+              variant="outlined"
             >
               Close
             </Button>
-          </DialogActions>
-        </Dialog>
-      </Box>
+            <Button
+              id="sub"
+              type="submit"
+              variant="contained"
+              disabled={!isFormValid}
+            >
+              Forward
+            </Button>
+          </div>
+          <Dialog
+            open={showConfirmation}
+            onClose={() => setShowConfirmation(false)}
+          >
+            <DialogTitle>Confirm Submit</DialogTitle>
+            <DialogContent>
+              <Typography variant="body1">
+                Are you sure you want to forward the form?
+              </Typography>
+            </DialogContent>
+            <DialogActions>
+              <Button
+                sx={{ color: "maroon" }}
+                onClick={() => setShowConfirmation(false)}
+              >
+                Cancel
+              </Button>
+              <Button sx={{ color: "maroon" }} onClick={handleSubmit} autoFocus>
+                Forward
+              </Button>
+            </DialogActions>
+          </Dialog>
+          <Dialog
+            open={showSuccess}
+            onClose={() => {
+              setShowSuccess(false);
+              navigate("/adminapplication");
+            }}
+          >
+            <DialogTitle>Success!</DialogTitle>
+            <DialogContent>
+              <Typography variant="body1">
+                You have successfully transferred the files.
+              </Typography>
+            </DialogContent>
+            <DialogActions>
+              <Button
+                sx={{ color: "maroon" }}
+                onClick={() => {
+                  navigate("/adminapplication");
+                  setOpen(false);
+                }}
+              >
+                Close
+              </Button>
+            </DialogActions>
+          </Dialog>
+        </Box>
+      )}
       <Dialog open={showDownloadDialog} onClose={handleCloseDownloadDialog}>
         <DialogTitle>Download Selected Files</DialogTitle>
         <DialogContent>

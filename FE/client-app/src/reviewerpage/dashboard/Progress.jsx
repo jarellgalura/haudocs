@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { RiLoader2Line } from "react-icons/ri";
 import {
   getFirestore,
   collection,
@@ -24,7 +23,8 @@ const Progress = () => {
     if (currentUser) {
       const submissionsQuery = query(
         submissionsCollection,
-        where("reviewer", "array-contains", currentUser.email)
+        where("reviewer", "array-contains", currentUser.email),
+        where("completed", "==", false)
       );
 
       const unsubscribe = onSnapshot(submissionsQuery, (snapshot) => {
