@@ -50,6 +50,7 @@ import {
   getDocs,
   query,
   where,
+  updateDoc,
 } from "firebase/firestore";
 import { getFirestore } from "firebase/firestore";
 
@@ -118,6 +119,7 @@ const Adminsidebar = ({ children }) => {
   const [unreadCount, setUnreadCount] = useState(0);
   const [selectedNotifications, setSelectedNotifications] = useState([]);
   const [selectAllChecked, setSelectAllChecked] = useState(false);
+  const [readNotifications, setReadNotifications] = useState([]);
 
   const handleCheckboxChange = (event, notificationId) => {
     if (event.target.checked) {
@@ -250,9 +252,6 @@ const Adminsidebar = ({ children }) => {
       const notifications = querySnapshot.docs.map((doc) => {
         return { ...doc.data(), id: doc.id };
       });
-      const readNotifications = JSON.parse(
-        localStorage.getItem("readNotifications") || "[]"
-      );
       const updatedNotifications = notifications.map((n) => {
         if (readNotifications.includes(n.id)) {
           return { ...n, read: true };
@@ -264,10 +263,6 @@ const Adminsidebar = ({ children }) => {
       );
       const unreadNotifications = updatedNotifications.filter((n) => !n.read);
       setUnreadCount(unreadNotifications.length);
-      localStorage.setItem(
-        "hasUnreadNotifications",
-        JSON.stringify(unreadNotifications.length > 0)
-      );
     });
 
     return () => {
@@ -278,25 +273,24 @@ const Adminsidebar = ({ children }) => {
   const handleNotificationClick = () => {
     const newNotifications = notifications.map((n) => ({ ...n, read: true }));
     setNotifications(newNotifications);
-    const readNotifications = newNotifications
+    const readNotificationIds = newNotifications
       .filter((n) => n.read)
       .map((n) => n.id);
-    localStorage.setItem(
-      "readNotifications",
-      JSON.stringify(readNotifications)
-    );
+    setReadNotifications(readNotificationIds);
     setUnreadCount(0);
-    localStorage.setItem("hasUnreadNotifications", JSON.stringify(false));
+    notifications.forEach((notification) => {
+      if (readNotificationIds.includes(notification.id)) {
+        updateDoc(doc(db, "notifications", notification.id), { read: true });
+      }
+    });
   };
 
   useEffect(() => {
-    const hasUnreadNotifications = JSON.parse(
-      localStorage.getItem("hasUnreadNotifications") || "false"
+    const unreadNotifications = notifications.filter(
+      (n) => !readNotifications.includes(n.id)
     );
-    if (!hasUnreadNotifications) {
-      setUnreadCount(0);
-    }
-  }, []);
+    setUnreadCount(unreadNotifications.length);
+  }, [notifications, readNotifications]);
 
   const hasPhotoURL = currentUser && currentUser.photoURL;
 

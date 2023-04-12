@@ -3,7 +3,7 @@ import { Grid, Box } from "@mui/material";
 import Adminsidebar from "../Adminsidebar";
 import Count from "./Count";
 import Protocolscount from "./Protocolscount";
-import Protocolsinsideoutside from "./Protocolsinsideoutside";
+import Ongoing from "./Ongoing";
 import Research from "./Research";
 import "./admindashboard.css";
 
@@ -65,7 +65,7 @@ function AdminDashboard() {
                 boxShadow: "2px 2px 5px rgba(0, 0, 0, 0.3)",
               }}
             >
-              <Protocolsinsideoutside />
+              <Ongoing />
             </Box>
           </Grid>
           <Grid item xs={12} md={6}>

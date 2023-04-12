@@ -212,31 +212,15 @@ const Continuingtab = (props) => {
 
       const notificationsRef = collection(db, "notifications");
 
-      // Check if all users have been selected
-      if (assignTo.length === users.length) {
-        const newNotification = {
-          id: doc(notificationsRef).id,
-          message:
-            `Protocol number: ${protocolNumber} has been \n` +
-            `forwarded for continuing review.`,
-          read: false,
-          recipientEmail: "all",
-          senderEmail: auth.currentUser.email,
-          timestamp: serverTimestamp(),
-        };
-        await setDoc(doc(notificationsRef), newNotification);
-      } else {
-        const newNotification = {
-          id: doc(notificationsRef).id,
-          message: `Protocol number: ${protocolNumber} has been
-   forwarded for continuing review.`,
-          read: false,
-          recipientEmail: assignTo.join(", "),
-          senderEmail: auth.currentUser.email,
-          timestamp: serverTimestamp(),
-        };
-        await setDoc(doc(notificationsRef), newNotification);
-      }
+      const newNotification = {
+        id: doc(notificationsRef).id,
+        message: `Protocol number: ${protocolNumber} has been forwarded for continuing review.`,
+        read: false,
+        recipientEmail: assignTo,
+        senderEmail: auth.currentUser.email,
+        timestamp: serverTimestamp(),
+      };
+      await setDoc(doc(notificationsRef), newNotification);
 
       console.log({
         protocolNumber,

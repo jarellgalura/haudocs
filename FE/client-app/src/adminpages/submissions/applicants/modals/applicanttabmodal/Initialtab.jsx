@@ -163,13 +163,12 @@ const Initialtab = (props) => {
   const handleSelectAll = () => {
     if (!selectAll) {
       // Select all users
-      setAssignTo(
-        users
-          .filter(
-            (user) => user.role === "scientist" || user.role === "non-scientist"
-          )
-          .map((user) => user.email)
-      );
+      const selectedUsers = users
+        .filter(
+          (user) => user.role === "scientist" || user.role === "non-scientist"
+        )
+        .map((user) => user.email);
+      setAssignTo(selectedUsers);
       setSelectAll(true);
     } else {
       // Deselect all users
@@ -177,6 +176,7 @@ const Initialtab = (props) => {
       setSelectAll(false);
     }
   };
+
   const handleCheckboxChange = (event) => {
     const { name, checked } = event.target;
 
@@ -261,27 +261,16 @@ const Initialtab = (props) => {
       const notificationsRef = collection(db, "notifications");
 
       // Check if all users have been selected
-      if (assignTo.length === users.length) {
-        const newNotification = {
-          id: doc(notificationsRef).id,
-          message: `Protocol number: ${protocolNumber} has been forwarded for initial review.`,
-          read: false,
-          recipientEmail: "all",
-          senderEmail: auth.currentUser.email,
-          timestamp: serverTimestamp(),
-        };
-        await setDoc(doc(notificationsRef), newNotification);
-      } else {
-        const newNotification = {
-          id: doc(notificationsRef).id,
-          message: `Protocol number: ${protocolNumber} has been forwarded for initial review.`,
-          read: false,
-          recipientEmail: assignTo.join(", "),
-          senderEmail: auth.currentUser.email,
-          timestamp: serverTimestamp(),
-        };
-        await setDoc(doc(notificationsRef), newNotification);
-      }
+
+      const newNotification = {
+        id: doc(notificationsRef).id,
+        message: `Protocol Number: ${protocolNumber} has been forwarded for initial review.`,
+        read: false,
+        recipientEmail: assignTo,
+        senderEmail: auth.currentUser.email,
+        timestamp: serverTimestamp(),
+      };
+      await setDoc(doc(notificationsRef), newNotification);
 
       console.log({
         protocolNumber,
@@ -643,7 +632,13 @@ const Initialtab = (props) => {
             </Button>
           </DialogActions>
         </Dialog>
-        <Dialog open={showSuccess} onClose={() => setShowSuccess(false)}>
+        <Dialog
+          open={showSuccess}
+          onClose={() => {
+            setShowSuccess(false);
+            navigate("/adminapplication");
+          }}
+        >
           <DialogTitle>Success!</DialogTitle>
           <DialogContent>
             <Typography variant="body1">
@@ -651,7 +646,13 @@ const Initialtab = (props) => {
             </Typography>
           </DialogContent>
           <DialogActions>
-            <Button sx={{ color: "maroon" }} onClick={handleClose}>
+            <Button
+              sx={{ color: "maroon" }}
+              onClick={() => {
+                navigate("/adminapplication");
+                setOpen(false);
+              }}
+            >
               Close
             </Button>
           </DialogActions>

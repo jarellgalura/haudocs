@@ -2,7 +2,7 @@ import React, { useState, useEffect } from "react";
 import { getFirestore, collection, onSnapshot } from "firebase/firestore";
 import CircularProgress from "@mui/material/CircularProgress";
 
-const Count = () => {
+const Ongoing = () => {
   const [submissions, setSubmissions] = useState([]);
   const [numInProgress, setNumInProgress] = useState(0);
   const [isLoading, setIsLoading] = useState(true);
@@ -25,7 +25,10 @@ const Count = () => {
         };
       });
       setSubmissions(submissionsData);
-      setNumInProgress(submissionsData.length);
+      const numInProgress = submissionsData.filter(
+        (submission) => submission.reviewer !== ""
+      ).length;
+      setNumInProgress(numInProgress);
       setIsLoading(false);
     });
     return () => {
@@ -52,7 +55,9 @@ const Count = () => {
             {numInProgress}
           </div>
           <p className="text-xl flex items-center text-center justify-center font-semibold">
-            {numInProgress > 0 ? "Number of Applicants" : "NO APPLICATIONS"}
+            {numInProgress > 0
+              ? "Protocols in Progress"
+              : "NO PROTOCOLS IN PROGRESS"}
           </p>
         </>
       )}
@@ -60,4 +65,4 @@ const Count = () => {
   );
 };
 
-export default Count;
+export default Ongoing;

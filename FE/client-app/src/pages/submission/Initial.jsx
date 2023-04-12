@@ -7,6 +7,7 @@ import {
   DialogActions,
   Typography,
   DialogContentText,
+  Box,
 } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import {
@@ -413,7 +414,18 @@ function Initial({ onSubmitted }) {
                     </DialogContent>
                     <DialogActions>
                       {loading ? (
-                        <CircularProgress size={24} />
+                        <>
+                          <DialogContent>
+                            <DialogContentText>
+                              Please wait...
+                            </DialogContentText>
+                            <Box
+                              sx={{ display: "flex", justifyContent: "center" }}
+                            >
+                              <CircularProgress />
+                            </Box>
+                          </DialogContent>
+                        </>
                       ) : (
                         <>
                           <Button
@@ -432,6 +444,7 @@ function Initial({ onSubmitted }) {
                       )}
                     </DialogActions>
                   </Dialog>
+
                   <Dialog open={showSuccess}>
                     <DialogTitle>Success</DialogTitle>
                     <DialogContent>
