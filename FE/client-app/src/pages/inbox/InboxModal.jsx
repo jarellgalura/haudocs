@@ -36,10 +36,10 @@ const InboxModal = () => {
             data[0].date_sent.nanoseconds / 1000000
         ).toLocaleString(),
         ...file,
-        review_type: data[0].review_type,
         research_type: data[0].research_type,
         protocol_no: data[0].protocol_no,
         decision: data[0].decision,
+        status: data[0].status,
       }));
       setSubmissions(files);
     });
@@ -56,7 +56,7 @@ const InboxModal = () => {
   const columns = [
     { field: "protocol_no", headerName: "Protocol Number", flex: 1 },
     { field: "research_type", headerName: "Research Type", flex: 1 },
-    { field: "review_type", headerName: "Research Type", flex: 1 },
+    { field: "upload_date", headerName: "Date Received", flex: 1 },
     {
       field: "decision",
       headerName: "Status",

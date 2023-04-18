@@ -13,7 +13,6 @@ import Continuing from "./Continuing";
 import Final from "./Final";
 import { auth } from "../../firebase";
 import LinearProgress from "@mui/material/LinearProgress";
-import Resubmission from "./Resubmission";
 
 function Submission() {
   const [activeTab, setActiveTab] = useState(0);
@@ -36,9 +35,15 @@ function Submission() {
 
       querySnapshot.forEach((doc) => {
         const submissionData = doc.data();
-        if (submissionData.status === "initial") {
+        if (
+          submissionData.status === "initial" ||
+          submissionData.status === "Initial Approved"
+        ) {
           initial = true;
-        } else if (submissionData.status === "continuing") {
+        } else if (
+          submissionData.status === "continuing" ||
+          submissionData.status === "Continuing Approved"
+        ) {
           initial = true;
           continuing = true;
         }

@@ -9,6 +9,9 @@ import "./admindashboard.css";
 import Papa from "papaparse";
 import { getFirestore, collection, onSnapshot } from "firebase/firestore";
 import { Button } from "@mui/material";
+import { LocalizationProvider } from "@mui/x-date-pickers-pro";
+import { AdapterDayjs } from "@mui/x-date-pickers-pro/AdapterDayjs";
+import { DateRangePicker } from "@mui/x-date-pickers-pro/DateRangePicker";
 
 function AdminDashboard() {
   const fetchDataAndConvertToCSV = async () => {
@@ -101,6 +104,11 @@ function AdminDashboard() {
           justifyContent: "center",
         }}
       >
+        <LocalizationProvider dateAdapter={AdapterDayjs}>
+          <DateRangePicker
+            localeText={{ start: "Start-Date", end: "End-Date" }}
+          />
+        </LocalizationProvider>
         <Box
           className="size"
           sx={{
@@ -115,7 +123,7 @@ function AdminDashboard() {
             Download Stats
           </Button>
         </Box>
-        <Grid container spacing={2}>
+        <Grid sx={{ marginTop: 1, marginBottom: 3 }} container spacing={2}>
           <Grid item xs={12} md={6}>
             <Box
               sx={{

@@ -34,25 +34,24 @@ const Inbox = () => {
     const submissionsCollection = collection(db, "submissions");
     const q = query(
       submissionsCollection,
-      where("uid", "==", auth.currentUser.uid)
+      where("uid", "==", auth.currentUser.uid),
+      where("forContinuing", "==", true)
     );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
-      const submissionsData = snapshot.docs
-        .map((doc) => {
-          const data = doc.data();
-          return {
-            id: doc.id,
-            ...data,
-            date_completed: data.date_completed
-              ? new Date(data.date_completed.seconds * 1000).toLocaleString()
-              : null,
-            due_date: data.due_date
-              ? new Date(data.due_date.seconds * 1000).toLocaleString()
-              : null,
-          };
-        })
-        .filter((submission) => submission.completed === true);
+      const submissionsData = snapshot.docs.map((doc) => {
+        const data = doc.data();
+        return {
+          id: doc.id,
+          ...data,
+          date_completed: data.date_completed
+            ? new Date(data.date_completed.seconds * 1000).toLocaleString()
+            : null,
+          due_date: data.due_date
+            ? new Date(data.due_date.seconds * 1000).toLocaleString()
+            : null,
+        };
+      });
       setSubmissions(submissionsData);
     });
     return () => {

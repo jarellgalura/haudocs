@@ -36,9 +36,9 @@ const Protocolscount = () => {
 
       const submissionsData = snapshot.docs.map((doc) => {
         const data = doc.data();
-        if (data.review_type === "exempted") {
+        if (data.review_type === "Exempted Review") {
           countExempted++;
-        } else if (data.review_type === "expedite") {
+        } else if (data.review_type === "Expedited Review") {
           countExpedite++;
         } else if (data.review_type === "Full Board Review") {
           countFullBoard++;

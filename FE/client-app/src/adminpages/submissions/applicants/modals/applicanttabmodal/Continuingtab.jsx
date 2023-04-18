@@ -33,7 +33,7 @@ import {
 } from "firebase/firestore";
 import { auth } from "../../../../../firebase";
 import Modal from "@mui/material/Modal";
-import AdminTransfer from "./AdminTransfer";
+import AdminContinuingTransfer from "./AdminContinuingTransfer";
 import CircularProgress from "@mui/material/CircularProgress";
 
 const style = {
@@ -423,7 +423,7 @@ const Continuingtab = (props) => {
               aria-describedby="modal-modal-description"
             >
               <Box sx={style}>
-                <AdminTransfer uid={props.uid} />
+                <AdminContinuingTransfer uid={props.uid} />
               </Box>
             </Modal>
           </div>

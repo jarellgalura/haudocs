@@ -246,6 +246,7 @@ const Initialtab = (props) => {
           due_date: Timestamp.fromDate(submissionDate.toDate()),
           reviewer: assignTo,
           school: isCheckedHau ? "HAU" : "Others",
+          forAdmin: false,
         });
 
         const updatedInitialFiles = data[0].initial_files.map((file) => {
@@ -488,9 +489,10 @@ const Initialtab = (props) => {
                   checked={isCheckedHau}
                   onChange={handleCheckboxChange}
                   name="Hau"
+                  id="Hau"
                 />
               }
-              label="HAU"
+              label={<label htmlFor="Hau">HAU</label>}
             />
             <FormControlLabel
               control={
@@ -498,9 +500,10 @@ const Initialtab = (props) => {
                   checked={isCheckedOthers}
                   onChange={handleCheckboxChange}
                   name="Others"
+                  id="Others"
                 />
               }
-              label="Others"
+              label={<label htmlFor="Others">Others</label>}
             />
           </Box>
 

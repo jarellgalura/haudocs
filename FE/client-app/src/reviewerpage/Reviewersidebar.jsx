@@ -180,7 +180,11 @@ const Reviewersidebar = ({ children }) => {
     ); // filter out null values (failed deletes)
     setSelectedNotifications([]);
     const notificationsRef = collection(db, "notifications");
-    const querySnapshot = await getDocs(notificationsRef);
+    const query = query(
+      notificationsRef,
+      where("recipientEmail", "==", currentUser.email)
+    );
+    const querySnapshot = await getDocs(query);
     const notifications = querySnapshot.docs
       .filter((doc) => !deletedIds.includes(doc.id)) // exclude deleted notifications
       .map((doc) => ({ ...doc.data(), id: doc.id }));
@@ -585,7 +589,7 @@ const Reviewersidebar = ({ children }) => {
         <div>
           <Badge
             badgeContent={notifications.filter((n) => !n.read).length}
-            color="primary"
+            color="secondary"
           >
             <Notifications sx={{ cursor: "pointer" }} onClick={handleClick} />
           </Badge>

@@ -33,8 +33,8 @@ import {
 } from "firebase/firestore";
 import { auth } from "../../../../../firebase";
 import Modal from "@mui/material/Modal";
-import AdminTransfer from "./AdminTransfer";
 import CircularProgress from "@mui/material/CircularProgress";
+import AdminFinalTransfer from "./AdminFinalTransfer";
 
 const style = {
   position: "absolute",
@@ -423,7 +423,7 @@ const Finaltab = (props) => {
               aria-describedby="modal-modal-description"
             >
               <Box sx={style}>
-                <AdminTransfer uid={props.uid} />
+                <AdminFinalTransfer uid={props.uid} />
               </Box>
             </Modal>
           </div>

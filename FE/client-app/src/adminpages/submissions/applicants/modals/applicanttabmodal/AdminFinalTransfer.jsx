@@ -33,15 +33,13 @@ import {
 import { db, auth } from "../../../../../firebase";
 import CircularProgressWithLabel from "@mui/material/CircularProgress";
 
-const AdminTransfer = (props) => {
+const AdminFinalTransfer = (props) => {
   const [file, setFile] = useState(null);
   const [reviewType, setReviewType] = useState("");
   const [sendTo, setSendTo] = useState("");
   const [comment, setComment] = useState("");
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
-  const [showExemptReviewTextField, setShowExemptReviewTextField] =
-    useState(false);
   const formRef = useRef(null);
   const [protocolNumber, setProtocolNumber] = useState("");
   const [decision, setDecision] = useState("");
@@ -58,11 +56,6 @@ const AdminTransfer = (props) => {
 
   const handleProtocolNumberChange = (event) => {
     setProtocolNumber(event.target.value);
-  };
-
-  const handleReviewTypeChange = (event) => {
-    setReviewType(event.target.value);
-    setShowExemptReviewTextField(event.target.value === "Exempt from Review");
   };
 
   const handleCommentChange = (event) => {
@@ -90,7 +83,6 @@ const AdminTransfer = (props) => {
       );
 
       const data = await response.json();
-      console.log(data);
 
       const submissionsRef = collection(db, "submissions");
       const q = query(submissionsRef, where("uid", "==", props.uid));
@@ -102,39 +94,48 @@ const AdminTransfer = (props) => {
         const docSnapshot = querySnapshot.docs[0];
 
         // Get the current date as a UNIX timestamp
-        const currentDate = serverTimestamp();
+        const currentDate = new Date();
+
+        // Offset the current date to GMT+8
+        const formatter = new Intl.DateTimeFormat("en-US", {
+          timeZone: "Asia/Singapore",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        });
+
+        const currentDateGMT8 = formatter.format(currentDate);
 
         // Add the offset current date to each file in the data.files array
         const filesWithDate = data.files.map((file) => ({
           ...file,
-          upload_date: currentDate, // Add the offset current date as a UNIX timestamp
+          upload_date: currentDateGMT8,
         }));
 
-        // Get the existing rev_initial_files array or an empty array if it doesn't exist
-        const existingReviewerFiles =
-          docSnapshot.data().rev_initial_files || [];
+        // Get the existing rev_final_files array or an empty array if it doesn't exist
+        const existingReviewerFiles = docSnapshot.data().rev_final_files || [];
 
         // Concatenate the existing and new files arrays
         const updatedReviewerFiles =
           existingReviewerFiles.concat(filesWithDate);
 
-        // Update the document with the updated rev_initial_files and sent_by
+        // Update the document with the updated rev_final_files and sent_by
         const submissionRef = doc(db, "submissions", docSnapshot.id);
         let updateData = {
           admin_files: updatedReviewerFiles,
           decision: decision,
-          review_type: reviewType,
           comment: comment,
           completed: checkCompleted,
           date_completed: serverTimestamp(),
           forContinuing: true,
-          status: "Initial Approved",
+          status: "Final Approved",
         };
-        if (reviewType === "Exempt from Review") {
-          updateData.protocol_no = protocolNumber;
-        }
         await updateDoc(submissionRef, updateData);
 
+        // Assuming your user collection is named "users"
         const userRef = doc(db, "users", props.uid);
 
         // Fetch the user document
@@ -240,32 +241,6 @@ const AdminTransfer = (props) => {
               </Select>
             </FormControl>
 
-            <FormControl sx={{ width: "100%" }}>
-              <InputLabel>Review Type</InputLabel>
-              <Select
-                label="Review Type"
-                value={reviewType}
-                onChange={handleReviewTypeChange}
-              >
-                <MenuItem value="Exempt from Review">
-                  Exempt from Review
-                </MenuItem>
-                <MenuItem value="Full Board Review">Full Board Review</MenuItem>
-                <MenuItem value="Expedited Review">Expedited Review</MenuItem>
-              </Select>
-            </FormControl>
-
-            {showExemptReviewTextField && (
-              <TextField
-                label="Protocol Number"
-                required
-                autoComplete="off"
-                fullWidth
-                value={protocolNumber}
-                onChange={handleProtocolNumberChange}
-              />
-            )}
-
             <TextField
               label="Message"
               variant="outlined"
@@ -348,4 +323,4 @@ const AdminTransfer = (props) => {
   );
 };
 
-export default AdminTransfer;
+export default AdminFinalTransfer;

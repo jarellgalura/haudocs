@@ -25,7 +25,7 @@ import {
 } from "firebase/firestore/lite";
 import { db, auth } from "../../firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import LinearProgress from "@mui/material/LinearProgress";
+import CircularProgressWithLabel from "@mui/material/CircularProgress";
 
 const Final = ({ onSubmitted }) => {
   const navigate = useNavigate();
@@ -36,6 +36,7 @@ const Final = ({ onSubmitted }) => {
   const [userName, setUserName] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   const handleSuccessClose = () => {
     setShowSuccess(false);
@@ -79,7 +80,7 @@ const Final = ({ onSubmitted }) => {
     const q = query(
       submissionsRef,
       where("uid", "==", auth.currentUser.uid),
-      where("status", "==", "continuing")
+      where("status", "==", "Continuing Approved")
     );
     const querySnapshot = await getDocs(q);
     const form = new FormData();
@@ -97,6 +98,12 @@ const Final = ({ onSubmitted }) => {
             filefolder: `${auth.currentUser.uid}/final`,
           },
           body: form,
+          onUploadProgress: (progressEvent) => {
+            const progress = Math.round(
+              (progressEvent.loaded / progressEvent.total) * 100
+            );
+            setUploadProgress(progress);
+          },
         }
       );
       const data = await response.json();
@@ -201,7 +208,20 @@ const Final = ({ onSubmitted }) => {
                   accept=".pdf,.doc,.docx"
                   type="file"
                   onChange={(event) => {
-                    setFirstFile(event.target.files[0]);
+                    const file = event.target.files[0];
+                    const fileName = file.name.toLowerCase();
+                    const fileExtension = fileName.substring(
+                      fileName.lastIndexOf(".") + 1
+                    );
+
+                    if (!["pdf", "doc", "docx"].includes(fileExtension)) {
+                      alert(
+                        "Please upload a file with a .pdf, .doc or .docx extension"
+                      );
+                      event.target.value = null; // Clear the input field
+                    } else {
+                      setFirstFile(file);
+                    }
                   }}
                 />
               </article>
@@ -227,12 +247,20 @@ const Final = ({ onSubmitted }) => {
                 <DialogActions>
                   {loading ? (
                     <>
-                      <DialogContent>
-                        <DialogContentText>Submitting...</DialogContentText>
-                        <Box sx={{ display: "flex", justifyContent: "center" }}>
-                          <LinearProgress color="secondary" />
-                        </Box>
-                      </DialogContent>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          alignItems: "center",
+                        }}
+                      >
+                        <CircularProgressWithLabel
+                          value={uploadProgress}
+                          thickness={4}
+                        />
+                        <DialogContentText sx={{ marginLeft: "10px" }}>
+                          Submitting...
+                        </DialogContentText>
+                      </Box>
                     </>
                   ) : (
                     <>

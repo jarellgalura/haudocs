@@ -10,6 +10,9 @@ const theme = createTheme({
     primary: {
       main: "#800000", // set primary color to maroon
     },
+    secondary: {
+      main: "#ffcf33", // set secondary color to navy
+    },
   },
 });
 

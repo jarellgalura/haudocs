@@ -263,6 +263,7 @@ const AssignedmodalContinuing = (props) => {
         const submissionRef = doc(db, "submissions", docSnapshot.id);
         await updateDoc(submissionRef, {
           rev_continuing_files: updatedReviewerFiles,
+          rev_to_admin_sent_date: serverTimestamp(),
         });
 
         console.log("Document updated with ID: ", docSnapshot.id);
@@ -374,6 +375,7 @@ const AssignedmodalContinuing = (props) => {
                 <Grid item xs={12} key={file.id}>
                   <input
                     type="file"
+                    accept=".pdf,.doc,.docx"
                     variant="outlined"
                     onChange={(event) => handleFileUpload(event, file.id)}
                     InputProps={{

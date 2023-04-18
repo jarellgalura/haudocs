@@ -34,13 +34,13 @@ function Application() {
             setStatus("Your application is in process for Continuing review");
           } else if (submission.status === "final") {
             setStatus("Your application is in process for Final review");
-          } else if (submission.status === "approved_initial") {
+          } else if (submission.status === "Initial Approved") {
             setStatus("Your application for initial review has been completed");
-          } else if (submission.status === "approved_continuing") {
+          } else if (submission.status === "Continuing Approved") {
             setStatus(
               "Your application for Continuing review has been completed"
             );
-          } else if (submission.status === "approved_final") {
+          } else if (submission.status === "Final Approved") {
             setStatus("Your application for Final review has been completed");
           } else if (submission.status === "declined_initial") {
             setStatus("Your application for initial review has been declined");
@@ -65,7 +65,9 @@ function Application() {
         </Box>
       );
     } else if (
-      status === "Your application for initial review has been completed"
+      (status === "Your application for initial review has been completed",
+      status === "Your application for Continuing review has been completed",
+      status === "Your application for Final review has been completed")
     ) {
       return (
         <Box display="flex" alignItems="center" justifyContent="center">

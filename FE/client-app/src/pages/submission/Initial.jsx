@@ -23,7 +23,7 @@ import {
 import { db, auth } from "../../firebase";
 import { onAuthStateChanged } from "firebase/auth";
 import { getDoc } from "firebase/firestore/lite";
-import LinearProgress from "@mui/material/LinearProgress";
+import CircularProgressWithLabel from "@mui/material/CircularProgress";
 
 function Initial({ onSubmitted }) {
   const navigate = useNavigate();
@@ -42,6 +42,7 @@ function Initial({ onSubmitted }) {
   const [userName, setUserName] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [loading, setLoading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
 
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (currentUser) => {
@@ -141,6 +142,12 @@ function Initial({ onSubmitted }) {
             filefolder: `${auth.currentUser.uid}/initial`,
           },
           body: form,
+          onUploadProgress: (progressEvent) => {
+            const progress = Math.round(
+              (progressEvent.loaded / progressEvent.total) * 100
+            );
+            setUploadProgress(progress);
+          },
         }
       );
       const data = await response.json();
@@ -259,7 +266,20 @@ function Initial({ onSubmitted }) {
                   accept=".pdf,.doc,.docx"
                   type="file"
                   onChange={(event) => {
-                    setFirstFile(event.target.files[0]);
+                    const file = event.target.files[0];
+                    const fileName = file.name.toLowerCase();
+                    const fileExtension = fileName.substring(
+                      fileName.lastIndexOf(".") + 1
+                    );
+
+                    if (!["pdf", "doc", "docx"].includes(fileExtension)) {
+                      alert(
+                        "Please upload a file with a .pdf, .doc or .docx extension"
+                      );
+                      event.target.value = null; // Clear the input field
+                    } else {
+                      setFirstFile(file);
+                    }
                   }}
                 />
               </article>
@@ -272,10 +292,24 @@ function Initial({ onSubmitted }) {
                 </label>
                 <input
                   class="block w-full mb-5 text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
-                  type="file"
+                  id="multiple_files"
                   accept=".pdf,.doc,.docx"
+                  type="file"
                   onChange={(event) => {
-                    setSecondFile(event.target.files[0]);
+                    const file = event.target.files[0];
+                    const fileName = file.name.toLowerCase();
+                    const fileExtension = fileName.substring(
+                      fileName.lastIndexOf(".") + 1
+                    );
+
+                    if (!["pdf", "doc", "docx"].includes(fileExtension)) {
+                      alert(
+                        "Please upload a file with a .pdf, .doc or .docx extension"
+                      );
+                      event.target.value = null; // Clear the input field
+                    } else {
+                      setSecondFile(file);
+                    }
                   }}
                 />
               </article>
@@ -289,10 +323,24 @@ function Initial({ onSubmitted }) {
                 </label>
                 <input
                   class="block w-full mb-5 text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
-                  type="file"
+                  id="multiple_files"
                   accept=".pdf,.doc,.docx"
+                  type="file"
                   onChange={(event) => {
-                    setThirdFile(event.target.files[0]);
+                    const file = event.target.files[0];
+                    const fileName = file.name.toLowerCase();
+                    const fileExtension = fileName.substring(
+                      fileName.lastIndexOf(".") + 1
+                    );
+
+                    if (!["pdf", "doc", "docx"].includes(fileExtension)) {
+                      alert(
+                        "Please upload a file with a .pdf, .doc or .docx extension"
+                      );
+                      event.target.value = null; // Clear the input field
+                    } else {
+                      setThirdFile(file);
+                    }
                   }}
                 />
               </article>
@@ -306,10 +354,24 @@ function Initial({ onSubmitted }) {
                 </label>
                 <input
                   class="block w-full mb-5 text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
-                  type="file"
+                  id="multiple_files"
                   accept=".pdf,.doc,.docx"
+                  type="file"
                   onChange={(event) => {
-                    setFourthFile(event.target.files[0]);
+                    const file = event.target.files[0];
+                    const fileName = file.name.toLowerCase();
+                    const fileExtension = fileName.substring(
+                      fileName.lastIndexOf(".") + 1
+                    );
+
+                    if (!["pdf", "doc", "docx"].includes(fileExtension)) {
+                      alert(
+                        "Please upload a file with a .pdf, .doc or .docx extension"
+                      );
+                      event.target.value = null; // Clear the input field
+                    } else {
+                      setFourthFile(file);
+                    }
                   }}
                 />
               </article>
@@ -325,10 +387,24 @@ function Initial({ onSubmitted }) {
                 </h1>
                 <input
                   class="block w-full mb-5 text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
-                  type="file"
+                  id="multiple_files"
                   accept=".pdf,.doc,.docx"
+                  type="file"
                   onChange={(event) => {
-                    setFifthFile(event.target.files[0]);
+                    const file = event.target.files[0];
+                    const fileName = file.name.toLowerCase();
+                    const fileExtension = fileName.substring(
+                      fileName.lastIndexOf(".") + 1
+                    );
+
+                    if (!["pdf", "doc", "docx"].includes(fileExtension)) {
+                      alert(
+                        "Please upload a file with a .pdf, .doc or .docx extension"
+                      );
+                      event.target.value = null; // Clear the input field
+                    } else {
+                      setFifthFile(file);
+                    }
                   }}
                 />
                 <h1 className="text-base mb-2">
@@ -336,10 +412,24 @@ function Initial({ onSubmitted }) {
                 </h1>
                 <input
                   class="block w-full mb-5 text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
-                  type="file"
+                  id="multiple_files"
                   accept=".pdf,.doc,.docx"
+                  type="file"
                   onChange={(event) => {
-                    setSixthFile(event.target.files[0]);
+                    const file = event.target.files[0];
+                    const fileName = file.name.toLowerCase();
+                    const fileExtension = fileName.substring(
+                      fileName.lastIndexOf(".") + 1
+                    );
+
+                    if (!["pdf", "doc", "docx"].includes(fileExtension)) {
+                      alert(
+                        "Please upload a file with a .pdf, .doc or .docx extension"
+                      );
+                      event.target.value = null; // Clear the input field
+                    } else {
+                      setSixthFile(file);
+                    }
                   }}
                 />
                 <h1 className="text-base mb-2">
@@ -347,10 +437,24 @@ function Initial({ onSubmitted }) {
                 </h1>
                 <input
                   class="block w-full mb-5 text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
-                  type="file"
+                  id="multiple_files"
                   accept=".pdf,.doc,.docx"
+                  type="file"
                   onChange={(event) => {
-                    setSeventhFile(event.target.files[0]);
+                    const file = event.target.files[0];
+                    const fileName = file.name.toLowerCase();
+                    const fileExtension = fileName.substring(
+                      fileName.lastIndexOf(".") + 1
+                    );
+
+                    if (!["pdf", "doc", "docx"].includes(fileExtension)) {
+                      alert(
+                        "Please upload a file with a .pdf, .doc or .docx extension"
+                      );
+                      event.target.value = null; // Clear the input field
+                    } else {
+                      setSeventhFile(file);
+                    }
                   }}
                 />
               </article>
@@ -363,10 +467,24 @@ function Initial({ onSubmitted }) {
                 </label>
                 <input
                   class="block w-full mb-5 text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
-                  type="file"
+                  id="multiple_files"
                   accept=".pdf,.doc,.docx"
+                  type="file"
                   onChange={(event) => {
-                    setEightFile(event.target.files[0]);
+                    const file = event.target.files[0];
+                    const fileName = file.name.toLowerCase();
+                    const fileExtension = fileName.substring(
+                      fileName.lastIndexOf(".") + 1
+                    );
+
+                    if (!["pdf", "doc", "docx"].includes(fileExtension)) {
+                      alert(
+                        "Please upload a file with a .pdf, .doc or .docx extension"
+                      );
+                      event.target.value = null; // Clear the input field
+                    } else {
+                      setEightFile(file);
+                    }
                   }}
                 />
               </article>
@@ -379,10 +497,24 @@ function Initial({ onSubmitted }) {
                 </label>
                 <input
                   class="block w-full mb-5 text-sm text-gray-900 border border-gray-300 rounded-lg cursor-pointer bg-gray-50 dark:text-gray-400 focus:outline-none dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400"
-                  type="file"
+                  id="multiple_files"
                   accept=".pdf,.doc,.docx"
+                  type="file"
                   onChange={(event) => {
-                    setNinthFile(event.target.files[0]);
+                    const file = event.target.files[0];
+                    const fileName = file.name.toLowerCase();
+                    const fileExtension = fileName.substring(
+                      fileName.lastIndexOf(".") + 1
+                    );
+
+                    if (!["pdf", "doc", "docx"].includes(fileExtension)) {
+                      alert(
+                        "Please upload a file with a .pdf, .doc or .docx extension"
+                      );
+                      event.target.value = null; // Clear the input field
+                    } else {
+                      setNinthFile(file);
+                    }
                   }}
                 />
               </article>
@@ -416,14 +548,20 @@ function Initial({ onSubmitted }) {
                     <DialogActions>
                       {loading ? (
                         <>
-                          <DialogContent>
-                            <DialogContentText>Submitting...</DialogContentText>
-                            <Box
-                              sx={{ display: "flex", justifyContent: "center" }}
-                            >
-                              <LinearProgress color="secondary" />
-                            </Box>
-                          </DialogContent>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                            }}
+                          >
+                            <CircularProgressWithLabel
+                              value={uploadProgress}
+                              thickness={4}
+                            />
+                            <DialogContentText sx={{ marginLeft: "10px" }}>
+                              Submitting...
+                            </DialogContentText>
+                          </Box>
                         </>
                       ) : (
                         <>

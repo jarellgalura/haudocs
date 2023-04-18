@@ -54,6 +54,8 @@ import {
   updateDoc,
   getFirestore,
 } from "firebase/firestore";
+import { ref, getDownloadURL } from "firebase/storage";
+import { storage } from "../firebase";
 
 const drawerWidth = 220;
 
@@ -144,6 +146,32 @@ const Sidebar = ({ children }) => {
     event.stopPropagation();
   };
 
+  useEffect(() => {
+    const unsubscribeAuth = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        if (user.photoURL) {
+          setImageUrl(user.photoURL);
+          localStorage.setItem("profileImageUrl", user.photoURL);
+        } else {
+          const storageRef = ref(storage, `users/${user.uid}/profile_picture`);
+          getDownloadURL(storageRef)
+            .then((url) => {
+              setImageUrl(url);
+              localStorage.setItem("profileImageUrl", url);
+            })
+            .catch((error) => {
+              console.log(error);
+            });
+        }
+      } else {
+        setImageUrl(null);
+        localStorage.removeItem("profileImageUrl");
+      }
+      setCurrentUser(user);
+    });
+    return unsubscribeAuth;
+  }, []);
+
   const handleSelectAll = () => {
     if (selectAllChecked) {
       setSelectedNotifications([]);
@@ -173,7 +201,11 @@ const Sidebar = ({ children }) => {
     ); // filter out null values (failed deletes)
     setSelectedNotifications([]);
     const notificationsRef = collection(db, "notifications");
-    const querySnapshot = await getDocs(notificationsRef);
+    const query = query(
+      notificationsRef,
+      where("recipientEmail", "==", currentUser.email)
+    );
+    const querySnapshot = await getDocs(query);
     const notifications = querySnapshot.docs
       .filter((doc) => !deletedIds.includes(doc.id)) // exclude deleted notifications
       .map((doc) => ({ ...doc.data(), id: doc.id }));
@@ -575,7 +607,7 @@ const Sidebar = ({ children }) => {
         <div>
           <Badge
             badgeContent={notifications.filter((n) => !n.read).length}
-            color="primary"
+            color="secondary"
           >
             <Notifications sx={{ cursor: "pointer" }} onClick={handleClick} />
           </Badge>
@@ -626,6 +658,18 @@ const Sidebar = ({ children }) => {
               <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
                 All Notifications
               </Typography>
+              <div className="flex flex-col items-end justify-end mb-5">
+                <Button
+                  sx={{
+                    color: "white",
+                  }}
+                  variant="contained"
+                  onClick={handleDeleteSelected}
+                  disabled={selectedNotifications.length === 0}
+                >
+                  Delete
+                </Button>
+              </div>
               <div
                 style={{
                   maxHeight: "300px",
@@ -667,18 +711,6 @@ const Sidebar = ({ children }) => {
                         </Typography>
                       </MenuItem>
                     ))}
-
-                    <Button
-                      sx={{
-                        mt: 5,
-                        color: "white",
-                      }}
-                      variant="contained"
-                      onClick={handleDeleteSelected}
-                      disabled={selectedNotifications.length === 0}
-                    >
-                      Delete
-                    </Button>
                   </>
                 ) : (
                   <Typography>No notifications to display.</Typography>

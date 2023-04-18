@@ -177,6 +177,7 @@ const Assignedmodalinitial = (props) => {
           rev_initial_files: updatedReviewerFiles,
           sent_by: sentBy,
           rev_to_admin_sent_date: serverTimestamp(),
+          forAdmin: true,
         });
         console.log("Document updated with ID: ", docSnapshot.id);
         const notificationsRef = collection(db, "notifications");
@@ -383,6 +384,7 @@ const Assignedmodalinitial = (props) => {
                 <Grid item xs={12} key={file.id}>
                   <input
                     type="file"
+                    accept=".pdf,.doc,.docx"
                     required
                     variant="outlined"
                     onChange={(event) => handleFileUpload(event, file.id)}

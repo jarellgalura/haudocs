@@ -86,7 +86,6 @@ function Reviewersstab(props) {
   const columns = [
     { field: "protocol_no", headerName: "Protocol Number", flex: 1 },
     { field: "rev_to_admin_sent_date", headerName: "Date Sent", flex: 1 },
-    { field: "due_date", headerName: "Due Date", flex: 1 },
     {
       field: "action",
       headerName: "Action",
