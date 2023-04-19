@@ -8,7 +8,6 @@ import {
   Setting,
   Submission,
   Logout,
-  ReSubmission,
   Inbox,
 } from "./pages";
 import { AuthContextProvider } from "./context/AuthContext";
@@ -196,18 +195,6 @@ function App() {
                 role === "applicant" ? (
                   <ProtectedRoute>
                     <Submission />
-                  </ProtectedRoute>
-                ) : (
-                  <Navigate to="/" replace />
-                )
-              }
-            />
-            <Route
-              path="/resubmission"
-              element={
-                role === "applicant" ? (
-                  <ProtectedRoute>
-                    <ReSubmission />
                   </ProtectedRoute>
                 ) : (
                   <Navigate to="/" replace />

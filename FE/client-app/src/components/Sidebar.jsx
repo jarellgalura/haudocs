@@ -361,11 +361,6 @@ const Sidebar = ({ children }) => {
       icon: <AddBox />,
     },
     {
-      path: "/resubmission",
-      name: "Resubmission",
-      icon: <ErrorOutline />,
-    },
-    {
       path: "/inbox",
       name: "Inbox",
       icon: <Inbox />,

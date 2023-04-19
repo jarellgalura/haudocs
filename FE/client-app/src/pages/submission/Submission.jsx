@@ -13,6 +13,7 @@ import Continuing from "./Continuing";
 import Final from "./Final";
 import { auth } from "../../firebase";
 import LinearProgress from "@mui/material/LinearProgress";
+import Resubmission from "./Resubmission";
 
 function Submission() {
   const [activeTab, setActiveTab] = useState(0);
@@ -79,6 +80,10 @@ function Submission() {
       label: "Final Review",
       content: <Final />,
       disabled: !continuingSubmitted,
+    },
+    {
+      label: "Resubmission",
+      content: <Resubmission />,
     },
   ];
 
