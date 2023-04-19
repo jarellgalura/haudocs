@@ -181,7 +181,7 @@ const AdminTransfer = (props) => {
   return (
     <div className="transfer">
       <Box>
-        <Box sx={{ maxWidth: "100%", margin: "0 auto" }}>
+        <Box sx={{ width: "100%", maxWidth: "100%", margin: "0 auto" }}>
           <Box
             ref={formRef}
             component="form"
@@ -205,7 +205,7 @@ const AdminTransfer = (props) => {
               id="file-upload"
               accept=".pdf,.doc,.docx"
               onChange={handleFileUpload}
-              style={{ width: "100%" }}
+              sx={{ width: "100%" }}
             />
             <FormGroup>
               <FormControlLabel

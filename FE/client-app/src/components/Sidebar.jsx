@@ -430,12 +430,129 @@ const Sidebar = ({ children }) => {
             transformOrigin={{ horizontal: "right", vertical: "top" }}
             anchorOrigin={{ horizontal: "right", vertical: "bottom" }}
           >
-            {notifications.map((n) => (
-              <MenuItem key={n.id} onClick={handleClose}>
-                {n.message}
-              </MenuItem>
-            ))}
-            <MenuItem>Mark all as read</MenuItem>
+            <div>
+              <Badge
+                badgeContent={notifications.filter((n) => !n.read).length}
+                color="secondary"
+              >
+                <Notifications
+                  sx={{ cursor: "pointer" }}
+                  onClick={handleClick}
+                />
+              </Badge>
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleClose}
+              >
+                <MenuItem sx={{ fontWeight: "bold" }} onClick={handleClose}>
+                  Notifications
+                </MenuItem>
+                <div
+                  style={{
+                    maxHeight: "300px",
+                    maxWidth: "300px",
+                    overflowY: "auto",
+                  }}
+                >
+                  {notifications.length > 0 ? (
+                    notifications.map((n) => (
+                      <MenuItem key={n.id} onClick={handleCloseNavigate}>
+                        <Typography style={{ whiteSpace: "break-spaces" }}>
+                          {n.message} <br />
+                          <small>
+                            {new Date(n.timestamp?.toDate()).toLocaleString()}
+                          </small>
+                        </Typography>
+                      </MenuItem>
+                    ))
+                  ) : (
+                    <MenuItem onClick={handleClose}>
+                      <Typography sx={{ fontStyle: "italic" }}>
+                        No new notifications
+                      </Typography>
+                    </MenuItem>
+                  )}
+                </div>
+                <Divider />
+                <MenuItem
+                  sx={{ fontWeight: "bold" }}
+                  onClick={() => setShowAll(true)}
+                >
+                  See All
+                </MenuItem>
+              </Menu>
+              <Dialog open={showAll} onClose={handleClose3}>
+                <DialogContent>
+                  <Typography variant="h6" sx={{ fontWeight: "bold", mb: 2 }}>
+                    All Notifications
+                  </Typography>
+                  <div className="flex flex-col items-end justify-end mb-5">
+                    <Button
+                      sx={{
+                        color: "white",
+                      }}
+                      variant="contained"
+                      onClick={handleDeleteSelected}
+                      disabled={selectedNotifications.length === 0}
+                    >
+                      Delete
+                    </Button>
+                  </div>
+                  <div
+                    style={{
+                      maxHeight: "300px",
+                      maxWidth: "100%",
+                      overflowY: "auto",
+                    }}
+                  >
+                    {notifications.length > 0 ? (
+                      <>
+                        <MenuItem
+                          sx={{ display: "flex", alignItems: "center" }}
+                        >
+                          <Checkbox
+                            checked={selectAllChecked}
+                            indeterminate={
+                              selectedNotifications.length > 0 &&
+                              selectedNotifications.length <
+                                notifications.length
+                            }
+                            onChange={handleSelectAll}
+                          />
+                          <Typography sx={{ fontWeight: "bold" }}>
+                            Select All Notifications
+                          </Typography>
+                        </MenuItem>
+                        {notifications.map((n) => (
+                          <MenuItem
+                            key={n.id}
+                            sx={{ display: "flex", alignItems: "center" }}
+                          >
+                            <Checkbox
+                              checked={selectedNotifications.includes(n.id)}
+                              onChange={(event) =>
+                                handleCheckboxChange(event, n.id)
+                              }
+                            />
+                            <Typography style={{ whiteSpace: "break-spaces" }}>
+                              {n.message} <br />
+                              <small>
+                                {new Date(
+                                  n.timestamp?.toDate()
+                                ).toLocaleString()}
+                              </small>
+                            </Typography>
+                          </MenuItem>
+                        ))}
+                      </>
+                    ) : (
+                      <Typography>No notifications to display.</Typography>
+                    )}
+                  </div>
+                </DialogContent>
+              </Dialog>
+            </div>
           </Menu>
           <div className="menu-trigger">
             <Tooltip title="Account settings">
@@ -574,12 +691,6 @@ const Sidebar = ({ children }) => {
             component={NavLink}
             label={<Typography style={{ fontSize: 10 }}>Submission</Typography>}
             icon={<AddBox />}
-          />
-          <BottomNavigationAction
-            to="/resubmission"
-            component={NavLink}
-            label={<Typography style={{ fontSize: 10 }}>Re Submit</Typography>}
-            icon={<ErrorOutline />}
           />
         </BottomNavigation>
       </Paper>

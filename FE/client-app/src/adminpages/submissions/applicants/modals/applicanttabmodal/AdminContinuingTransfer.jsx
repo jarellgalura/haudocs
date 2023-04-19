@@ -207,7 +207,7 @@ const AdminContinuingTransfer = (props) => {
               id="file-upload"
               accept=".pdf,.doc,.docx"
               onChange={handleFileUpload}
-              style={{ width: "100%" }}
+              sx={{ width: "100%" }}
             />
             <FormGroup>
               <FormControlLabel

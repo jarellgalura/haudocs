@@ -29,7 +29,7 @@ import CircularProgressWithLabel from "@mui/material/CircularProgress";
 
 const Resubmission = ({ onSubmitted }) => {
   const navigate = useNavigate();
-  const [firstFile, setFirstFile] = useState(null);
+  const [file, setFile] = useState(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [showSuccess, setShowSuccess] = useState(false);
   const [showAlert, setShowAlert] = useState(false);
@@ -80,14 +80,11 @@ const Resubmission = ({ onSubmitted }) => {
     const q = query(
       submissionsRef,
       where("uid", "==", auth.currentUser.uid),
-      where("status", "==", "Continuing Approved")
+      where("ForResubmission", "==", true)
     );
     const querySnapshot = await getDocs(q);
     const form = new FormData();
-
-    if (firstFile) {
-      form.append("HAU-IRB 3.7(A): Final Report Form", firstFile);
-    }
+    form.append("file", file);
 
     try {
       const response = await fetch(
@@ -95,7 +92,7 @@ const Resubmission = ({ onSubmitted }) => {
         {
           method: "POST",
           headers: {
-            filefolder: `${auth.currentUser.uid}/final`,
+            filefolder: `${auth.currentUser.uid}/resubmission`,
           },
           body: form,
           onUploadProgress: (progressEvent) => {
@@ -220,7 +217,7 @@ const Resubmission = ({ onSubmitted }) => {
                       );
                       event.target.value = null; // Clear the input field
                     } else {
-                      setFirstFile(file);
+                      setFile(file);
                     }
                   }}
                 />
@@ -250,7 +247,7 @@ const Resubmission = ({ onSubmitted }) => {
                       );
                       event.target.value = null; // Clear the input field
                     } else {
-                      setFirstFile(file);
+                      setFile(file);
                     }
                   }}
                 />
@@ -280,7 +277,7 @@ const Resubmission = ({ onSubmitted }) => {
                       );
                       event.target.value = null; // Clear the input field
                     } else {
-                      setFirstFile(file);
+                      setFile(file);
                     }
                   }}
                 />
@@ -310,7 +307,7 @@ const Resubmission = ({ onSubmitted }) => {
                       );
                       event.target.value = null; // Clear the input field
                     } else {
-                      setFirstFile(file);
+                      setFile(file);
                     }
                   }}
                 />

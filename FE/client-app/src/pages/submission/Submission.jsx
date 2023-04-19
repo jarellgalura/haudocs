@@ -82,7 +82,7 @@ function Submission() {
       disabled: !continuingSubmitted,
     },
     {
-      label: "Resubmission",
+      label: "File Resubmission",
       content: <Resubmission />,
     },
   ];

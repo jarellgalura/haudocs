@@ -94,6 +94,7 @@ function Applicanttabmodal(props) {
               <Tab label="Initial Review" {...a11yProps(0)} />
               <Tab label="Continuing Review" {...a11yProps(1)} />
               <Tab label="Final Review" {...a11yProps(2)} />
+              <Tab label="Resubmission" {...a11yProps(3)} />
             </CustomTabs>
           </ThemeProvider>
         </Box>
@@ -108,6 +109,11 @@ function Applicanttabmodal(props) {
 
         {/* Final TAB */}
         <TabPanel value={value} index={2}>
+          <Finaltab uid={props.uid} handleCloseModal={handleCloseModal} />
+        </TabPanel>
+
+        {/* Resubmission TAB */}
+        <TabPanel value={value} index={3}>
           <Finaltab uid={props.uid} handleCloseModal={handleCloseModal} />
         </TabPanel>
       </Box>

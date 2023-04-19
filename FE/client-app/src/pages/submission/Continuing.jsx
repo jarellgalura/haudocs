@@ -494,13 +494,13 @@ const Continuing = ({ onSubmitted }) => {
                           alignItems: "center",
                         }}
                       >
+                        <DialogContentText sx={{ marginLeft: "10px" }}>
+                          Submitting...
+                        </DialogContentText>
                         <CircularProgressWithLabel
                           value={uploadProgress}
                           thickness={4}
                         />
-                        <DialogContentText sx={{ marginLeft: "10px" }}>
-                          Submitting...
-                        </DialogContentText>
                       </Box>
                     </>
                   ) : (
