@@ -10,6 +10,7 @@ import "./tabmodal.css";
 import Initialtab from "./applicanttabmodal/Initialtab";
 import Continuingtab from "./applicanttabmodal/Continuingtab";
 import Finaltab from "./applicanttabmodal/Finaltab";
+import Resubmissiontab from "./applicanttabmodal/Resubmissiontab";
 
 function Applicanttabmodal(props) {
   console.log("applicant", props.uid);
@@ -114,7 +115,10 @@ function Applicanttabmodal(props) {
 
         {/* Resubmission TAB */}
         <TabPanel value={value} index={3}>
-          <Finaltab uid={props.uid} handleCloseModal={handleCloseModal} />
+          <Resubmissiontab
+            uid={props.uid}
+            handleCloseModal={handleCloseModal}
+          />
         </TabPanel>
       </Box>
     </div>

@@ -25,9 +25,8 @@ import {
 } from "firebase/firestore/lite";
 import { db, auth } from "../../firebase";
 import { onAuthStateChanged } from "firebase/auth";
-import CircularProgressWithLabel from "@mui/material/CircularProgress";
 
-const Resubmission = ({ onSubmitted }) => {
+const Resubmission = () => {
   const navigate = useNavigate();
   const [file, setFile] = useState(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -77,11 +76,7 @@ const Resubmission = ({ onSubmitted }) => {
   async function handleSubmit() {
     setLoading(true);
     const submissionsRef = collection(db, "submissions");
-    const q = query(
-      submissionsRef,
-      where("uid", "==", auth.currentUser.uid),
-      where("ForResubmission", "==", true)
-    );
+    const q = query(submissionsRef, where("uid", "==", auth.currentUser.uid));
     const querySnapshot = await getDocs(q);
     const form = new FormData();
     form.append("file", file);
@@ -106,21 +101,21 @@ const Resubmission = ({ onSubmitted }) => {
       const data = await response.json();
       console.log(data);
 
-      const finalFiles = data.files.map((file) => ({
+      const resubmissionFiles = data.files.map((file) => ({
         id: generateId(16),
-        status: "final",
         forReview: false,
+        forResubmission: true,
         ...file,
       }));
 
       if (!querySnapshot.empty) {
         const docRef = querySnapshot.docs[0].ref;
         await updateDoc(docRef, {
-          final_files: [
-            ...querySnapshot.docs[0].data().final_files,
-            ...finalFiles,
+          resubmission_files: [
+            ...querySnapshot.docs[0].data().resubmission_files,
+            ...resubmissionFiles,
           ],
-          status: "final",
+          date_sent: serverTimestamp(),
         });
         setLoading(false);
         console.log("Document updated with ID: ", docRef.id);
@@ -137,7 +132,7 @@ const Resubmission = ({ onSubmitted }) => {
         adminEmails.forEach(async (email) => {
           const newNotification = {
             id: doc(notificationsRef).id,
-            message: `Applicant ${userName} has submissions for final review.`,
+            message: `Applicant ${userName} has submit resubmissions.`,
             role: "applicant",
             read: false,
             recipientEmail: email,
@@ -146,12 +141,10 @@ const Resubmission = ({ onSubmitted }) => {
           };
           await setDoc(doc(notificationsRef), newNotification);
         });
-        onSubmitted();
       } else {
         const newSubmissionRef = await addDoc(submissionsRef, {
           uid: auth.currentUser.uid,
-          status: "final",
-          final_files: finalFiles,
+          final_files: resubmissionFiles,
         });
         console.log("New document created with ID: ", newSubmissionRef.id);
       }
@@ -339,10 +332,6 @@ const Resubmission = ({ onSubmitted }) => {
                           alignItems: "center",
                         }}
                       >
-                        <CircularProgressWithLabel
-                          value={uploadProgress}
-                          thickness={4}
-                        />
                         <DialogContentText sx={{ marginLeft: "10px" }}>
                           Submitting...
                         </DialogContentText>

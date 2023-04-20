@@ -47,7 +47,8 @@ const AdminContinuingTransfer = (props) => {
   const [loading, setLoading] = useState(false);
 
   const handleFileUpload = (event) => {
-    setFile(event.target.files[0]);
+    const files = [...event.target.files];
+    setFile(files);
   };
 
   const handleDecisionChange = (event) => {
@@ -67,7 +68,11 @@ const AdminContinuingTransfer = (props) => {
     setLoading(true);
 
     const form = new FormData();
-    form.append("file", file);
+    if (file !== null) {
+      file.forEach((file) => {
+        form.append("file", file);
+      });
+    }
 
     // Perform the fetch request
     try {
@@ -123,6 +128,13 @@ const AdminContinuingTransfer = (props) => {
         const updatedReviewerFiles =
           existingReviewerFiles.concat(filesWithDate);
 
+        let status = "";
+        if (decision === "Protocol Disapproved") {
+          status = "Declined Continuing";
+        } else {
+          status = decision === "" ? "continuing" : "Continuing Approved";
+        }
+
         // Update the document with the updated rev_continuing_files and sent_by
         const submissionRef = doc(db, "submissions", docSnapshot.id);
         let updateData = {
@@ -132,7 +144,7 @@ const AdminContinuingTransfer = (props) => {
           completed: checkCompleted,
           date_completed: serverTimestamp(),
           forContinuing: true,
-          status: "Continuing Approved",
+          status: status,
         };
         await updateDoc(submissionRef, updateData);
 
@@ -238,7 +250,7 @@ const AdminContinuingTransfer = (props) => {
                 <MenuItem value="Approved with Minor">
                   Approved with Minor
                 </MenuItem>
-                <MenuItem value="None">None</MenuItem>
+                <MenuItem value=" ">None</MenuItem>
               </Select>
             </FormControl>
 
@@ -280,7 +292,6 @@ const AdminContinuingTransfer = (props) => {
                         alignItems: "center",
                       }}
                     >
-                      <CircularProgressWithLabel value={0} thickness={4} />
                       <DialogContentText sx={{ marginLeft: "10px" }}>
                         Sending...
                       </DialogContentText>

@@ -457,6 +457,11 @@ const Continuingtab = (props) => {
                       : `${selected.length} reviewers selected`}
                   </div>
                 )}
+                MenuProps={{
+                  sx: {
+                    maxHeight: "200px",
+                  },
+                }}
               >
                 <MenuItem key="select-all" value="select-all">
                   <Checkbox

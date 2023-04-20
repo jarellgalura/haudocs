@@ -27,7 +27,11 @@ const Count = () => {
               : null,
           };
         })
-        .filter((submission) => submission.completed === false);
+        .filter(
+          (submission) =>
+            submission.completed === false &&
+            submission.decision === "Protocol Disapproved"
+        );
       setNumInProgress(
         submissionsData.filter((submission) => submission.reviewer !== [])
           .length

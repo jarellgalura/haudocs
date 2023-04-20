@@ -32,9 +32,7 @@ import {
   setDoc,
 } from "firebase/firestore";
 import { auth } from "../../../../../firebase";
-import Modal from "@mui/material/Modal";
 import CircularProgress from "@mui/material/CircularProgress";
-import AdminFinalTransfer from "./AdminFinalTransfer";
 
 const style = {
   position: "absolute",
@@ -48,7 +46,7 @@ const style = {
   p: 4,
 };
 
-const Finaltab = (props) => {
+const Resubmissiontab = (props) => {
   const navigate = useNavigate();
   const { handleCloseModal } = props;
   const [protocolNumber, setProtocolNumber] = React.useState("");
@@ -89,7 +87,7 @@ const Finaltab = (props) => {
       const protocolNo = data[0].protocol_no;
       setProtocolNumber(protocolNo);
 
-      const files = data[0].final_files.map((file, index) => ({
+      const files = data[0].resubmission_files.map((file, index) => ({
         id: index + 1,
         name: data[0].name,
         date_sent: new Date(
@@ -181,11 +179,7 @@ const Finaltab = (props) => {
 
       const db = getFirestore();
       const submissionsRef = collection(db, "submissions");
-      const q = query(
-        submissionsRef,
-        where("uid", "==", props.uid),
-        where("status", "==", "final")
-      );
+      const q = query(submissionsRef, where("uid", "==", props.uid));
 
       getDocs(q).then((querySnapshot) => {
         const data = querySnapshot.docs.map((doc) => ({
@@ -199,18 +193,20 @@ const Finaltab = (props) => {
           rev_date_sent: serverTimestamp(),
         });
 
-        const updatedFinalFiles = data[0].final_files.map((file) => {
-          if (selectedId.includes(file.id)) {
-            return {
-              ...file,
-              forReview: true,
-            };
+        const updatedResubmissionFiles = data[0].resubmission_files.map(
+          (file) => {
+            if (selectedId.includes(file.id)) {
+              return {
+                ...file,
+                forReview: true,
+              };
+            }
+            return file;
           }
-          return file;
-        });
+        );
 
         updateDoc(docRef, {
-          final_files: updatedFinalFiles,
+          resubmission_files: updatedResubmissionFiles,
         });
       });
 
@@ -218,21 +214,13 @@ const Finaltab = (props) => {
 
       const newNotification = {
         id: doc(notificationsRef).id,
-        message: `Protocol number: ${protocolNumber} has been forwarded for final review.`,
+        message: `Protocol number: ${protocolNumber} has been forwarded the resubmission files.`,
         read: false,
         recipientEmail: assignTo,
         senderEmail: auth.currentUser.email,
         timestamp: serverTimestamp(),
       };
       await setDoc(doc(notificationsRef), newNotification);
-
-      console.log({
-        protocolNumber,
-        reviewType,
-        assignTo,
-        isCheckedHau,
-        isCheckedOthers,
-      });
     } else {
       alert("Please select at least one checkbox");
     }
@@ -313,7 +301,7 @@ const Finaltab = (props) => {
   };
 
   const columns = [
-    { field: "fieldname", headerName: "DocumentName", flex: 1 },
+    { field: "filename", headerName: "DocumentName", flex: 1 },
     { field: "name", headerName: "Sent By", flex: 1 },
     {
       field: "forReview",
@@ -400,34 +388,6 @@ const Finaltab = (props) => {
         >
           Download All Files
         </Button>
-        {!isCompleted && (
-          <div>
-            <Button
-              size="medium"
-              sx={{
-                color: "white",
-                backgroundColor: "maroon",
-                "&:hover": {
-                  backgroundColor: "maroon",
-                },
-              }}
-              variant="contained"
-              onClick={modalhandleOpen}
-            >
-              Transfer/Archive
-            </Button>
-            <Modal
-              open={showModal}
-              onClose={modalhandleClose}
-              aria-labelledby="modal-modal-title"
-              aria-describedby="modal-modal-description"
-            >
-              <Box sx={style}>
-                <AdminFinalTransfer uid={props.uid} />
-              </Box>
-            </Modal>
-          </div>
-        )}
       </div>
       {!isCompleted && (
         <Box
@@ -562,4 +522,4 @@ const Finaltab = (props) => {
   );
 };
 
-export default Finaltab;
+export default Resubmissiontab;

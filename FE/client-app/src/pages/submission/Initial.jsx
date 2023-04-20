@@ -166,6 +166,7 @@ function Initial({ onSubmitted }) {
           initial_files: initialFiles,
           continuing_files: [],
           final_files: [],
+          resubmission_files: [],
           rev_initial_files: [],
           rev_continuing_files: [],
           rev_final_files: [],
@@ -557,10 +558,6 @@ function Initial({ onSubmitted }) {
                             <DialogContentText sx={{ marginLeft: "10px" }}>
                               Submitting...
                             </DialogContentText>
-                            <CircularProgressWithLabel
-                              value={uploadProgress}
-                              thickness={4}
-                            />
                           </Box>
                         </>
                       ) : (

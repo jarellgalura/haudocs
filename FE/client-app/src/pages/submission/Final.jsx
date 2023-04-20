@@ -256,10 +256,6 @@ const Final = ({ onSubmitted }) => {
                         <DialogContentText sx={{ marginLeft: "10px" }}>
                           Submitting...
                         </DialogContentText>
-                        <CircularProgressWithLabel
-                          value={uploadProgress}
-                          thickness={4}
-                        />
                       </Box>
                     </>
                   ) : (

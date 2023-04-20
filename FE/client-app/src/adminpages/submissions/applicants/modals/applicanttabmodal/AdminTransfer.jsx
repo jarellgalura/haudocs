@@ -31,7 +31,6 @@ import {
   updateDoc,
 } from "firebase/firestore/lite";
 import { db, auth } from "../../../../../firebase";
-import CircularProgressWithLabel from "@mui/material/CircularProgress";
 
 const AdminTransfer = (props) => {
   const [file, setFile] = useState(null);
@@ -49,7 +48,8 @@ const AdminTransfer = (props) => {
   const [loading, setLoading] = useState(false);
 
   const handleFileUpload = (event) => {
-    setFile(event.target.files[0]);
+    const files = [...event.target.files];
+    setFile(files);
   };
 
   const handleDecisionChange = (event) => {
@@ -74,7 +74,11 @@ const AdminTransfer = (props) => {
     setLoading(true);
 
     const form = new FormData();
-    form.append("file", file);
+    if (file !== null) {
+      file.forEach((file) => {
+        form.append("file", file);
+      });
+    }
 
     // Perform the fetch request
     try {
@@ -90,7 +94,6 @@ const AdminTransfer = (props) => {
       );
 
       const data = await response.json();
-      console.log(data);
 
       const submissionsRef = collection(db, "submissions");
       const q = query(submissionsRef, where("uid", "==", props.uid));
@@ -102,12 +105,25 @@ const AdminTransfer = (props) => {
         const docSnapshot = querySnapshot.docs[0];
 
         // Get the current date as a UNIX timestamp
-        const currentDate = serverTimestamp();
+        const currentDate = new Date();
+
+        // Offset the current date to GMT+8
+        const formatter = new Intl.DateTimeFormat("en-US", {
+          timeZone: "Asia/Singapore",
+          year: "numeric",
+          month: "2-digit",
+          day: "2-digit",
+          hour: "2-digit",
+          minute: "2-digit",
+          second: "2-digit",
+        });
+
+        const currentDateGMT8 = formatter.format(currentDate);
 
         // Add the offset current date to each file in the data.files array
         const filesWithDate = data.files.map((file) => ({
           ...file,
-          upload_date: currentDate, // Add the offset current date as a UNIX timestamp
+          upload_date: currentDateGMT8, // Add the offset current date as a UNIX timestamp
         }));
 
         // Get the existing rev_initial_files array or an empty array if it doesn't exist
@@ -117,6 +133,13 @@ const AdminTransfer = (props) => {
         // Concatenate the existing and new files arrays
         const updatedReviewerFiles =
           existingReviewerFiles.concat(filesWithDate);
+
+        let status = "";
+        if (decision === "Protocol Disapproved") {
+          status = "Declined Initial";
+        } else {
+          status = decision === "" ? "initial" : "Initial Approved";
+        }
 
         // Update the document with the updated rev_initial_files and sent_by
         const submissionRef = doc(db, "submissions", docSnapshot.id);
@@ -128,7 +151,7 @@ const AdminTransfer = (props) => {
           completed: checkCompleted,
           date_completed: serverTimestamp(),
           forContinuing: true,
-          status: "Initial Approved",
+          status: status,
         };
         if (reviewType === "Exempt from Review") {
           updateData.protocol_no = protocolNumber;
@@ -236,7 +259,7 @@ const AdminTransfer = (props) => {
                 <MenuItem value="Approved with Minor">
                   Approved with Minor
                 </MenuItem>
-                <MenuItem value="None">None</MenuItem>
+                <MenuItem value=" ">None</MenuItem>
               </Select>
             </FormControl>
 
@@ -252,6 +275,7 @@ const AdminTransfer = (props) => {
                 </MenuItem>
                 <MenuItem value="Full Board Review">Full Board Review</MenuItem>
                 <MenuItem value="Expedited Review">Expedited Review</MenuItem>
+                <MenuItem value=" ">None</MenuItem>
               </Select>
             </FormControl>
 
@@ -304,7 +328,6 @@ const AdminTransfer = (props) => {
                         alignItems: "center",
                       }}
                     >
-                      <CircularProgressWithLabel value={0} thickness={4} />
                       <DialogContentText sx={{ marginLeft: "10px" }}>
                         Sending...
                       </DialogContentText>

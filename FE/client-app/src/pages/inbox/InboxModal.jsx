@@ -37,7 +37,6 @@ const InboxModal = () => {
         ).toLocaleString(),
         ...file,
         research_type: data[0].research_type,
-        protocol_no: data[0].protocol_no,
         decision: data[0].decision,
         status: data[0].status,
       }));
@@ -54,7 +53,7 @@ const InboxModal = () => {
   };
 
   const columns = [
-    { field: "protocol_no", headerName: "Protocol Number", flex: 1 },
+    { field: "filename", headerName: "Document Name", flex: 1 },
     { field: "research_type", headerName: "Research Type", flex: 1 },
     { field: "upload_date", headerName: "Date Received", flex: 1 },
     {

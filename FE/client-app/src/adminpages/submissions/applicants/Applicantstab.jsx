@@ -24,7 +24,11 @@ function Applicantstab(props) {
   useEffect(() => {
     const db = getFirestore();
     const submissionsCollection = collection(db, "submissions");
-    const q = query(submissionsCollection, where("completed", "==", false));
+    const q = query(
+      submissionsCollection,
+      where("completed", "==", false),
+      where("decision", "!=", "Protocol Disapproved")
+    );
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
       const submissionsData = snapshot.docs.map((doc) => {

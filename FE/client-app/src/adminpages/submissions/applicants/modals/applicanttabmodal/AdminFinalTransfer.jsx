@@ -47,7 +47,8 @@ const AdminFinalTransfer = (props) => {
   const [loading, setLoading] = useState(false);
 
   const handleFileUpload = (event) => {
-    setFile(event.target.files[0]);
+    const files = [...event.target.files];
+    setFile(files);
   };
 
   const handleDecisionChange = (event) => {
@@ -67,7 +68,11 @@ const AdminFinalTransfer = (props) => {
     setLoading(true);
 
     const form = new FormData();
-    form.append("file", file);
+    if (file !== null) {
+      file.forEach((file) => {
+        form.append("file", file);
+      });
+    }
 
     // Perform the fetch request
     try {
@@ -131,7 +136,7 @@ const AdminFinalTransfer = (props) => {
           completed: checkCompleted,
           date_completed: serverTimestamp(),
           forContinuing: true,
-          status: "Final Approved",
+          status: decision === " " ? "final" : "Final Approved",
         };
         await updateDoc(submissionRef, updateData);
 
@@ -237,7 +242,7 @@ const AdminFinalTransfer = (props) => {
                 <MenuItem value="Approved with Minor">
                   Approved with Minor
                 </MenuItem>
-                <MenuItem value="None">None</MenuItem>
+                <MenuItem value=" ">None</MenuItem>
               </Select>
             </FormControl>
 
@@ -279,7 +284,6 @@ const AdminFinalTransfer = (props) => {
                         alignItems: "center",
                       }}
                     >
-                      <CircularProgressWithLabel value={0} thickness={4} />
                       <DialogContentText sx={{ marginLeft: "10px" }}>
                         Sending...
                       </DialogContentText>

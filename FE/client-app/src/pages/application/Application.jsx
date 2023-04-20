@@ -12,6 +12,7 @@ import {
   where,
 } from "firebase/firestore";
 import { auth } from "../../firebase";
+import { FcCancel } from "react-icons/fc";
 
 function Application() {
   const [status, setStatus] = useState("Please wait...");
@@ -29,22 +30,22 @@ function Application() {
         } else {
           const submission = querySnapshot.docs[0].data();
           if (submission.status === "initial") {
-            setStatus("Your application is in process for initial review");
+            setStatus("Your application is in process for Initial Review");
           } else if (submission.status === "continuing") {
-            setStatus("Your application is in process for Continuing review");
+            setStatus("Your application is in process for Continuing Review");
           } else if (submission.status === "final") {
-            setStatus("Your application is in process for Final review");
+            setStatus("Your application is in process for Final Review");
           } else if (submission.status === "Initial Approved") {
-            setStatus("Your application for initial review has been completed");
+            setStatus("Your application for Initial Review has been completed");
           } else if (submission.status === "Continuing Approved") {
             setStatus(
               "Your application for Continuing review has been completed"
             );
           } else if (submission.status === "Final Approved") {
-            setStatus("Your application for Final review has been completed");
-          } else if (submission.status === "declined_initial") {
-            setStatus("Your application for initial review has been declined");
-          } else if (submission.status === "declined_continuing") {
+            setStatus("Your application for Final Review has been completed");
+          } else if (submission.status === "Declined Initial") {
+            setStatus("Your application for Initial Review has been declined");
+          } else if (submission.status === "Declined Continuing") {
             setStatus(
               "Your application for Continuing review has been declined"
             );
@@ -65,9 +66,18 @@ function Application() {
         </Box>
       );
     } else if (
-      (status === "Your application for initial review has been completed",
+      status === "Your application for Initial Review has been declined" ||
+      status === "Your application for Continuing Review has been declined"
+    ) {
+      return (
+        <Box display="flex" alignItems="center" justifyContent="center">
+          <FcCancel size={70} />
+        </Box>
+      );
+    } else if (
+      (status === "Your application for Initial Review has been completed",
       status === "Your application for Continuing review has been completed",
-      status === "Your application for Final review has been completed")
+      status === "Your application for Final Review has been completed")
     ) {
       return (
         <Box display="flex" alignItems="center" justifyContent="center">
