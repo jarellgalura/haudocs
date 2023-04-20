@@ -47,7 +47,7 @@ function Application() {
             setStatus("Your application for Initial Review has been declined");
           } else if (submission.status === "Declined Continuing") {
             setStatus(
-              "Your application for Continuing review has been declined"
+              "Your application for Continuing Review has been declined"
             );
           }
         }

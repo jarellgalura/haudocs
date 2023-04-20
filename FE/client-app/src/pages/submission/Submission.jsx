@@ -38,7 +38,8 @@ function Submission() {
         const submissionData = doc.data();
         if (
           submissionData.status === "initial" ||
-          submissionData.status === "Initial Approved"
+          submissionData.status === "Initial Approved" ||
+          submissionData.status === "Declined Continuing"
         ) {
           initial = true;
         } else if (
