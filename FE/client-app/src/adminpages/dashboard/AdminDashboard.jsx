@@ -15,7 +15,6 @@ import {
     where,
     orderBy,
     Timestamp,
-    getDocs,
 } from "firebase/firestore";
 import { Button } from "@mui/material";
 import { LocalizationProvider } from "@mui/x-date-pickers-pro";
@@ -67,9 +66,27 @@ function AdminDashboard() {
             return row;
         });
 
+        let totalSubmissions = 0;
+        let inProgress = 0;
+        let completed = 0;
+
         const processSnapshot = (snapshot) => {
+            let totalApplications = 0;
+            let protocolsInProgress = 0;
+            let protocolsCompleted = 0;
+
             snapshot.docs.forEach((doc) => {
                 const data = doc.data();
+                totalApplications++;
+
+                if (data.reviewer) {
+                    protocolsInProgress++;
+                }
+
+                if (data.completed) {
+                    protocolsCompleted++;
+                }
+
                 const researchTypeIndex = researchTypes.indexOf(
                     data.research_type
                 );
@@ -87,7 +104,23 @@ function AdminDashboard() {
                 }
             });
 
-            const csv = Papa.unparse(aggregatedData);
+            const headerRow = [
+                ["Start Date", "End Date"],
+                [
+                    dateRange[0] ? dateRange[0].format("YYYY-MM-DD") : "",
+                    dateRange[1] ? dateRange[1].format("YYYY-MM-DD") : "",
+                ],
+                [
+                    "Number of Applications",
+                    "Protocols in Progress",
+                    "Protocols Completed",
+                ],
+                [totalApplications, protocolsInProgress, protocolsCompleted],
+            ];
+
+            const csvHeader = Papa.unparse(headerRow);
+            const csvData = Papa.unparse(aggregatedData, { header: false });
+            const csv = `${csvHeader}\n${csvData}`;
             return csv;
         };
 
