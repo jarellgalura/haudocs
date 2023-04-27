@@ -442,7 +442,7 @@ const Resubmissiontab = (props) => {
                   .map((user) => (
                     <MenuItem key={user.email} value={user.email}>
                       <Checkbox checked={assignTo.indexOf(user.email) > -1} />
-                      {user.email}
+                      {user.name}, ({user.email})
                     </MenuItem>
                   ))}
               </Select>

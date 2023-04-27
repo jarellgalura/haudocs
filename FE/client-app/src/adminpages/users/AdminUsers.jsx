@@ -232,6 +232,7 @@ const AdminUsers = () => {
                           <Select
                             labelId="role-label"
                             id="role"
+                            label="Role"
                             value={role}
                             onChange={(e) => setRole(e.target.value)}
                             autoComplete="role-name"
